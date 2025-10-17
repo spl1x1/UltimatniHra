@@ -5,17 +5,20 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#ifdef __fromPython__:
-#include <Python.h>
-#endif
+#include <nlohmann/json.hpp>
 
-
+using namespace nlohmann::literals;
 
 class Server {
+    int port;
+    bool isRunning;
 
+public:
+    Server();
 
+#ifdef __fromPython__
 
-
+#endif
 };
 
 

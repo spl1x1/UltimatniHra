@@ -2,12 +2,12 @@
 project(UltimatniHra)
 
 set(CMAKE_CXX_STANDARD 20)
-set(EXECUTABLE_OUTPUT_PATH /build)
 
 include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
 CPMAddPackage("gh:libsdl-org/SDL_image#11154af")
+CPMAddPackage("gh:nlohmann/json#55f9368")
 
 
 add_executable(UltimatniHra
@@ -19,6 +19,7 @@ add_executable(UltimatniHra
 target_link_libraries(UltimatniHra
         SDL3::SDL3
         SDL3_image::SDL3_image
+        nlohmann_json::nlohmann_json
         )
 
 add_custom_command(TARGET UltimatniHra POST_BUILD

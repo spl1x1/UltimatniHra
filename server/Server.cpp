@@ -4,23 +4,12 @@
 
 #include "Server.h"
 
-class Server {
 
-    int port;
-    Socket serverSocket;
-    bool isRunning;
 
-public:
-Server() {
+
+
+Server::Server() {
     if (isRunning) {
         return;
-    }
+    };
 }
-
-#ifdef __fromPython__:
-
-#else
-
-#endif
-
-};
