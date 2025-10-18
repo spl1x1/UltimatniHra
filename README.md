@@ -8,8 +8,6 @@
 >  <li> Basic path finding algoritmus </li>
 > <li> Assety </li>
 > </ol>
-
-
 > Přidat knihovny
 > [RmlUI](https://github.com/mikke89/RmlUi),
 > [SDL_ttf](https://github.com/libsdl-org/SDL_ttf),
