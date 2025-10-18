@@ -25,6 +25,7 @@ class Client {
     int WINDOW_WIDTH;
     int WINDOW_HEIGHT;
 
+    bool generateConfigFile();
     bool configureSDL();
 
     public:

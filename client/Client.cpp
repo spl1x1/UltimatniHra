@@ -4,26 +4,37 @@
 
 #include "Client.h"
 
-bool Client::configureSDL() {
-    std::fstream configFile("config.json");
+bool Client::generateConfigFile() {
+    nlohmann::json config = {
+        {"window_width", 1920 / 2},
+        {"window_height", 1080 / 2},
+      };
 
-    if (!std::filesystem::exists("config.json")) {
-        try {
-            WINDOW_WIDTH = 1920 / 2;
-            WINDOW_HEIGHT = 1080 / 2;
-        }
-        catch (std::exception &e) {
-
-        }
+    std::ofstream configFile("config.json");
+    if (!configFile.is_open()) {
+        std::cerr << "Could not create config file!" << std::endl;
+        return false;
     }
+    configFile << std::setw(4) << config << std::endl;
+    configFile.close();
+    return true;
+}
 
+bool Client::configureSDL() {
+    if (!std::filesystem::exists("config.json")) {
+        generateConfigFile();
+    }
+    std::fstream configFile("config.json", std::ios::in | std::ios::out);
     if (!configFile.is_open()) {
         std::cerr << "Could not open config file!" << std::endl;
         return false;
     }
 
-
     nlohmann::json config = nlohmann::json::parse(configFile);
+
+    WINDOW_WIDTH = config["window_width"].get<int>();
+    WINDOW_HEIGHT = config["window_height"].get<int>();
+
     return true;
 }
 
