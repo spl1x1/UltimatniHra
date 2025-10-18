@@ -14,6 +14,8 @@ add_executable(UltimatniHra
         main.cpp
         server/Server.cpp
         server/Server.h
+        client/Client.cpp
+        client/Client.h
 )
 
 target_link_libraries(UltimatniHra
@@ -21,6 +23,7 @@ target_link_libraries(UltimatniHra
         SDL3_image::SDL3_image
         nlohmann_json::nlohmann_json
         )
+
 
 add_custom_command(TARGET UltimatniHra POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -32,5 +35,4 @@ add_custom_command(TARGET UltimatniHra POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
         "${CMAKE_BINARY_DIR}/assets")
-
 

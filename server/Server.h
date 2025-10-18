@@ -11,7 +11,7 @@ using namespace nlohmann::literals;
 
 class Server {
     int port;
-    bool isRunning;
+    bool isRunning = false;
 
 public:
     Server();
