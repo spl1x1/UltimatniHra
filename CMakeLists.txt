@@ -23,9 +23,10 @@ add_executable(UltimatniHra
         main.cpp
         server/Server.cpp
         server/Server.h
-        client/Client.cpp
-        client/Client.h
-       # mapa/generace_mapy.cpp
+        render/Window.cpp
+        render/Window.h
+        server/Event.h
+        # mapa/generace_mapy.cpp
 )
 
 target_link_libraries(UltimatniHra

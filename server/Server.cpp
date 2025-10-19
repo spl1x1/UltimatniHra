@@ -5,11 +5,41 @@
 #include "Server.h"
 
 
+void Server::Tick() {
+    while (isRunning) {
+        onTick(tickRate);
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+    }
+}
 
+void Server::Initialize() {
+    isRunning = true;
+
+}
+
+void Server::Stop() {
+    isRunning = false;
+
+}
+
+int Server::ChangeTickRate(int newTickRate) {
+    if (newTickRate <= 0) {
+        return -1;
+    }
+    if (tickRate==newTickRate) {
+        return 0;
+    }
+    tickRate = newTickRate;
+    sleepDuration = 1000 / tickRate;
+    return 1;
+}
 
 
 Server::Server() {
-    if (isRunning) {
-        return;
-    };
+    Initialize();
+    Tick();
+}
+
+Server::~Server() {
+    this->Stop();
 }

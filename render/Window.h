@@ -6,16 +6,10 @@
 #define CLIENT_H
 #include <SDL3/SDL.h>
 #include <nlohmann/json.hpp>
+#include <string>
 #include <iostream>
-#include <fstream>
 
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
-
-class Client {
+class Window {
 
     int* gFrameBuffer;
     SDL_Window* gSDLWindow;
@@ -24,16 +18,14 @@ class Client {
     int gDone;
     int WINDOW_WIDTH;
     int WINDOW_HEIGHT;
-
-    bool generateConfigFile();
-    bool configureSDL();
+    std::string WINDOW_TITLE;
+    void advanceFrame();
+    bool init();
 
     public:
-    bool update();
-    void loop();
-    bool init();
-    Client();
-    ~Client();
+
+    explicit Window(const std::string& title, int width = 960, int height = 540);
+    ~Window();
 };
 
 
