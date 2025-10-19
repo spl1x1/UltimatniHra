@@ -8,7 +8,6 @@
 #include <nlohmann/json.hpp>
 #include <chrono>
 #include <thread>
-#include <iostream>
 #include "Event.h"
 
 using namespace nlohmann::literals;
@@ -21,19 +20,16 @@ class Server {
 
     //Private Methods
     void Tick();
-    void Initialize();
-
 public:
 
 
     //Events
-    Event<void(int)> onTick;
-    Event<Server()> *onInitialize = new Event<Server()>;
+    Event<void()> onTick;
+    Event<void()> onInitialize;
 
-
+    void Initialize();
     int ChangeTickRate(int newTickRate);
     void Stop();
-    Server();
     ~Server();
 };
 

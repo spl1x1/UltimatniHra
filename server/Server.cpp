@@ -7,15 +7,18 @@
 
 void Server::Tick() {
     while (isRunning) {
-        onTick(tickRate);
-        std::cout<<"Server Tick at rate: " << tickRate << " ticks per second." << std::endl;
+        onTick();
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
     }
 }
 
 void Server::Initialize() {
+    onInitialize();
+    if (isRunning) {
+        return;
+    }
     isRunning = true;
-
+    Tick();
 }
 
 void Server::Stop() {
@@ -33,12 +36,6 @@ int Server::ChangeTickRate(int newTickRate) {
     tickRate = newTickRate;
     sleepDuration = 1000 / tickRate;
     return 1;
-}
-
-
-Server::Server() {
-    Initialize();
-    Tick();
 }
 
 Server::~Server() {
