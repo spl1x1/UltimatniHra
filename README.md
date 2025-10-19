@@ -16,6 +16,7 @@
 > [HarfBuzz](https://github.com/harfbuzz/harfbuzz),
 > [PlutoSVG](https://github.com/sammycage/plutosvg),
 > [PlutoVG](https://github.com/sammycage/plutovg),
+> ✅
 
 
 > Další linky
