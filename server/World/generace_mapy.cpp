@@ -1,10 +1,5 @@
 ﻿#include "generace_mapy.h"
 
-
-#define MAP_WIDTH 100
-#define MAP_HEIGHT 100
-#include "generace_mapy.h"
-
 double GeneraceMapy::fade(double t) {
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
