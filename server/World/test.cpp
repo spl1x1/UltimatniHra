@@ -5,6 +5,6 @@
 #include "generace_mapy.h"
 
 int main() {
-    new GeneraceMapy();
+    GeneraceMapy mapa;
     return 0;
 }
