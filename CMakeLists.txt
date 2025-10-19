@@ -5,9 +5,18 @@ set(CMAKE_CXX_STANDARD 20)
 
 include(cmake/CPM.cmake)
 
+set(SDLTTF_VENDORED ON CACHE BOOL "SDL_TTF - Bundeled dependencies" FORCE)
+set(RMLUI_STATIC_LIB ON CACHE BOOL "RmlUi - static library" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Static libs" FORCE)
+
+#sdl
 CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
 CPMAddPackage("gh:libsdl-org/SDL_image#11154af")
+CPMAddPackage("gh:libsdl-org/SDL_ttf#a1ce367")
+
+#other libs
 CPMAddPackage("gh:nlohmann/json#55f9368")
+CPMAddPackage("gh:mikke89/RmlUi#58c7515")
 
 
 add_executable(UltimatniHra
@@ -16,21 +25,16 @@ add_executable(UltimatniHra
         server/Server.h
         client/Client.cpp
         client/Client.h
-        mapa/generace_mapy.cpp
+       # mapa/generace_mapy.cpp
 )
 
 target_link_libraries(UltimatniHra
         SDL3::SDL3
         SDL3_image::SDL3_image
         nlohmann_json::nlohmann_json
-        )
-
-
-add_custom_command(TARGET UltimatniHra POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:SDL3::SDL3>
-        $<TARGET_FILE:SDL3_image::SDL3_image>
-        ${CMAKE_BINARY_DIR})
+        SDL3_ttf::SDL3_ttf
+        RmlUi::RmlUi
+)
 
 add_custom_command(TARGET UltimatniHra POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
