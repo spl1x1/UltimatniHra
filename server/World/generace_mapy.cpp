@@ -1,10 +1,5 @@
-﻿#include <algorithm>
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <random>
-#include <ctime>
-using namespace std;
+﻿#include "generace_mapy.h"
+
 
 #define MAP_WIDTH 100
 #define MAP_HEIGHT 100
@@ -84,8 +79,9 @@ void nacist_mapu(const vector<vector<double>>& mapa) {
         cout << endl;
     }
 }
-int main() {
-    srand(static_cast<unsigned int>(cas(0))); //random seed
+
+GeneraceMapy::GeneraceMapy() {
+    srand(static_cast<unsigned int>(time(0))); //random seed
 
     vector<int> permutace(256);
     generovat_permutaci(permutace);
@@ -96,6 +92,8 @@ int main() {
     nacist_mapu(mapa);
     return 0;
 }
+
+
 
 //
 // Created by Jar Jar Banton on 18. 10. 2025.

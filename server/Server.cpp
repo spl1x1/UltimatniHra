@@ -8,6 +8,7 @@
 void Server::Tick() {
     while (isRunning) {
         onTick(tickRate);
+        std::cout<<"Server Tick at rate: " << tickRate << " ticks per second." << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
     }
 }

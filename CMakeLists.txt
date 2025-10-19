@@ -26,7 +26,12 @@ add_executable(UltimatniHra
         render/Window.cpp
         render/Window.h
         server/Event.h
-        # mapa/generace_mapy.cpp
+)
+
+add_executable(server_test
+        server/World/generace_mapy.h
+        server/World/generace_mapy.cpp
+        server/World/test.cpp
 )
 
 target_link_libraries(UltimatniHra
