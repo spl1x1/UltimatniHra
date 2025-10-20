@@ -2,7 +2,7 @@
 // Created by USER on 17.10.2025.
 //
 
-#include "Window.h"
+#include "Menu/Mainmenu.h"
 
 void Window::advanceFrame()
 {
@@ -18,6 +18,7 @@ void Window::advanceFrame()
 
 
 bool Window::init() {
+    new Mainmenu(*this);
         if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
         {
             return false;
@@ -30,6 +31,12 @@ bool Window::init() {
 
     if ( !gSDLWindow || !gSDLRenderer || !gSDLTexture) return false;
 
+    int width, height, bbwidth, bbheight;
+    SDL_GetWindowSize(gSDLWindow, &width, &height);
+    SDL_GetWindowSizeInPixels(gSDLWindow, &bbwidth, &bbheight);
+    SDL_Log("Window size: %ix%i", width, height);
+    SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
+    
         gDone = 0;
         while (gDone != 1)
         {

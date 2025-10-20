@@ -1,0 +1,16 @@
+<template name="window" content="content">
+<head>
+	<link type="text/rcss" href="style.rcss"/>
+</head>
+<body class="window">
+	<div class="content">
+		<div class="title">Main Menu</div>
+		<div class="menu-options">
+			<button class="menu-button" onclick="startGame()">Start Game</button>
+			<button class="menu-button" onclick="loadGame()">Load Game</button>
+			<button class="menu-button" onclick="openSettings()">Settings</button>
+			<button class="menu-button" onclick="exitGame()">Exit</button>
+		</div>
+	</div>
+</body>
+</template>

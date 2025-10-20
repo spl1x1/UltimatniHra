@@ -3,14 +3,27 @@
 #include "server/Event.h"
 
 std::thread serverThread;
+Server s;
+
+
 
 
 int main(int argc, char *argv[]) {;
-    new std::thread([](){
-        Server *s = new Server();
-        s->onTick.add([](int dt){ std::cout << "tick dt=" << dt << "\n"; });
-
-
+  /*  s.onTick.add([]() {
+        std::cout << "Server Tick Event" << std::endl;
     });
+
+    s.onInitialize.add([]() {
+        std::cout << "Server Initialized" << std::endl;
+    });
+    */
+
+    new std::thread([]() {
+        s.Initialize();
+    });
+
     Window *c = new Window("Basic window", 960, 540);
+
+    s.Stop();
+    return 0;
 }
