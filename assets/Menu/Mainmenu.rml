@@ -1,16 +1,26 @@
-<template name="window" content="content">
-<head>
-	<link type="text/rcss" href="style.rcss"/>
-</head>
-<body class="window">
-	<div class="content">
-		<div class="title">Main Menu</div>
-		<div class="menu-options">
-			<button class="menu-button" onclick="startGame()">Start Game</button>
-			<button class="menu-button" onclick="loadGame()">Load Game</button>
-			<button class="menu-button" onclick="openSettings()">Settings</button>
-			<button class="menu-button" onclick="exitGame()">Exit</button>
-		</div>
-	</div>
-</body>
-</template>
+<rml>
+	<head>
+		<style>
+			body {
+                font-family: rmlui-debugger-font;
+                font-size: 12px;
+                top: 100px; right: 100px; bottom: 100px; left: 100px;
+                padding: 150px;
+                text-align: center;
+                background: #333;
+                color: white;
+            }
+            p {
+                display: block;
+                padding: 30px;
+            }
+            p:hover {
+                background: #444;
+            }
+		</style>
+	</head>
+	<body>
+	<p>Hello world!</p>
+	</body>
+</rml>
+)";
