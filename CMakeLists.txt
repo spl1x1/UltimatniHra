@@ -10,6 +10,9 @@ set(RMLUI_STATIC_LIB ON CACHE BOOL "RmlUi - static library" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Static libs" FORCE)
 
 
+add_compile_definitions(RMLUI_SDL_VERSION_MAJOR=3)
+add_compile_definitions(SDL_VERSION_MAJOR=3)
+
 #sdl
 CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
 CPMAddPackage("gh:libsdl-org/SDL_image#11154af")
@@ -18,6 +21,9 @@ CPMAddPackage("gh:libsdl-org/SDL_ttf#a1ce367")
 #other libs
 CPMAddPackage("gh:nlohmann/json#55f9368")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
+
+add_library(SDL::SDL ALIAS SDL3-static )
+add_library(SDL_image::SDL_image ALIAS SDL3_image-static)
 
 
 add_subdirectory(
@@ -39,12 +45,12 @@ add_executable(server_test
         server/World/generace_mapy.h
         server/World/generace_mapy.cpp
         server/World/test.cpp
-        render/Menu/RmlUiTest.cpp
 )
 
 add_executable(RmlUiTest
         render/Menu/RmlUiTest.cpp
 )
+
 
 target_link_libraries(RmlUiTest
         SDL3::SDL3
@@ -52,6 +58,7 @@ target_link_libraries(RmlUiTest
         SDL3_ttf::SDL3_ttf
         RmlUi::RmlUi
         rmlui_backend_common_headers
+        rmlui_backend_SDL_SDLrenderer
 )
 
 target_link_libraries(UltimatniHra
