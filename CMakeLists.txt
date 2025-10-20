@@ -17,18 +17,14 @@ CPMAddPackage("gh:libsdl-org/SDL_ttf#a1ce367")
 
 #other libs
 CPMAddPackage("gh:nlohmann/json#55f9368")
-#CPMAddPackage("gh:mikke89/RmlUi#58c7515")
+CPMAddPackage("gh:mikke89/RmlUi#58c7515")
 
 
-add_library(imgui STATIC
-        render/imgui/imgui.cpp
-        render/imgui/imgui_draw.cpp
-        render/imgui/imgui_tables.cpp
-        render/imgui/imgui_widgets.cpp
-        render/imgui/backends/imgui_impl_sdl3.cpp
-        render/imgui/backends/imgui_impl_sdlrenderer3.cpp
-        render/imgui/backends/imgui_impl_sdlrenderer3.h
+add_subdirectory(
+        ${CMAKE_BINARY_DIR}/_deps/rmlui-src/Backends
 )
+
+
 
 add_executable(UltimatniHra
         main.cpp
@@ -37,18 +33,25 @@ add_executable(UltimatniHra
         render/Window.cpp
         render/Window.h
         server/Event.h
-        render/Menu/Mainmenu.cpp
-        render/Menu/Mainmenu.h
 )
 
 add_executable(server_test
         server/World/generace_mapy.h
         server/World/generace_mapy.cpp
         server/World/test.cpp
+        render/Menu/RmlUiTest.cpp
 )
 
-target_link_libraries(imgui
+add_executable(RmlUiTest
+        render/Menu/RmlUiTest.cpp
+)
+
+target_link_libraries(RmlUiTest
         SDL3::SDL3
+        SDL3_image::SDL3_image
+        SDL3_ttf::SDL3_ttf
+        RmlUi::RmlUi
+        rmlui_backend_common_headers
 )
 
 target_link_libraries(UltimatniHra
@@ -56,7 +59,7 @@ target_link_libraries(UltimatniHra
         SDL3_image::SDL3_image
         nlohmann_json::nlohmann_json
         SDL3_ttf::SDL3_ttf
-        imgui
+        RmlUi::RmlUi
 )
 
 
