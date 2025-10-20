@@ -46,8 +46,11 @@ void GeneraceMapy::generovat_permutaci(vector<int>& permutace) {
     for (int i = 0; i < 256; i++) {
         permutace[i] = i;
     }
-    std::random_shuffle(permutace.begin(), permutace.end());
+    std::random_device rd;
+    std::default_random_engine rng(rd());
+    std::shuffle(permutace.begin(), permutace.end(), rng);
     permutace.insert(permutace.end(), permutace.begin(), permutace.end());
+
 }
 
 void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& permutace, double scale) {
