@@ -76,3 +76,8 @@ add_custom_command(TARGET UltimatniHra POST_BUILD
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
         "${CMAKE_BINARY_DIR}/assets")
 
+add_custom_command(TARGET RmlUiTest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        "${CMAKE_BINARY_DIR}/assets")
+
