@@ -66,9 +66,7 @@ void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& pe
     }
 }
 
-void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa,
-                               const vector<vector<double>>& vlhkostMapa,
-                               vector<vector<int>>& biomMapa) {
+void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& biomMapa) {
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
             double vyska = (vyskaMapa[x][y] + 1.0) / 2.0;
@@ -99,13 +97,17 @@ GeneraceMapy::GeneraceMapy() {
 
     vector<vector<double>> vyskaMapa(MAP_WIDTH, vector<double>(MAP_HEIGHT));
     vector<vector<double>> vlhkostMapa(MAP_WIDTH, vector<double>(MAP_HEIGHT));
-    vector<vector<int>> biomMapa(MAP_WIDTH, vector<int>(MAP_HEIGHT));
+
+    biomMapa.resize(MAP_WIDTH, vector<int>(MAP_HEIGHT)); // Resize the class member
 
     double scale = 20.0;
     generovat_teren(vyskaMapa, permutace1, scale);
     generovat_teren(vlhkostMapa, permutace2, scale);
 
     nacist_mapu(vyskaMapa, vlhkostMapa, biomMapa);
+}
+const vector<vector<int>>& GeneraceMapy::getBiomMapa() const {
+    return biomMapa;
 }
 
 

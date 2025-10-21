@@ -21,10 +21,10 @@ class GeneraceMapy {
 public:
     GeneraceMapy(); // constructor
 
-    // Optional: Expose MAP_WIDTH/HEIGHT if needed outside the class
     static constexpr int MAP_WIDTH = 512;
     static constexpr int MAP_HEIGHT = 512;
     vector<vector<int>> biomMapa;
+    const vector<vector<int>>& getBiomMapa() const;
 
 private:
     // Biome identifiers as enum
@@ -45,11 +45,7 @@ private:
     double perlin_noise(double x, double y, vector<int>& permutace);
     void generovat_permutaci(vector<int>& permutace);
     void generovat_teren(vector<vector<double>>& mapa, vector<int>& permutace, double scale);
-
-    // Modified to output biome IDs instead of printing strings
-    void nacist_mapu(const vector<vector<double>>& vyskaMapa,
-                     const vector<vector<double>>& vlhkostMapa,
-                     vector<vector<int>>& biomMapa);
+    void nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& biomMapa);
 };
 
 #endif //ULTIMATNIHRA_GENERACE_MAPY_H
