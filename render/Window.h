@@ -14,6 +14,10 @@
 
 #define SDL_FLAGS SDL_INIT_VIDEO | SDL_INIT_EVENTS
 
+struct WorldData {
+    SDL_Texture* Texture = nullptr;
+    std::vector<std::vector<int>> WorldMap;
+};
 
 struct WindowData {
     SDL_Window* Window;
@@ -26,6 +30,7 @@ struct WindowData {
 class Window {
 public:
     WindowData data;
+    WorldData worldData;
     int* gFrameBuffer;
     int WINDOW_WIDTH;
     int WINDOW_HEIGHT;

@@ -39,6 +39,10 @@ add_executable(UltimatniHra
         render/Window.cpp
         render/Window.h
         server/Event.h
+        render/World/WorldRender.cpp
+        render/World/WorldRender.h
+        server/World/generace_mapy.h
+        server/World/generace_mapy.cpp
 )
 
 add_executable(server_test

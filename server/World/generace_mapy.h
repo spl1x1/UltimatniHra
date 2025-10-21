@@ -24,6 +24,7 @@ public:
     // Optional: Expose MAP_WIDTH/HEIGHT if needed outside the class
     static constexpr int MAP_WIDTH = 512;
     static constexpr int MAP_HEIGHT = 512;
+    vector<vector<int>> biomMapa;
 
 private:
     // Biome identifiers as enum

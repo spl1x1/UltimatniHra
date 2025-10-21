@@ -8,7 +8,9 @@
 
 
 struct WorldRender {
-    static void GenerateTexture(Window& window, std::pmr::vector<std::pmr::vector<int>>& worldMap);
+    static void loadTexturesFromDirectory(const std::string& directoryPath, Window& window) ;
+    static void GenerateTexture(Window& window);
+
 };
 
 

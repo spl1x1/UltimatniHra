@@ -3,6 +3,10 @@
 //
 
 #include "Window.h"
+#include "World/WorldRender.h"
+
+
+#include "World/WorldRender.h"
 
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
@@ -78,15 +82,15 @@ void Window::TestTexture( ) {
 
 
 bool Window::init() {
-        if (!SDL_Init(SDL_FLAGS))
-        {
-            return false;
-        }
+    if (!SDL_Init(SDL_FLAGS))
+    {
+        return false;
+    }
 
     gFrameBuffer = new int[WINDOW_WIDTH * WINDOW_HEIGHT];
     data.Window = SDL_CreateWindow(WINDOW_TITLE.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     data.Renderer = SDL_CreateRenderer( data.Window, NULL);
-     data.Texture = SDL_CreateTexture(data.Renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT);
+    data.Texture = SDL_CreateTexture(data.Renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     if ( !data.Window || !data.Renderer || !data.Texture) {
         SDL_Log("SDL_CreateWindow Error: %s", SDL_GetError());
@@ -98,6 +102,7 @@ bool Window::init() {
     SDL_Log("Window size: %ix%i", WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
     TestTexture();
+    WorldRender::GenerateTexture(*this);
 
         data.Running = true;
         while (data.Running)
