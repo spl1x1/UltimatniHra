@@ -10,7 +10,6 @@
 struct WorldRender {
     static void loadTexturesFromDirectory(const std::string& directoryPath, Window& window) ;
     static void GenerateTexture(Window& window);
-
 };
 
 
