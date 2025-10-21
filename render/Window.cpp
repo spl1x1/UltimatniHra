@@ -10,7 +10,7 @@
 
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
-    SDL_RenderTexture(data.Renderer, textures["TestTexture"], nullptr, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], nullptr, nullptr);
     SDL_RenderPresent(data.Renderer);
     SDL_Event e;
     if (SDL_PollEvent(&e))
@@ -29,6 +29,7 @@ bool Window::LoadSurface(const std::string& Path) {
         return false;
     }
     surfaces[Path] = surface;
+    SDL_SaveBMP(surface, "assets/latest.bmp");
     return true;
 }
 
@@ -78,6 +79,7 @@ void Window::TestTexture( ) {
     }
     surfaces["FinalSurface"] = finalSurface;
     CreateTextureFromSurface("FinalSurface", "TestTexture");
+    CreateTextureFromSurface(R"(assets/textures/world\grass\grass_1.bmp)", "GrassTexture" );
 }
 
 
@@ -101,8 +103,8 @@ bool Window::init() {
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
     SDL_Log("Window size: %ix%i", WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
-    TestTexture();
     WorldRender::GenerateTexture(*this);
+    TestTexture();
 
         data.Running = true;
         while (data.Running)

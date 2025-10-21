@@ -15,7 +15,6 @@
 #define SDL_FLAGS SDL_INIT_VIDEO | SDL_INIT_EVENTS
 
 struct WorldData {
-    SDL_Texture* Texture = nullptr;
     std::vector<std::vector<int>> WorldMap;
 };
 
