@@ -8,30 +8,40 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
-#include <iostream>
+#include <unordered_map>
+#include <SDL3_image/SDL_image.h>
 
-#include "imgui/imgui.h"
 
+#define SDL_FLAGS SDL_INIT_VIDEO | SDL_INIT_EVENTS
+
+
+struct WindowData {
+    SDL_Window* Window;
+    SDL_Renderer* Renderer;
+    SDL_Texture* Texture;
+    SDL_Event event;
+    bool Running;
+};
 
 class Window {
 public:
+    WindowData data;
     int* gFrameBuffer;
-    SDL_Window* gSDLWindow;
-    SDL_Renderer* gSDLRenderer;
-    SDL_Texture* gSDLTexture;
-    int gDone;
     int WINDOW_WIDTH;
     int WINDOW_HEIGHT;
     std::string WINDOW_TITLE;
-    bool open = true;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
+    std::unordered_map<std::string, SDL_Texture*> textures;
+    std::unordered_map<std::string, SDL_Surface*> surfaces;
 
 
     void advanceFrame();
+    void Destroy();
+    bool LoadSurface(const std::string& Path);
+    bool LoadTexture(const std::string& Path);
+    bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
+    void TestTexture();
+
     bool init();
-
-
     explicit Window(const std::string& title, int width = 960, int height = 540);
     ~Window();
 };

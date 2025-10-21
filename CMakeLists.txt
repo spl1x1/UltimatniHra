@@ -49,6 +49,8 @@ add_executable(server_test
 
 add_executable(RmlUiTest
         render/Menu/RmlUiTest.cpp
+        render/World/WorldRender.cpp
+        render/World/WorldRender.h
 )
 
 

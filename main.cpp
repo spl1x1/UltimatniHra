@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {;
     });
 
     Window *c = new Window("Basic window", 960, 540);
+    c->init();
 
     s.Stop();
     return 0;
