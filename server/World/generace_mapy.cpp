@@ -1,4 +1,7 @@
-﻿#include "generace_mapy.h"
+﻿//
+// Created by Jar Jar Banton on 18. 10. 2025.
+//
+#include "generace_mapy.h"
 
 double GeneraceMapy::fade(double t) {
     return t * t * t * (t * (t * 6 - 15) + 10);
@@ -63,51 +66,47 @@ void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& pe
     }
 }
 
-void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa,const vector<vector<double>>& vlhkostMapa) {
+void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa,
+                               const vector<vector<double>>& vlhkostMapa,
+                               vector<vector<int>>& biomMapa) {
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
-            double vyska = (vyskaMapa[x][y] + 1.0) / 2.0;      // Normalize to [0, 1]
-            double vlhkost = (vlhkostMapa[x][y] + 1.0) / 2.0;  // Normalize to [0, 1]
-            std::string biom = ziskat_biom(vyska, vlhkost);
-            cout << biom << " ";
+            double vyska = (vyskaMapa[x][y] + 1.0) / 2.0;
+            double vlhkost = (vlhkostMapa[x][y] + 1.0) / 2.0;
+            biomMapa[x][y] = ziskat_biom(vyska, vlhkost);
         }
-        cout << endl;
     }
 }
-std::string GeneraceMapy::ziskat_biom(double vyska, double vlhkost) {
+int GeneraceMapy::ziskat_biom(double vyska, double vlhkost) {
     if (vyska < 0.3) {
-        return "voda";
+        return VODA;
     } else if (vyska < 0.4) {
-        return "plaz";
+        return PLAZ;
     } else if (vyska < 0.6) {
-        if (vlhkost < 0.5) return "poust";
-        else return "trava";
+        return (vlhkost < 0.5) ? POUST : TRAVA;
     } else if (vyska < 0.8) {
-        if (vlhkost < 0.4) return "skala";
-        else return "les";
+        return (vlhkost < 0.4) ? SKALA : LES;
     } else {
-        return "snih";
+        return SNIH;
     }
 }
 
 GeneraceMapy::GeneraceMapy() {
-    vector<int> permutace1(256);
-    vector<int> permutace2(256);
+    vector<int> permutace1(512);
+    vector<int> permutace2(512);
     generovat_permutaci(permutace1);
     generovat_permutaci(permutace2);
 
     vector<vector<double>> vyskaMapa(MAP_WIDTH, vector<double>(MAP_HEIGHT));
     vector<vector<double>> vlhkostMapa(MAP_WIDTH, vector<double>(MAP_HEIGHT));
+    vector<vector<int>> biomMapa(MAP_WIDTH, vector<int>(MAP_HEIGHT));
 
     double scale = 20.0;
     generovat_teren(vyskaMapa, permutace1, scale);
-    generovat_teren(vlhkostMapa, permutace2, scale); // 2nd layer
+    generovat_teren(vlhkostMapa, permutace2, scale);
 
-    nacist_mapu(vyskaMapa, vlhkostMapa);
+    nacist_mapu(vyskaMapa, vlhkostMapa, biomMapa);
 }
 
 
 
-//
-// Created by Jar Jar Banton on 18. 10. 2025.
-//
