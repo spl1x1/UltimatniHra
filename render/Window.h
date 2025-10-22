@@ -8,10 +8,20 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
-#include <SDL3_image/SDL_image.h>
+#include <RmlUi/Core.h>
+
+#include "Menu/Backend/RmlUi_Renderer_SDL.h"
+#include "Menu/Backend/RmlUi_Platform_SDL.h"
 
 
-#define SDL_FLAGS SDL_INIT_VIDEO | SDL_INIT_EVENTS
+#define SDL_FLAGS (SDL_INIT_VIDEO | SDL_INIT_EVENTS)
+#define SDL_WINDOW_FLAGS SDL_WINDOW_RESIZABLE
+
+struct MenuData {
+    Rml::Context* RmlContext;
+    RenderInterface_SDL* render_interface;
+    SystemInterface_SDL* system_interface;
+};
 
 struct WorldData {
     std::vector<std::vector<int>> WorldMap;
@@ -30,7 +40,7 @@ class Window {
 public:
     WindowData data;
     WorldData worldData;
-    int* gFrameBuffer;
+    MenuData menuData;
     int WINDOW_WIDTH;
     int WINDOW_HEIGHT;
     std::string WINDOW_TITLE;
@@ -46,6 +56,7 @@ public:
     bool LoadTexture(const std::string& Path, const std::string& SaveAs);
     bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
     void TestTexture();
+    void HandleEvent(const SDL_Event* e);
 
     bool init();
     explicit Window(const std::string& title, int width = 960, int height = 540);

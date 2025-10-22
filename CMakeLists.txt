@@ -11,6 +11,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Static libs" FORCE)
 
 add_compile_definitions(RMLUI_SDL_VERSION_MAJOR=3)
 add_compile_definitions(SDL_VERSION_MAJOR=3)
+add_compile_definitions(DEBUG)
 
 #sdl
 CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
@@ -43,6 +44,10 @@ add_executable(UltimatniHra
         render/World/WorldRender.h
         server/World/generace_mapy.h
         server/World/generace_mapy.cpp
+        render/Menu/Backend/RmlUi_Renderer_SDL.cpp
+        render/Menu/Backend/RmlUi_Renderer_SDL.h
+        render/Menu/Backend/RmlUi_Platform_SDL.cpp
+        render/Menu/Backend/RmlUi_Platform_SDL.h
 )
 
 add_executable(server_test

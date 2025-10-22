@@ -4,20 +4,74 @@
 
 #include "Window.h"
 #include "World/WorldRender.h"
+#include <RmlUi/Debugger.h>
+#include <SDL3_image/SDL_image.h>
 
+
+
+void Window::HandleEvent(const SDL_Event *e) {
+    switch (e->type)
+    {
+        case SDL_EVENT_QUIT: {
+            Destroy();
+            break;
+        }
+        case SDL_EVENT_MOUSE_MOTION: {
+            menuData.RmlContext->ProcessMouseMove(static_cast<int>(e->motion.x), static_cast<int>(e->motion.y), 0);
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        {
+            int button = e->button.button;
+            int rml_button = button - 1;
+
+            menuData.RmlContext->ProcessMouseButtonDown(rml_button, 0);
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+        {
+            int button = e->button.button;
+            int rml_button = button - 1;
+
+            menuData.RmlContext->ProcessMouseButtonUp(rml_button, 0);
+            break;
+        }
+        case SDL_EVENT_KEY_DOWN: {
+            const SDL_Keycode keycode = e->key.key;
+
+            Rml::Input::KeyIdentifier rml_key = RmlSDL::ConvertKey(static_cast<int>(keycode));
+            menuData.RmlContext->ProcessKeyDown(rml_key, 0);
+
+            if (keycode == SDLK_RETURN || keycode == SDLK_KP_ENTER)
+            {
+                menuData.RmlContext->ProcessTextInput("\n");
+            }
+
+            switch (e->key.scancode)
+            {
+#ifdef DEBUG
+                case SDL_SCANCODE_F8: {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Changing visibility of Debugger");
+                    Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
+                    break;
+                }
+#endif
+                    default:
+                        break;}
+            }
+            default:
+                break;
+        }
+};
 
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], worldData.CameraRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], nullptr, nullptr);
+    menuData.RmlContext->Update();
+    menuData.RmlContext->Render();
     SDL_RenderPresent(data.Renderer);
     SDL_Event e;
-    if (SDL_PollEvent(&e))
-    {
-        if (e.type == SDL_EVENT_QUIT)
-        {
-            Destroy();
-        }
-    }
+    if (SDL_PollEvent(&e)) HandleEvent(&e);
 }
 
 bool Window::LoadSurface(const std::string& Path) {
@@ -53,6 +107,7 @@ bool Window::LoadTexture(const std::string& Path) {
 bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
     SDL_Texture* texture = IMG_LoadTexture(data.Renderer,Path.c_str());
     if (!texture) {
+
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
@@ -76,7 +131,7 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 }
 
 
-void Window::TestTexture( ) {
+void Window::TestTexture() {
     SDL_Surface* finalSurface = SDL_CreateSurface(
         960,540,SDL_PIXELFORMAT_ABGR8888
     );
@@ -105,15 +160,40 @@ bool Window::init() {
         return false;
     }
 
-    gFrameBuffer = new int[WINDOW_WIDTH * WINDOW_HEIGHT];
-    data.Window = SDL_CreateWindow(WINDOW_TITLE.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-    data.Renderer = SDL_CreateRenderer( data.Window, NULL);
+    data.Window = SDL_CreateWindow(WINDOW_TITLE.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_FLAGS);
+    data.Renderer = SDL_CreateRenderer( data.Window, nullptr);
     data.Texture = SDL_CreateTexture(data.Renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT);
+
 
     if ( !data.Window || !data.Renderer || !data.Texture) {
         SDL_Log("SDL_CreateWindow Error: %s", SDL_GetError());
         return false;
     }
+
+    menuData.render_interface = new RenderInterface_SDL(data.Renderer);
+
+    menuData.system_interface = new SystemInterface_SDL();
+    menuData.system_interface->SetWindow(data.Window);
+
+    SDL_SetWindowMinimumSize(data.Window, WINDOW_WIDTH, WINDOW_HEIGHT);
+    SDL_SetRenderLogicalPresentation(data.Renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+
+    Rml::SetRenderInterface(menuData.render_interface);
+    Rml::SetSystemInterface(menuData.system_interface);
+
+    if (!menuData.system_interface || !menuData.render_interface) {
+        SDL_Log("Failed to initialize RmlUi interfaces");
+        return false;
+    }
+
+    Rml::Initialise();
+
+    menuData.RmlContext = Rml::CreateContext("main", Rml::Vector2i(WINDOW_WIDTH, WINDOW_HEIGHT), menuData.render_interface);
+
+#ifdef DEBUG
+    Rml::Debugger::Initialise(menuData.RmlContext);
+    Rml::Debugger::SetVisible(false);
+#endif
 
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
@@ -138,7 +218,9 @@ Window::Window(const std::string& title, int width, int height) {
 
 void Window::Destroy() {
     data.Running = false;
-    delete[] gFrameBuffer;
+
+    Rml::Shutdown();
+
     SDL_DestroyTexture(data.Texture);
     SDL_DestroyRenderer(data.Renderer);
     SDL_DestroyWindow(data.Window);
