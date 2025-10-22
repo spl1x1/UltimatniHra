@@ -4,18 +4,36 @@
 
 #include "WorldRender.h"
 
+void WorldRender::ReleaseResources(Window &window) {
+    SDL_DestroySurface(window.surfaces["grass_1.bmp"]);
+    window.surfaces.erase("grass_1.bmp");
+
+    SDL_DestroySurface(window.surfaces["grass_2.bmp"]);
+    window.surfaces.erase("grass_2.bmp");
+
+    SDL_DestroySurface(window.surfaces["grass_3.bmp"]);
+    window.surfaces.erase("grass_3.bmp");
+
+    SDL_DestroySurface(window.surfaces["grass_4.bmp"]);
+    window.surfaces.erase("grass_4.bmp");
+
+    SDL_DestroySurface(window.surfaces["grass_5.bmp"]);
+    window.surfaces.erase("grass_5.bmp");
+}
+
+
 void WorldRender::loadTexturesFromDirectory(const std::string& directoryPath, Window& window) {
     for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
         std::string fileName = entry.path().string();
-        std::cout << "Loading texture: " << entry << std::endl;
-        window.LoadSurface(fileName);
+        SDL_Log("Loading surface: %s", fileName.c_str());
+        window.LoadSurface(fileName,entry.path().filename().string());
     }
 }
 
 void WorldRender::GenerateTexture(Window& window) {
     for (const auto& entry : std::filesystem::directory_iterator("assets/textures/world")) {
         std::string fileName = entry.path().string();
-        std::cout << "Directory: " << fileName << std::endl;
+        SDL_Log("Directory:: %s", fileName.c_str());
         loadTexturesFromDirectory(fileName, window);
     }
     SDL_Surface* finalSurface = SDL_CreateSurface(8192,8192,SDL_PIXELFORMAT_ABGR8888);
@@ -29,41 +47,41 @@ void WorldRender::GenerateTexture(Window& window) {
             destRect.w = 16;
             destRect.h = 16;
 
-            SDL_Surface* srcSurface = SDL_CreateSurface(16,16,SDL_PIXELFORMAT_ABGR8888);
+            SDL_Surface* srcSurface = nullptr;
             switch (tileType) {
                 case 1:
                 {
-                    srcSurface = window.surfaces[R"(assets/textures/world\grass\grass_1.bmp)"];
+                    srcSurface = window.surfaces["grass_1.bmp"];
                     break;
                 }
                 case 2:
                 {
-                    srcSurface = window.surfaces[R"(assets/textures/world\grass\grass_2.bmp)"];
+                    srcSurface = window.surfaces["grass_2.bmp"];
                     break;
                 }
                 case 3:
                 {
-                    srcSurface = window.surfaces[R"(assets/textures/world/grass/grass_3.bmp)"];
+                    srcSurface = window.surfaces["grass_3.bmp"];
                     break;
                 }
                 case 4:
                 {
-                    srcSurface = window.surfaces[R"(assets/textures/world/grass/grass_4.bmp)"];
+                    srcSurface = window.surfaces["grass_4.bmp"];
                     break;
                 }
                 case 5:
                 {
-                    srcSurface = window.surfaces[R"(assets/textures/world\grass\grass_5.bmp)"];
+                    srcSurface = window.surfaces["grass_5.bmp"];
                     break;
                 }
                 case 6:
                 {
-                    srcSurface = window.surfaces[R"(assets/textures/world\grass\grass_1.bmp)"];
+                    srcSurface = window.surfaces["grass_1.bmp"];
                     break;
                 }
                 default:
                 {
-                    srcSurface =  window.surfaces["assets/Sprite-0001.bmp"];
+                    srcSurface =  nullptr;
                     break;
                 }
             }
@@ -74,4 +92,5 @@ void WorldRender::GenerateTexture(Window& window) {
     window.surfaces["WorldMap"] = finalSurface;
     window.CreateTextureFromSurface("WorldMap","WorldMap");
     SDL_SaveBMP(finalSurface, "assets/worldmap.bmp");
+    ReleaseResources(window);
 };

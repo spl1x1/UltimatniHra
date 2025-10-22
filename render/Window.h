@@ -5,7 +5,6 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 #include <SDL3/SDL.h>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
 #include <unordered_map>
@@ -16,6 +15,7 @@
 
 struct WorldData {
     std::vector<std::vector<int>> WorldMap;
+    SDL_FRect* CameraRect = new SDL_FRect{200.0f, 100.0f, 960, 540};
 };
 
 struct WindowData {
@@ -41,7 +41,9 @@ public:
     void advanceFrame();
     void Destroy();
     bool LoadSurface(const std::string& Path);
+    bool LoadSurface(const std::string& Path, const std::string& SaveAs);
     bool LoadTexture(const std::string& Path);
+    bool LoadTexture(const std::string& Path, const std::string& SaveAs);
     bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
     void TestTexture();
 
