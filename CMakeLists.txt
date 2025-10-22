@@ -51,20 +51,6 @@ add_executable(server_test
         server/World/test.cpp
 )
 
-add_executable(RmlUiTest
-        render/Menu/RmlUiTest.cpp
-        render/World/WorldRender.cpp
-        render/World/WorldRender.h
-)
-
-
-target_link_libraries(RmlUiTest
-        SDL3::SDL3
-        SDL3_image::SDL3_image
-        RmlUi::RmlUi
-        rmlui_backend_common_headers
-        rmlui_backend_SDL_SDLrenderer
-)
 
 target_link_libraries(UltimatniHra
         SDL3::SDL3
@@ -76,11 +62,6 @@ target_link_libraries(UltimatniHra
 
 
 add_custom_command(TARGET UltimatniHra POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-        "${CMAKE_BINARY_DIR}/assets")
-
-add_custom_command(TARGET RmlUiTest POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
         "${CMAKE_BINARY_DIR}/assets")

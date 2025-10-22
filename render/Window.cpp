@@ -6,11 +6,9 @@
 #include "World/WorldRender.h"
 
 
-#include "World/WorldRender.h"
-
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], nullptr, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], worldData.CameraRect, nullptr);
     SDL_RenderPresent(data.Renderer);
     SDL_Event e;
     if (SDL_PollEvent(&e))
@@ -29,7 +27,16 @@ bool Window::LoadSurface(const std::string& Path) {
         return false;
     }
     surfaces[Path] = surface;
-    SDL_SaveBMP(surface, "assets/latest.bmp");
+    return true;
+}
+
+bool Window::LoadSurface(const std::string& Path, const std::string& SaveAs) {
+    SDL_Surface* surface = SDL_LoadBMP(Path.c_str());
+    if (!surface) {
+        SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
+        return false;
+    }
+    surfaces[SaveAs] = surface;
     return true;
 }
 
@@ -40,6 +47,16 @@ bool Window::LoadTexture(const std::string& Path) {
         return false;
     }
     textures[Path] = texture;
+    return true;
+}
+
+bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
+    SDL_Texture* texture = IMG_LoadTexture(data.Renderer,Path.c_str());
+    if (!texture) {
+        SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
+        return false;
+    }
+    textures[SaveAs] = texture;
     return true;
 }
 
@@ -79,7 +96,6 @@ void Window::TestTexture( ) {
     }
     surfaces["FinalSurface"] = finalSurface;
     CreateTextureFromSurface("FinalSurface", "TestTexture");
-    CreateTextureFromSurface(R"(assets/textures/world\grass\grass_1.bmp)", "GrassTexture" );
 }
 
 
