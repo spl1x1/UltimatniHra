@@ -10,8 +10,8 @@
 #include <unordered_map>
 #include <RmlUi/Core.h>
 
-#include "Menu/Backend/RmlUi_Renderer_SDL.h"
-#include "Menu/Backend/RmlUi_Platform_SDL.h"
+#include "Menu/RmlUi_Renderer_SDL.h"
+#include "Menu/RmlUi_Platform_SDL.h"
 
 
 #define SDL_FLAGS (SDL_INIT_VIDEO | SDL_INIT_EVENTS)

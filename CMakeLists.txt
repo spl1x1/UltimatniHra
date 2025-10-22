@@ -44,10 +44,10 @@ add_executable(UltimatniHra
         render/World/WorldRender.h
         server/World/generace_mapy.h
         server/World/generace_mapy.cpp
-        render/Menu/Backend/RmlUi_Renderer_SDL.cpp
-        render/Menu/Backend/RmlUi_Renderer_SDL.h
-        render/Menu/Backend/RmlUi_Platform_SDL.cpp
-        render/Menu/Backend/RmlUi_Platform_SDL.h
+        render/Menu/RmlUi_Renderer_SDL.cpp
+        render/Menu/RmlUi_Renderer_SDL.h
+        render/Menu/RmlUi_Platform_SDL.cpp
+        render/Menu/RmlUi_Platform_SDL.h
 )
 
 add_executable(server_test

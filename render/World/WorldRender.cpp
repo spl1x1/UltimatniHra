@@ -3,7 +3,6 @@
 //
 
 #include "WorldRender.h"
-#include "../Menu/Backend/RmlUi_Renderer_SDL.h"
 
 void WorldRender::ReleaseResources(Window &window) {
     SDL_DestroySurface(window.surfaces["grass_1.bmp"]);
