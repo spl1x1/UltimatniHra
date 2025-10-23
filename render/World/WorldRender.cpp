@@ -4,6 +4,15 @@
 
 #include "WorldRender.h"
 
+void WorldRender::loadTextures(Window &window) {
+    window.CreateTextureFromSurface("Water1.bmp", "Water1");
+    window.CreateTextureFromSurface("Water2.bmp", "Water2");
+    window.CreateTextureFromSurface("Water3.bmp", "Water3");
+    window.CreateTextureFromSurface("Water4.bmp", "Water4");
+    window.CreateTextureFromSurface("Water5.bmp", "Water5");
+
+}
+
 void WorldRender::ReleaseResources(Window &window) {
     SDL_DestroySurface(window.surfaces["grass_1.bmp"]);
     window.surfaces.erase("grass_1.bmp");
@@ -25,7 +34,7 @@ void WorldRender::ReleaseResources(Window &window) {
 }
 
 
-void WorldRender::loadTexturesFromDirectory(const std::string& directoryPath, Window& window) {
+void WorldRender::loadSurfacesFromDirectory(const std::string& directoryPath, Window& window) {
     for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
         std::string fileName = entry.path().string();
         SDL_Log("Loading surface: %s", fileName.c_str());
@@ -37,18 +46,18 @@ void WorldRender::GenerateTexture(Window& window) {
     for (const auto& entry : std::filesystem::directory_iterator("assets/textures/world")) {
         std::string fileName = entry.path().string();
         SDL_Log("Directory:: %s", fileName.c_str());
-        loadTexturesFromDirectory(fileName, window);
+        loadSurfacesFromDirectory(fileName, window);
     }
-    SDL_Surface* finalSurface = SDL_CreateSurface(8192,8192,SDL_PIXELFORMAT_ABGR8888);
+    SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 
     for (int x = 0; x < window.worldData.WorldMap.size(); x++) {
         for (int y = 0; y < window.worldData.WorldMap.at(x).size(); y++) {
             int tileType = window.worldData.WorldMap.at(x).at(y);
             SDL_Rect destRect;
-            destRect.x = x * 16;
-            destRect.y = y * 16;
-            destRect.w = 16;
-            destRect.h = 16;
+            destRect.x = x * TEXTURERES;
+            destRect.y = y * TEXTURERES;
+            destRect.w = TEXTURERES;
+            destRect.h = TEXTURERES;
 
             SDL_Surface* srcSurface = nullptr;
             switch (tileType) {
@@ -82,11 +91,7 @@ void WorldRender::GenerateTexture(Window& window) {
                     srcSurface = window.surfaces["grass_1.bmp"];
                     break;
                 }
-                default:
-                {
-                    srcSurface =  nullptr;
-                    break;
-                }
+                default: break;
             }
             SDL_BlitSurface(srcSurface, nullptr, finalSurface, &destRect);
 
@@ -94,6 +99,7 @@ void WorldRender::GenerateTexture(Window& window) {
     }
     window.surfaces["WorldMap"] = finalSurface;
     window.CreateTextureFromSurface("WorldMap","WorldMap");
+    loadTextures(window);
     SDL_SaveBMP(finalSurface, "assets/worldmap.bmp");
     ReleaseResources(window);
 };

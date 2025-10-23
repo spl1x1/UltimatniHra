@@ -3,6 +3,7 @@
 #include "server/Event.h"
 #include "server/World/generace_mapy.h"
 
+
 std::thread serverThread;
 Server s;
 
@@ -23,9 +24,9 @@ int main(int argc, char *argv[]) {;
     });
 
     GeneraceMapy generaceMapy = GeneraceMapy();
-    Window *c = new Window("Basic window", 960, 540);
+    auto *c = new Window();
     c->worldData.WorldMap = generaceMapy.biomMapa;
-    c->init();
+    c->init("Game window");
 
     s.Stop();
     return 0;

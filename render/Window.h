@@ -14,6 +14,18 @@
 #include "Menu/RmlUi_Platform_SDL.h"
 
 
+#ifndef GAMERESW
+#define GAMERESW 960
+#endif
+
+#ifndef GAMERESH
+#define GAMERESH 360
+#endif
+
+#ifndef FRAMERATE
+#define FRAMERATE 60
+#endif
+
 #define SDL_FLAGS (SDL_INIT_VIDEO | SDL_INIT_EVENTS)
 #define SDL_WINDOW_FLAGS SDL_WINDOW_RESIZABLE
 
@@ -25,15 +37,15 @@ struct MenuData {
 
 struct WorldData {
     std::vector<std::vector<int>> WorldMap;
-    SDL_FRect* CameraRect = new SDL_FRect{200.0f, 100.0f, 960, 540};
+    SDL_FRect* CameraRect = new SDL_FRect{200.0f, 100.0f,GAMERESW, GAMERESH};
 };
 
 struct WindowData {
     SDL_Window* Window;
     SDL_Renderer* Renderer;
-    SDL_Texture* Texture;
     SDL_Event event;
     bool Running;
+    double refreshRate;
 };
 
 class Window {
@@ -55,11 +67,9 @@ public:
     bool LoadTexture(const std::string& Path);
     bool LoadTexture(const std::string& Path, const std::string& SaveAs);
     bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
-    void TestTexture();
     void HandleEvent(const SDL_Event* e);
 
-    bool init();
-    explicit Window(const std::string& title, int width = 960, int height = 540);
+    void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
     ~Window();
 };
 

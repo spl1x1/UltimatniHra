@@ -4,12 +4,18 @@
 
 #ifndef PREPAREWORLD_H
 #define PREPAREWORLD_H
+
+#ifndef TEXTURERES
+#define TEXTURERES 32
+#endif
+
 #include "../Window.h"
 #include <filesystem>
 
 
 struct WorldRender {
-    static void loadTexturesFromDirectory(const std::string& directoryPath, Window& window) ;
+    static void loadTextures(Window &window);
+    static void loadSurfacesFromDirectory(const std::string& directoryPath, Window& window) ;
     static void GenerateTexture(Window& window);
 
     private:

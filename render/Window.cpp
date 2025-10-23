@@ -65,8 +65,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 };
 
 void Window::advanceFrame() {
-    SDL_RenderClear(data.Renderer);
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], nullptr, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], worldData.CameraRect, nullptr);
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
     SDL_RenderPresent(data.Renderer);
@@ -130,44 +129,23 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
     return true;
 }
 
+void Window::init(const std::string& title, int width, int height) {
+    WINDOW_TITLE = title;
+    WINDOW_WIDTH = width;
+    WINDOW_HEIGHT = height;
 
-void Window::TestTexture() {
-    SDL_Surface* finalSurface = SDL_CreateSurface(
-        960,540,SDL_PIXELFORMAT_ABGR8888
-    );
-
-    LoadSurface("assets/textures/Sprite-0001.bmp");
-
-    for (int i = 0; i < 34; i++) {
-        for (int j = 0; j < 60; j++) {
-            SDL_Rect destRect;
-            destRect.x = j * 16;
-            destRect.y = i * 16;
-            destRect.w = 16;
-            destRect.h = 16;
-
-            SDL_BlitSurface(surfaces["assets/textures/Sprite-0001.bmp"], nullptr, finalSurface, &destRect);
-        }
-    }
-    surfaces["FinalSurface"] = finalSurface;
-    CreateTextureFromSurface("FinalSurface", "TestTexture");
-}
-
-
-bool Window::init() {
     if (!SDL_Init(SDL_FLAGS))
     {
-        return false;
+        return;
     }
 
     data.Window = SDL_CreateWindow(WINDOW_TITLE.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_FLAGS);
     data.Renderer = SDL_CreateRenderer( data.Window, nullptr);
-    data.Texture = SDL_CreateTexture(data.Renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 
-    if ( !data.Window || !data.Renderer || !data.Texture) {
+    if ( !data.Window || !data.Renderer) {
         SDL_Log("SDL_CreateWindow Error: %s", SDL_GetError());
-        return false;
+        return;
     }
 
     menuData.render_interface = new RenderInterface_SDL(data.Renderer);
@@ -176,14 +154,14 @@ bool Window::init() {
     menuData.system_interface->SetWindow(data.Window);
 
     SDL_SetWindowMinimumSize(data.Window, WINDOW_WIDTH, WINDOW_HEIGHT);
-    SDL_SetRenderLogicalPresentation(data.Renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+    SDL_SetRenderLogicalPresentation(data.Renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_STRETCH);
 
     Rml::SetRenderInterface(menuData.render_interface);
     Rml::SetSystemInterface(menuData.system_interface);
 
     if (!menuData.system_interface || !menuData.render_interface) {
         SDL_Log("Failed to initialize RmlUi interfaces");
-        return false;
+        return;
     }
 
     Rml::Initialise();
@@ -194,26 +172,25 @@ bool Window::init() {
     Rml::Debugger::Initialise(menuData.RmlContext);
     Rml::Debugger::SetVisible(false);
 #endif
-
+#ifdef FRAMERATE
+    data.refreshRate = 1000.0 / FRAMERATE;
+#else
+    data.refreshRate = 1000.0/SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(data.Window))->refresh_rate;
+#endif
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
     SDL_Log("Window size: %ix%i", WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
     WorldRender::GenerateTexture(*this);
-    TestTexture();
 
         data.Running = true;
-        while (data.Running)
-        {
+        int water = 1;
+        while (data.Running) {
+            SDL_RenderClear(data.Renderer);
+            SDL_RenderTexture(data.Renderer,textures["Water" + std::to_string(water)], nullptr, nullptr);
             advanceFrame();
+            SDL_Delay(static_cast<Uint32>(data.refreshRate));
         }
-    return true;
-}
-
-Window::Window(const std::string& title, int width, int height) {
-    WINDOW_TITLE = title;
-    WINDOW_WIDTH = width;
-    WINDOW_HEIGHT = height;
 }
 
 void Window::Destroy() {
@@ -221,7 +198,6 @@ void Window::Destroy() {
 
     Rml::Shutdown();
 
-    SDL_DestroyTexture(data.Texture);
     SDL_DestroyRenderer(data.Renderer);
     SDL_DestroyWindow(data.Window);
     SDL_Quit();
