@@ -66,12 +66,17 @@ void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& pe
     }
 }
 
-void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& biomMapa) {
+void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& outbiomMapa) {
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
+
+            if (x < BORDER_SIZE || y < BORDER_SIZE || x >= MAP_WIDTH - BORDER_SIZE || y >= MAP_HEIGHT - BORDER_SIZE) {
+                outbiomMapa[x][y] = VODA;
+                continue;
+            }
             double vyska = (vyskaMapa[x][y] + 1.0) / 2.0;
             double vlhkost = (vlhkostMapa[x][y] + 1.0) / 2.0;
-            biomMapa[x][y] = ziskat_biom(vyska, vlhkost);
+            outbiomMapa[x][y] = ziskat_biom(vyska, vlhkost);
         }
     }
 }
