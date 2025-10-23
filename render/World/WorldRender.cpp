@@ -63,12 +63,12 @@ void WorldRender::GenerateTexture(Window& window) {
             switch (tileType) {
                 case 1:
                 {
-                    srcSurface = window.surfaces["grass_1.bmp"];
+                    srcSurface = window.surfaces["sand.bmp"];
                     break;
                 }
                 case 2:
                 {
-                    srcSurface = window.surfaces["grass_2.bmp"];
+                    srcSurface = window.surfaces["sand.bmp"];
                     break;
                 }
                 case 3:
