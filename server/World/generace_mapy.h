@@ -24,6 +24,7 @@ public:
     static constexpr int MAP_WIDTH = 512;
     static constexpr int MAP_HEIGHT = 512;
     vector<vector<int>> biomMapa;
+    static constexpr int BORDER_SIZE = 7;
     const vector<vector<int>>& getBiomMapa() const;
 
 private:
