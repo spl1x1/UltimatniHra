@@ -1,4 +1,8 @@
-﻿#include "render/Window.h"
+﻿#define MAP_WIDTH 512
+#define MAP_HEIGHT 512
+
+
+#include "render/Window.h"
 #include "server/Server.h"
 #include "server/Event.h"
 #include "server/World/generace_mapy.h"

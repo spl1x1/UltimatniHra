@@ -49,6 +49,7 @@ struct WindowData {
 };
 
 class Window {
+
 public:
     WindowData data;
     WorldData worldData;
@@ -60,6 +61,7 @@ public:
     std::unordered_map<std::string, SDL_Surface*> surfaces;
 
 
+    void parseToRenderer(SDL_Renderer* renderer, const std::string& sprite = "", SDL_FRect* destRect = nullptr, SDL_FRect *srcRect = nullptr);
     void advanceFrame();
     void Destroy();
     bool LoadSurface(const std::string& Path);

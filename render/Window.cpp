@@ -9,6 +9,19 @@
 #include <RmlUi/Lua.h>
 
 
+void Window::parseToRenderer(SDL_Renderer *renderer, const std::string& sprite, SDL_FRect *destRect, SDL_FRect *srcRect) {
+    if (!renderer || sprite.empty()) {
+#ifdef DEBUG
+        SDL_Log("Called parseToRenderer(), without valid arguments");
+#endif
+        return;
+    }
+        if (surfaces.contains(sprite)) {
+            CreateTextureFromSurface(sprite, sprite);
+            SDL_RenderTexture(data.Renderer, textures["sprite"], srcRect, destRect);
+        }
+}
+
 
 void Window::HandleEvent(const SDL_Event *e) {
     switch (e->type)
@@ -64,6 +77,8 @@ void Window::HandleEvent(const SDL_Event *e) {
                 break;
         }
 };
+
+
 
 void Window::advanceFrame() {
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], worldData.CameraRect, nullptr);
@@ -189,7 +204,6 @@ void Window::init(const std::string& title, int width, int height) {
         int water = 1;
         while (data.Running) {
             SDL_RenderClear(data.Renderer);
-            SDL_RenderTexture(data.Renderer,textures["Water" + std::to_string(water)], nullptr, nullptr);
             advanceFrame();
             SDL_Delay(static_cast<Uint32>(data.refreshRate));
         }

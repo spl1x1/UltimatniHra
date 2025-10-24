@@ -49,12 +49,16 @@ add_executable(UltimatniHra
         render/Menu/RmlUi_Renderer_SDL.h
         render/Menu/RmlUi_Platform_SDL.cpp
         render/Menu/RmlUi_Platform_SDL.h
+        render/ScaleFactorCalculator.h
+        render/ScaleFactorCalculator.cpp
 )
 
 add_executable(server_test
         server/World/generace_mapy.h
         server/World/generace_mapy.cpp
         server/World/test.cpp
+        server/World/WorldDataStruct.h
+        server/World/WorldDataStruct.cpp
 )
 
 
@@ -64,6 +68,12 @@ target_link_libraries(UltimatniHra
         nlohmann_json::nlohmann_json
         RmlUi::RmlUi
         RmlUi::Lua
+)
+
+add_executable(ScalingTest
+        render/ScaleFactorCalculator.h
+        render/ScaleFactorCalculator.cpp
+        render/ScalingFactorCalculator_test.cpp
 )
 
 

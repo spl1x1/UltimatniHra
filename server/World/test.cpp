@@ -3,6 +3,7 @@
 //
 
 #include "generace_mapy.h"
+#include "WorldDataStruct.h"
 
 int main() {
     GeneraceMapy mapa;
@@ -13,5 +14,14 @@ int main() {
     //     }
     //     std::cout << "\n";
     // }
+    WorldDataStruct worldData = WorldDataStruct(42);
+    WorldDataStruct::getBlockVariationMap(worldData);
+
+    for (int y = 0; y < MAP_HEIGHT; y++) {
+        for (int x = 0; x < MAP_WIDTH; x++) {
+            std::cout << worldData.blockVariantionMap[x][y] << " ";
+        }
+        std::cout << "\n";
+    }
     return 0;
 }
