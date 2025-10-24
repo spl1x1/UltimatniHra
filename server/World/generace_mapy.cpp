@@ -69,8 +69,8 @@ void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& pe
 void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& outbiomMapa) {
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
-
-            if (x < BORDER_SIZE || y < BORDER_SIZE || x >= MAP_WIDTH - BORDER_SIZE || y >= MAP_HEIGHT - BORDER_SIZE) {
+            int random_border = std::rand()%14+BORDER_SIZE; //14 je o kolik navic
+            if (x < random_border || y < random_border || x >= MAP_WIDTH - random_border || y >= MAP_HEIGHT - random_border) {
                 outbiomMapa[x][y] = VODA;
                 continue;
             }
