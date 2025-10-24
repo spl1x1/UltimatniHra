@@ -1,6 +1,14 @@
 ﻿//
 // Created by Jar Jar Banton on 18. 10. 2025.
 //
+
+#ifndef MAP_WIDTH
+#define MAP_WIDTH 512
+#endif
+#ifndef MAP_HEIGHT
+#define MAP_HEIGHT 512
+#endif
+
 #include "generace_mapy.h"
 
 double GeneraceMapy::fade(double t) {

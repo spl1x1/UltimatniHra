@@ -198,6 +198,11 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
     SDL_Log("Window size: %ix%i", WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
+
+    worldDataStruct = WorldDataStruct(42);
+    WorldDataStruct::getBlockVariationMap(worldDataStruct);
+    WorldDataStruct::getBlockVariationMap(worldDataStruct);
+
     WorldRender::GenerateTexture(*this);
 
         data.Running = true;

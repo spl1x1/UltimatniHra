@@ -22,8 +22,6 @@ class GeneraceMapy
 public:
     GeneraceMapy(); // constructor
 
-    static constexpr int MAP_WIDTH = 512;
-    static constexpr int MAP_HEIGHT = 512;
     vector<vector<int>> biomMapa;
     static constexpr int BORDER_SIZE = 7; //minimum border size
     const vector<vector<int>>& getBiomMapa() const;

@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <RmlUi/Core.h>
 
+#include "../server/World/WorldDataStruct.h"
 #include "Menu/RmlUi_Renderer_SDL.h"
 #include "Menu/RmlUi_Platform_SDL.h"
 
@@ -51,6 +52,7 @@ struct WindowData {
 class Window {
 
 public:
+    WorldDataStruct worldDataStruct;
     WindowData data;
     WorldData worldData;
     MenuData menuData;
@@ -72,6 +74,7 @@ public:
     void HandleEvent(const SDL_Event* e);
 
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
+    Window() : worldDataStruct(42) {};
     ~Window();
 };
 

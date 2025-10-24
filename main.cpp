@@ -1,8 +1,4 @@
-﻿#define MAP_WIDTH 512
-#define MAP_HEIGHT 512
-
-
-#include "render/Window.h"
+﻿#include "render/Window.h"
 #include "server/Server.h"
 #include "server/Event.h"
 #include "server/World/generace_mapy.h"
@@ -28,7 +24,7 @@ int main(int argc, char *argv[]) {;
     });
 
     GeneraceMapy generaceMapy = GeneraceMapy();
-    auto *c = new Window();
+    Window *c = new Window();
     c->worldData.WorldMap = generaceMapy.biomMapa;
     c->init("Game window");
 

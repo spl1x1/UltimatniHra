@@ -73,22 +73,26 @@ void WorldRender::GenerateTexture(Window& window) {
                 }
                 case 3:
                 {
-                    srcSurface = window.surfaces["grass.bmp"];
+                    std::string variationTexture = "grass" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
+                    srcSurface = window.surfaces[variationTexture];
                     break;
                 }
                 case 4:
                 {
-                    srcSurface = window.surfaces["grass.bmp"];
+                    std::string variationTexture = "grass" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
+                    srcSurface = window.surfaces[variationTexture];
                     break;
                 }
                 case 5:
                 {
-                    srcSurface = window.surfaces["grass.bmp"];
+                    std::string variationTexture = "grass" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
+                    srcSurface = window.surfaces[variationTexture];
                     break;
                 }
                 case 6:
                 {
-                    srcSurface = window.surfaces["grass.bmp"];
+                    std::string variationTexture = "snow" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
+                    srcSurface = window.surfaces[variationTexture];
                     break;
                 }
                 default: break;

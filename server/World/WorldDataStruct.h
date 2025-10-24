@@ -5,16 +5,6 @@
 #ifndef WORLDDATASTRUCT_H
 #define WORLDDATASTRUCT_H
 
-#ifndef MAP_WIDTH
-#define MAP_WIDTH 512
-#endif
-#ifndef MAP_HEIGHT
-#define MAP_HEIGHT 512
-#endif
-#ifndef VARIATION_LEVELS
-#define VARIATION_LEVELS 5
-#endif
-
 
 struct WorldDataStruct {
     int seed;

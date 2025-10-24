@@ -51,6 +51,8 @@ add_executable(UltimatniHra
         render/Menu/RmlUi_Platform_SDL.h
         render/ScaleFactorCalculator.h
         render/ScaleFactorCalculator.cpp
+        server/World/WorldDataStruct.h
+        server/World/WorldDataStruct.cpp
 )
 
 add_executable(server_test
