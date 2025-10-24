@@ -22,6 +22,10 @@
 > >[SDL_image](https://github.com/libsdl-org/SDL_image),
 > >[FreeType](https://download.savannah.gnu.org/releases/freetype/)
 > 
+> Requiremnts:
+> > [CMake](https://cmake.org/download/), [Lua](https://www.lua.org/download.html)
+> 
+> 
 > Další linky
 > > [Aseprite](https://www.aseprite.org/),
 > > [SDL tutorial web](https://glusoft.com/sdl3-tutorials/),
