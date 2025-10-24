@@ -73,22 +73,22 @@ void WorldRender::GenerateTexture(Window& window) {
                 }
                 case 3:
                 {
-                    srcSurface = window.surfaces["grass_3.bmp"];
+                    srcSurface = window.surfaces["grass.bmp"];
                     break;
                 }
                 case 4:
                 {
-                    srcSurface = window.surfaces["grass_4.bmp"];
+                    srcSurface = window.surfaces["grass.bmp"];
                     break;
                 }
                 case 5:
                 {
-                    srcSurface = window.surfaces["grass_5.bmp"];
+                    srcSurface = window.surfaces["grass.bmp"];
                     break;
                 }
                 case 6:
                 {
-                    srcSurface = window.surfaces["grass_1.bmp"];
+                    srcSurface = window.surfaces["grass.bmp"];
                     break;
                 }
                 default: break;
