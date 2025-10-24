@@ -30,6 +30,7 @@
 > > [Aseprite](https://www.aseprite.org/),
 > > [SDL tutorial web](https://glusoft.com/sdl3-tutorials/),
 > > [SDL tutorial playlist](https://youtube.com/playlist?list=PLvv0ScY6vfd-RZSmGbLkZvkgec6lJ0BfX&si=mb2sst8vbANOyhoHQ),
-> > [SDL resolution handeling](https://www.studyplan.dev/sdl2/sdl2-display-modes)
-> > [Basic game AI](https://gamedev.net/tutorials/programming/artificial-intelligence/the-total-beginners-guide-to-game-ai-r4942/)
-> > [RmlUi wiki](https://mikke89.github.io/RmlUiDoc/)
+> > [SDL resolution handeling](https://www.studyplan.dev/sdl2/sdl2-display-modes),
+> > [Basic game AI](https://gamedev.net/tutorials/programming/artificial-intelligence/the-total-beginners-guide-to-game-ai-r4942/),
+> > [RmlUi wiki](https://mikke89.github.io/RmlUiDoc/),
+> > [Assets](https://itch.io/game-assets/tag-32x32)
