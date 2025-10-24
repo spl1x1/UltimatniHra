@@ -1,8 +1,8 @@
-﻿# 2.5D Hra - Semestrální projekt
+﻿# 2D Hra - Semestrální projekt
 
  
 > TODO:
-> > <ol> <li> Renderer přidat FOD effect (2.5D, Layer separation, Parallax) </li>
+> > <ol> <li> Renderer </li>
 > > <li> UI systém - inventář, menu, HP atd. </li>
 > > <li> Haul execution </li>
 > > <li> Zvukový engine </li>
