@@ -6,6 +6,7 @@
 #include "World/WorldRender.h"
 #include <RmlUi/Debugger.h>
 #include <SDL3_image/SDL_image.h>
+#include <RmlUi/Lua.h>
 
 
 
@@ -170,6 +171,7 @@ void Window::init(const std::string& title, int width, int height) {
 
 #ifdef DEBUG
     Rml::Debugger::Initialise(menuData.RmlContext);
+    Rml::Lua::Initialise();
     Rml::Debugger::SetVisible(false);
 #endif
 #ifdef FRAMERATE
