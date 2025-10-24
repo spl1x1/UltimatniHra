@@ -7,6 +7,7 @@ include(cmake/CPM.cmake)
 
 set(RMLUI_STATIC_LIB ON CACHE BOOL "RmlUi - static library" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Static libs" FORCE)
+set(RMLUI_LUA_BINDINGS ON "Build Lua bindings." FORCE)
 
 
 add_compile_definitions(RMLUI_SDL_VERSION_MAJOR=3)
@@ -62,6 +63,7 @@ target_link_libraries(UltimatniHra
         SDL3_image::SDL3_image
         nlohmann_json::nlohmann_json
         RmlUi::RmlUi
+        RmlUi::Lua
 )
 
 
