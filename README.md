@@ -4,7 +4,7 @@
 > TODO:
 > > <ol> <li> Renderer </li>
 > > <li> UI systém - inventář, menu, HP atd. </li>
-> > <li> Haul execution </li>
+> > <li> Hault execution </li>
 > > <li> Zvukový engine </li>
 > > <li> Interface pro komunikaci serveru a klientu </li>
 > > <li> Procedurální generace (perlin  noise, nastavit parametry)</li>
