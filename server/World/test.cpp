@@ -3,7 +3,7 @@
 //
 
 #include "generace_mapy.h"
-#include "WorldDataStruct.h"
+#include "WorldStructs.h"
 
 #ifndef MAP_WIDTH
 #define MAP_WIDTH 512
@@ -24,8 +24,8 @@ int main() {
     //     }
     //     std::cout << "\n";
     // }
-    WorldDataStruct worldData = WorldDataStruct(42);
-    WorldDataStruct::getBlockVariationMap(worldData);
+    WorldData worldData = WorldData(42);
+    WorldData::getBlockVariationMap(worldData);
 
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {

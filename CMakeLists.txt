@@ -36,8 +36,6 @@ add_subdirectory(
 
 add_executable(UltimatniHra
         main.cpp
-        server/Server.cpp
-        server/Server.h
         render/Window.cpp
         render/Window.h
         server/Event.h
@@ -51,16 +49,19 @@ add_executable(UltimatniHra
         render/Menu/RmlUi_Platform_SDL.h
         render/ScaleFactorCalculator.h
         render/ScaleFactorCalculator.cpp
-        server/World/WorldDataStruct.h
-        server/World/WorldDataStruct.cpp
+        server/World/WorldStructs.h
+        server/World/WorldStructs.cpp
+        server/Entities/EntityStructs.cpp
+        server/Entities/EntityStructs.h
+        server/ServerStrucs.h
 )
 
 add_executable(server_test
         server/World/generace_mapy.h
         server/World/generace_mapy.cpp
         server/World/test.cpp
-        server/World/WorldDataStruct.h
-        server/World/WorldDataStruct.cpp
+        server/World/WorldStructs.h
+        server/World/WorldStructs.cpp
 )
 
 

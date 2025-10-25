@@ -14,7 +14,6 @@
 
 
 struct WorldRender {
-    static void loadTextures(Window &window);
     static void loadSurfacesFromDirectory(const std::string& directoryPath, Window& window) ;
     static void GenerateTexture(Window& window);
 

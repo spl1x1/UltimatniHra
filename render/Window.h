@@ -10,7 +10,9 @@
 #include <unordered_map>
 #include <RmlUi/Core.h>
 
-#include "../server/World/WorldDataStruct.h"
+#include "../server/ServerStrucs.h"
+#include "../server/Entities/EntityStructs.h"
+#include "../server/World/WorldStructs.h"
 #include "Menu/RmlUi_Renderer_SDL.h"
 #include "Menu/RmlUi_Platform_SDL.h"
 
@@ -23,9 +25,6 @@
 #define GAMERESH 360
 #endif
 
-#ifndef FRAMERATE
-#define FRAMERATE 60
-#endif
 
 #define SDL_FLAGS (SDL_INIT_VIDEO | SDL_INIT_EVENTS)
 #define SDL_WINDOW_FLAGS SDL_WINDOW_RESIZABLE
@@ -34,11 +33,6 @@ struct MenuData {
     Rml::Context* RmlContext;
     RenderInterface_SDL* render_interface;
     SystemInterface_SDL* system_interface;
-};
-
-struct WorldData {
-    std::vector<std::vector<int>> WorldMap;
-    SDL_FRect* CameraRect = new SDL_FRect{200.0f, 100.0f,GAMERESW, GAMERESH};
 };
 
 struct WindowData {
@@ -52,7 +46,12 @@ struct WindowData {
 class Window {
 
 public:
-    WorldDataStruct worldDataStruct;
+    std::vector<std::vector<int>> WorldMap;
+
+    Server server;
+    Player player = {480,180, 256,256,200.0f};
+    SDL_FRect* CameraRect = new SDL_FRect{player.x-480, player.y,GAMERESW, GAMERESH};
+    WorldData worldDataStruct;
     WindowData data;
     WorldData worldData;
     MenuData menuData;
@@ -62,7 +61,7 @@ public:
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
 
-
+    void renderPlayer(SDL_Renderer* renderer, const Player& player);
     void parseToRenderer(SDL_Renderer* renderer, const std::string& sprite = "", SDL_FRect* destRect = nullptr, SDL_FRect *srcRect = nullptr);
     void advanceFrame();
     void Destroy();

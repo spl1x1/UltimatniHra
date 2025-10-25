@@ -9,6 +9,16 @@
 #include <RmlUi/Lua.h>
 
 
+void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
+    SDL_FRect rect;
+    rect.x = player.x;
+    rect.y = player.y;
+    rect.w = 32;
+    rect.h = 32;
+
+    SDL_RenderTexture(renderer, textures["Player"], nullptr, &rect);
+}
+
 void Window::parseToRenderer(SDL_Renderer *renderer, const std::string& sprite, SDL_FRect *destRect, SDL_FRect *srcRect) {
     if (!renderer || sprite.empty()) {
 #ifdef DEBUG
@@ -24,6 +34,9 @@ void Window::parseToRenderer(SDL_Renderer *renderer, const std::string& sprite, 
 
 
 void Window::HandleEvent(const SDL_Event *e) {
+    float dx = 0.0f;
+    float dy = 0.0f;
+
     switch (e->type)
     {
         case SDL_EVENT_QUIT: {
@@ -70,18 +83,34 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
 #endif
-                    default:
-                        break;}
-            }
-            default:
-                break;
+                case SDL_SCANCODE_W: {dy -= 1.0f; break;}
+                case SDL_SCANCODE_S: {dy += 1.0f; break;}
+                case SDL_SCANCODE_A: {dx -= 1.0f; break;}
+                case SDL_SCANCODE_D: {dx += 1.0f; break;}
+
+                default:
+                    break;}
         }
+        default:
+            break;
+    }
+    if (dx == 0 && dy == 0) return;
+    if (dx != 0 && dy != 0) {
+        dx *= 0.7071f;
+        dy *= 0.7071f;
+    }
+
+    player.x += dx * player.speed * server.deltaTime;
+    player.y += dy * player.speed * server.deltaTime;
 };
 
 
 
 void Window::advanceFrame() {
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], worldData.CameraRect, nullptr);
+    CameraRect->x = player.x - 464;
+    CameraRect->y = player.y - 74;
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], CameraRect, nullptr);
+    renderPlayer(data.Renderer,player);
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
     SDL_RenderPresent(data.Renderer);
@@ -171,6 +200,7 @@ void Window::init(const std::string& title, int width, int height) {
 
     SDL_SetWindowMinimumSize(data.Window, WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_SetRenderLogicalPresentation(data.Renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_STRETCH);
+    SDL_SetRenderVSync(data.Renderer, true);
 
     Rml::SetRenderInterface(menuData.render_interface);
     Rml::SetSystemInterface(menuData.system_interface);
@@ -199,19 +229,26 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_Log("Window size: %ix%i", WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
 
-    worldDataStruct = WorldDataStruct(42);
-    WorldDataStruct::getBlockVariationMap(worldDataStruct);
-    WorldDataStruct::getBlockVariationMap(worldDataStruct);
+    worldDataStruct = WorldData(42);
+    WorldData::getBlockVariationMap(worldDataStruct);
+    WorldData::getBlockVariationMap(worldDataStruct);
+
+    LoadSurface("assets/textures/Sprite-0001.bmp", "Player");
+    CreateTextureFromSurface("Player", "Player");
 
     WorldRender::GenerateTexture(*this);
+    Uint64 last = SDL_GetPerformanceCounter();
 
-        data.Running = true;
-        int water = 1;
-        while (data.Running) {
-            SDL_RenderClear(data.Renderer);
-            advanceFrame();
-            SDL_Delay(static_cast<Uint32>(data.refreshRate));
-        }
+    data.Running = true;
+    while (data.Running) {
+        Uint64 current = SDL_GetPerformanceCounter();
+        server.deltaTime = (current - last) / static_cast<float>(SDL_GetPerformanceFrequency());
+        last = current;
+
+        SDL_RenderClear(data.Renderer);
+        advanceFrame();
+        SDL_Delay(static_cast<Uint32>(data.refreshRate));
+    }
 }
 
 void Window::Destroy() {

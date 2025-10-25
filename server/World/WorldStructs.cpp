@@ -12,10 +12,10 @@
 #define VARIATION_LEVELS 5
 #endif
 
-#include "WorldDataStruct.h"
+#include "WorldStructs.h"
 #include <cstdlib>
 
-void WorldDataStruct::dealocateMap(int** map) {
+void WorldData::dealocateMap(int** map) {
     for (int i = 0; i < MAP_WIDTH; ++i) {
         delete[] biomeMap[i];
         delete[] blockVariantionMap[i];
@@ -26,7 +26,7 @@ void WorldDataStruct::dealocateMap(int** map) {
     delete[] structureMap;
 }
 
-WorldDataStruct::WorldDataStruct(int seed){
+WorldData::WorldData(int seed){
     this->seed = seed;
     // Allocate memory for 2D arrays
     biomeMap = new int*[MAP_WIDTH];
@@ -39,7 +39,7 @@ WorldDataStruct::WorldDataStruct(int seed){
     }
 }
 
-void WorldDataStruct::getBlockVariationMap(WorldDataStruct worldData) {
+void WorldData::getBlockVariationMap(WorldData worldData) {
     std::srand(static_cast<unsigned int>(worldData.seed));
     for (int i = 0; i < MAP_WIDTH; ++i) {
         for (int j = 0; j < MAP_HEIGHT; ++j) {

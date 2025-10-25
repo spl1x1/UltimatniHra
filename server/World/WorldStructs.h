@@ -6,7 +6,7 @@
 #define WORLDDATASTRUCT_H
 
 
-struct WorldDataStruct {
+struct WorldData {
     int seed;
     // Add other world-related data members as needed
     int** biomeMap; // 2D array for biome map
@@ -15,9 +15,9 @@ struct WorldDataStruct {
 
     void dealocateMap(int** map);
 
-    WorldDataStruct(int seed);
+    WorldData(int seed = 0);
 
-    static void getBlockVariationMap(WorldDataStruct worldData);
+    static void getBlockVariationMap(WorldData worldData);
 };
 
 #endif //WORLDDATASTRUCT_H

@@ -4,15 +4,6 @@
 
 #include "WorldRender.h"
 
-void WorldRender::loadTextures(Window &window) {
-    window.CreateTextureFromSurface("Water1.bmp", "Water1");
-    window.CreateTextureFromSurface("Water2.bmp", "Water2");
-    window.CreateTextureFromSurface("Water3.bmp", "Water3");
-    window.CreateTextureFromSurface("Water4.bmp", "Water4");
-    window.CreateTextureFromSurface("Water5.bmp", "Water5");
-
-}
-
 void WorldRender::ReleaseResources(Window &window) {
     SDL_DestroySurface(window.surfaces["grass_1.bmp"]);
     window.surfaces.erase("grass_1.bmp");
@@ -28,6 +19,27 @@ void WorldRender::ReleaseResources(Window &window) {
 
     SDL_DestroySurface(window.surfaces["grass_5.bmp"]);
     window.surfaces.erase("grass_5.bmp");
+
+    SDL_DestroySurface(window.surfaces["Snow1.bmp"]);
+    window.surfaces.erase("Snow1.bmp");
+
+    SDL_DestroySurface(window.surfaces["Snow2.bmp"]);
+    window.surfaces.erase("Snow2.bmp");
+
+    SDL_DestroySurface(window.surfaces["Snow3.bmp"]);
+    window.surfaces.erase("Snow3.bmp");
+
+    SDL_DestroySurface(window.surfaces["beach.bmp"]);
+    window.surfaces.erase("beach.bmp");
+
+    SDL_DestroySurface(window.surfaces["sand.bmp"]);
+    window.surfaces.erase("sand.bmp");
+
+    SDL_DestroySurface(window.surfaces["mountain.bmp"]);
+    window.surfaces.erase("mountain.bmp");
+
+    SDL_DestroySurface(window.surfaces["forest.bmp"]);
+    window.surfaces.erase("forest.bmp");
 
     SDL_DestroySurface(window.surfaces["WorldMap"]);
     window.surfaces.erase("WorldMap");
@@ -50,9 +62,9 @@ void WorldRender::GenerateTexture(Window& window) {
     }
     SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 
-    for (int x = 0; x < window.worldData.WorldMap.size(); x++) {
-        for (int y = 0; y < window.worldData.WorldMap.at(x).size(); y++) {
-            int tileType = window.worldData.WorldMap.at(x).at(y);
+    for (int x = 0; x < window.WorldMap.size(); x++) {
+        for (int y = 0; y < window.WorldMap.at(x).size(); y++) {
+            int tileType = window.WorldMap.at(x).at(y);
             SDL_Rect destRect;
             destRect.x = x * TEXTURERES;
             destRect.y = y * TEXTURERES;
@@ -63,7 +75,7 @@ void WorldRender::GenerateTexture(Window& window) {
             switch (tileType) {
                 case 1:
                 {
-                    srcSurface = window.surfaces["sand.bmp"];
+                    srcSurface = window.surfaces["beach.bmp"];
                     break;
                 }
                 case 2:
@@ -79,19 +91,17 @@ void WorldRender::GenerateTexture(Window& window) {
                 }
                 case 4:
                 {
-                    std::string variationTexture = "grass" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
-                    srcSurface = window.surfaces[variationTexture];
+                    srcSurface = window.surfaces["mountain.bmp"];
                     break;
                 }
                 case 5:
                 {
-                    std::string variationTexture = "grass" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
-                    srcSurface = window.surfaces[variationTexture];
+                    srcSurface = window.surfaces["forest.bmp"];
                     break;
                 }
                 case 6:
                 {
-                    std::string variationTexture = "snow" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
+                    std::string variationTexture = "Snow" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
                     srcSurface = window.surfaces[variationTexture];
                     break;
                 }
@@ -103,7 +113,6 @@ void WorldRender::GenerateTexture(Window& window) {
     }
     window.surfaces["WorldMap"] = finalSurface;
     window.CreateTextureFromSurface("WorldMap","WorldMap");
-    loadTextures(window);
     SDL_SaveBMP(finalSurface, "assets/worldmap.bmp");
     ReleaseResources(window);
 };
