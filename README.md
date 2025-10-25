@@ -1,6 +1,6 @@
-﻿# 2D Hra - Semestrální projekt
+﻿# 2D Hra - Semestrální projekt <img width="32" height="32" alt="Icon39" src="https://github.com/user-attachments/assets/d969f139-2afd-4670-8904-5e050f4bb833" />
 
- 
+------------------------
 > TODO:
 > > <ol> <li> Renderer </li>
 > > <li> UI systém - inventář, menu, HP atd. </li>
