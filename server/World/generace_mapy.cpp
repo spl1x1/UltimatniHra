@@ -113,7 +113,7 @@ GeneraceMapy::GeneraceMapy() {
 
     biomMapa.resize(MAP_WIDTH, vector<int>(MAP_HEIGHT)); // Resize the class member
 
-    double scale = 20.0;
+    double scale = 150.0; //velikost biomu
     generovat_teren(vyskaMapa, permutace1, scale);
     generovat_teren(vlhkostMapa, permutace2, scale);
 
