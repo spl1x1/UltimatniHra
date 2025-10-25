@@ -18,7 +18,7 @@
 
 
 #ifndef GAMERESW
-#define GAMERESW 960
+#define GAMERESW 640
 #endif
 
 #ifndef GAMERESH
