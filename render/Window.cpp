@@ -11,7 +11,6 @@
 #include <SDL3_image/SDL_image.h>
 #include <RmlUi/Lua.h>
 
-
 void Window::markLocationOnMap(float x, float y) {
     auto* Rectangle = new SDL_Rect{static_cast<int>(x),static_cast<int>(y),16,16};
     SDL_BlitSurface(surfaces["mark.bmp"], nullptr, surfaces["WorldMap"], Rectangle);
@@ -214,7 +213,8 @@ void Window::init(const std::string& title, int width, int height) {
 
     data.Window = SDL_CreateWindow(WINDOW_TITLE.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_FLAGS);
     data.Renderer = SDL_CreateRenderer( data.Window, nullptr);
-
+    LoadSurface("assets/textures/Icon.bmp", "Icon");
+    SDL_SetWindowIcon(data.Window,surfaces["Icon"]);
 
     if ( !data.Window || !data.Renderer) {
         SDL_Log("SDL_CreateWindow Error: %s", SDL_GetError());
@@ -227,7 +227,7 @@ void Window::init(const std::string& title, int width, int height) {
     menuData.system_interface->SetWindow(data.Window);
 
     SDL_SetWindowMinimumSize(data.Window, WINDOW_WIDTH, WINDOW_HEIGHT);
-    SDL_SetRenderLogicalPresentation(data.Renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_STRETCH);
+    SDL_SetRenderLogicalPresentation(data.Renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
     SDL_SetRenderVSync(data.Renderer, true);
 
     Rml::SetRenderInterface(menuData.render_interface);
