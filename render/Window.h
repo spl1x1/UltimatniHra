@@ -46,21 +46,31 @@ struct WindowData {
 class Window {
 
 public:
+    int WINDOW_WIDTH;
+    int WINDOW_HEIGHT;
+
     std::vector<std::vector<int>> WorldMap;
 
     Server server;
-    Player player = {480,180, 256,256,200.0f};
-    SDL_FRect* CameraRect = new SDL_FRect{player.x-480, player.y,GAMERESW, GAMERESH};
+    const float PLAYER_WIDTH = 32.0f;
+    const float PLAYER_HEIGHT = 32.0f;
+    Player player = {480, 180, 256, 256, 200.0f};
+    SDL_FRect* CameraRect = new SDL_FRect{
+        player.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
+        player.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
+        GAMERESW,
+        GAMERESH
+    };
     WorldData worldDataStruct;
     WindowData data;
     WorldData worldData;
     MenuData menuData;
-    int WINDOW_WIDTH;
-    int WINDOW_HEIGHT;
     std::string WINDOW_TITLE;
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
 
+    void markLocationOnMap(float x, float y);
+    void handlePlayerInput(Player& player, float deltaTime);
     void renderPlayer(SDL_Renderer* renderer, const Player& player);
     void parseToRenderer(SDL_Renderer* renderer, const std::string& sprite = "", SDL_FRect* destRect = nullptr, SDL_FRect *srcRect = nullptr);
     void advanceFrame();

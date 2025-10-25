@@ -114,5 +114,5 @@ void WorldRender::GenerateTexture(Window& window) {
     window.surfaces["WorldMap"] = finalSurface;
     window.CreateTextureFromSurface("WorldMap","WorldMap");
     SDL_SaveBMP(finalSurface, "assets/worldmap.bmp");
-    ReleaseResources(window);
+    //ReleaseResources(window);
 };

@@ -3,16 +3,51 @@
 //
 
 #include "Window.h"
+
+#include <ranges>
+
 #include "World/WorldRender.h"
 #include <RmlUi/Debugger.h>
 #include <SDL3_image/SDL_image.h>
 #include <RmlUi/Lua.h>
 
 
+void Window::markLocationOnMap(float x, float y) {
+    auto* Rectangle = new SDL_Rect{static_cast<int>(x),static_cast<int>(y),16,16};
+    SDL_BlitSurface(surfaces["mark.bmp"], nullptr, surfaces["WorldMap"], Rectangle);
+    CreateTextureFromSurface("WorldMap","WorldMap");
+    SDL_SaveBMP(surfaces["WorldMap"], "assets/worldmap.bmp");
+    delete Rectangle;
+    SDL_Log("Marked location on map at (%.2f, %.2f)", x, y);
+}
+
+void Window::handlePlayerInput(Player& player, float deltaTime) {
+    const bool* keystates = SDL_GetKeyboardState(nullptr);
+
+    float dx = 0.0f;
+    float dy = 0.0f;
+
+    if (keystates[SDL_SCANCODE_W] || keystates[SDL_SCANCODE_UP])    dy -= 1.0f;
+    if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])  dy += 1.0f;
+    if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  dx -= 1.0f;
+    if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) dx += 1.0f;
+
+    // Normalize diagonal movement
+    if (dx != 0 && dy != 0) {
+        dx *= 0.7071f;
+        dy *= 0.7071f;
+    }
+
+    player.x += dx * player.speed * deltaTime;
+    player.y += dy * player.speed * deltaTime;
+    CameraRect->x = player.x - (WINDOW_WIDTH / 2.0f - 32.0 / 2.0f);
+    CameraRect->y = player.y - (WINDOW_HEIGHT / 2.0f - 32.0 / 2.0f);
+}
+
 void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
     SDL_FRect rect;
-    rect.x = player.x;
-    rect.y = player.y;
+    rect.x = player.x - CameraRect->x;
+    rect.y = player.y - CameraRect->y;
     rect.w = 32;
     rect.h = 32;
 
@@ -34,9 +69,6 @@ void Window::parseToRenderer(SDL_Renderer *renderer, const std::string& sprite, 
 
 
 void Window::HandleEvent(const SDL_Event *e) {
-    float dx = 0.0f;
-    float dy = 0.0f;
-
     switch (e->type)
     {
         case SDL_EVENT_QUIT: {
@@ -82,33 +114,29 @@ void Window::HandleEvent(const SDL_Event *e) {
                     Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
                     break;
                 }
+                case SDL_SCANCODE_F3: {
+                    SDL_Log("Player at (%.2f, %.2f)", player.x, player.y);
+                    SDL_Log("CameraRect at (%.2f, %.2f)", CameraRect->x, CameraRect->y);
+                    SDL_Log("Rendering player at (%.2f, %.2f)",player.x - CameraRect->x, player.x - CameraRect->y);
+                    break;
+                }
+                case SDL_SCANCODE_F4: {
+                    markLocationOnMap(player.x, player.y);
+                    break;
+                }
 #endif
-                case SDL_SCANCODE_W: {dy -= 1.0f; break;}
-                case SDL_SCANCODE_S: {dy += 1.0f; break;}
-                case SDL_SCANCODE_A: {dx -= 1.0f; break;}
-                case SDL_SCANCODE_D: {dx += 1.0f; break;}
-
                 default:
                     break;}
         }
         default:
             break;
     }
-    if (dx == 0 && dy == 0) return;
-    if (dx != 0 && dy != 0) {
-        dx *= 0.7071f;
-        dy *= 0.7071f;
-    }
-
-    player.x += dx * player.speed * server.deltaTime;
-    player.y += dy * player.speed * server.deltaTime;
 };
 
 
 
 void Window::advanceFrame() {
-    CameraRect->x = player.x - 464;
-    CameraRect->y = player.y - 74;
+    handlePlayerInput(player, server.deltaTime);
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], CameraRect, nullptr);
     renderPlayer(data.Renderer,player);
     menuData.RmlContext->Update();
@@ -254,8 +282,13 @@ void Window::init(const std::string& title, int width, int height) {
 void Window::Destroy() {
     data.Running = false;
 
+    for (const auto &val: textures | std::views::values) {
+        SDL_DestroyTexture(val);
+    }
+    for (const auto &val: surfaces | std::views::values) {
+        SDL_DestroySurface(val);
+    }
     Rml::Shutdown();
-
     SDL_DestroyRenderer(data.Renderer);
     SDL_DestroyWindow(data.Window);
     SDL_Quit();
