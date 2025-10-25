@@ -1,15 +1,15 @@
-﻿# 2.5D Hra - Semestrální projekt
+﻿# 2D Hra - Semestrální projekt
 
  
 > TODO:
-> > <ol> <li> Renderer přidat FOD effect (2.5D, Layer separation, Parallax) </li>
+> > <ol> <li> Renderer </li>
 > > <li> UI systém - inventář, menu, HP atd. </li>
 > > <li> Haul execution </li>
 > > <li> Zvukový engine </li>
 > > <li> Interface pro komunikaci serveru a klientu </li>
 > > <li> Procedurální generace (perlin  noise, nastavit parametry)</li>
 > > <li> Generace struktur </li>
-> > <li> Základní konstrukt pro Entitu (všedny další formou dědičnosti)</li>
+> > <li> Základní konstrukt pro Entitu (všechny další formou dědičnosti)</li>
 > > <li> Basic path (založen na aktualní pozici entity a hráče, prostě vektor, neřešit struktury) </li>
 > > <li> Základní AI (predfined behaviour, random cally)</li>
 > > <li> Assety </li>
