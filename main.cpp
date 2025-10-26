@@ -1,5 +1,4 @@
 ﻿#include "render/Window.h"
-#include "server/Event.h"
 #include "server/World/generace_mapy.h"
 
 
@@ -14,9 +13,7 @@ int main(int argc, char *argv[]) {;
     });
     */
 
-    GeneraceMapy generaceMapy = GeneraceMapy();
-    Window *c = new Window();
-    c->WorldMap = generaceMapy.biomMapa;
+    auto *c = new Window();
     c->init("Game window");
     return 0;
 }

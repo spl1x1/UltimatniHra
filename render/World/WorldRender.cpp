@@ -4,6 +4,19 @@
 
 #include "WorldRender.h"
 
+#include "../../server/World/generace_mapy.h"
+
+void WorldRender::GenerateWorld(int seed, Window& window) {
+    WorldData worldData;
+
+    GeneraceMapy generaceMapy = GeneraceMapy();
+    worldData.WorldMap = generaceMapy.biomMapa;
+    WorldData::getBlockVariationMap(worldData);
+
+    GenerateTexture(window, worldData);
+    window.worldData = worldData;
+}
+
 void WorldRender::ReleaseResources(Window &window) {
     SDL_DestroySurface(window.surfaces["grass_1.bmp"]);
     window.surfaces.erase("grass_1.bmp");
@@ -54,7 +67,7 @@ void WorldRender::loadSurfacesFromDirectory(const std::string& directoryPath, Wi
     }
 }
 
-void WorldRender::GenerateTexture(Window& window) {
+void WorldRender::GenerateTexture(Window& window, WorldData& worldData) {
     for (const auto& entry : std::filesystem::directory_iterator("assets/textures/world")) {
         std::string fileName = entry.path().string();
         SDL_Log("Directory:: %s", fileName.c_str());
@@ -62,9 +75,9 @@ void WorldRender::GenerateTexture(Window& window) {
     }
     SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 
-    for (int x = 0; x < window.WorldMap.size(); x++) {
-        for (int y = 0; y < window.WorldMap.at(x).size(); y++) {
-            int tileType = window.WorldMap.at(x).at(y);
+    for (int x = 0; x < worldData.WorldMap.size(); x++) {
+        for (int y = 0; y < worldData.WorldMap.at(x).size(); y++) {
+            int tileType = worldData.WorldMap.at(x).at(y);
             SDL_Rect destRect;
             destRect.x = x * TEXTURERES;
             destRect.y = y * TEXTURERES;
@@ -85,7 +98,7 @@ void WorldRender::GenerateTexture(Window& window) {
                 }
                 case 3:
                 {
-                    std::string variationTexture = "grass" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
+                    std::string variationTexture = "grass" + std::to_string(worldData.blockVariantionMap[x][y]) + ".bmp";
                     srcSurface = window.surfaces[variationTexture];
                     break;
                 }
@@ -101,7 +114,7 @@ void WorldRender::GenerateTexture(Window& window) {
                 }
                 case 6:
                 {
-                    std::string variationTexture = "Snow" + std::to_string(window.worldDataStruct.blockVariantionMap[x][y]) + ".bmp";
+                    std::string variationTexture = "Snow" + std::to_string(worldData.blockVariantionMap[x][y]) + ".bmp";
                     srcSurface = window.surfaces[variationTexture];
                     break;
                 }

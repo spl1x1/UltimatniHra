@@ -11,6 +11,19 @@
 #include <SDL3_image/SDL_image.h>
 #include <RmlUi/Lua.h>
 
+
+void Window::renderMainMenu() {
+
+    SDL_RenderClear(data.Renderer);
+    SDL_RenderTexture(data.Renderer, textures["MainMenuBackground"], nullptr, nullptr);
+    menuData.RmlContext->Update();
+    menuData.RmlContext->Render();
+    SDL_RenderPresent(data.Renderer);
+    SDL_Event e;
+    if (SDL_PollEvent(&e)) HandleMainMenuEvent(&e);
+}
+
+
 void Window::markLocationOnMap(float x, float y) {
     auto* Rectangle = new SDL_Rect{static_cast<int>(x),static_cast<int>(y),16,16};
     SDL_BlitSurface(surfaces["mark.bmp"], nullptr, surfaces["WorldMap"], Rectangle);
@@ -20,7 +33,7 @@ void Window::markLocationOnMap(float x, float y) {
     SDL_Log("Marked location on map at (%.2f, %.2f)", x, y);
 }
 
-void Window::handlePlayerInput(Player& player, float deltaTime) {
+void Window::handlePlayerInput(Player& player, float deltaTime) const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
     float dx = 0.0f;
@@ -39,21 +52,21 @@ void Window::handlePlayerInput(Player& player, float deltaTime) {
 
     player.x += dx * player.speed * deltaTime;
     player.y += dy * player.speed * deltaTime;
-    CameraRect->x = player.x - (WINDOW_WIDTH / 2.0f - 32.0 / 2.0f);
-    CameraRect->y = player.y - (WINDOW_HEIGHT / 2.0f - 32.0 / 2.0f);
+    data.CameraPos->x = player.x - (data.WINDOW_WIDTH / 2.0f - 32.0 / 2.0f);
+    data.CameraPos->y = player.y - (data.WINDOW_HEIGHT / 2.0f - 32.0 / 2.0f);
 }
 
 void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
     SDL_FRect rect;
-    rect.x = player.x - CameraRect->x;
-    rect.y = player.y - CameraRect->y;
+    rect.x = player.x - data.CameraPos->x;
+    rect.y = player.y - data.CameraPos->y;
     rect.w = 32;
     rect.h = 32;
 
     SDL_RenderTexture(renderer, textures["Player"], nullptr, &rect);
 }
 
-void Window::parseToRenderer(SDL_Renderer *renderer, const std::string& sprite, SDL_FRect *destRect, SDL_FRect *srcRect) {
+void Window::parseToRenderer(const SDL_Renderer *renderer, const std::string& sprite, const SDL_FRect *destRect, const SDL_FRect *srcRect) {
     if (!renderer || sprite.empty()) {
 #ifdef DEBUG
         SDL_Log("Called parseToRenderer(), without valid arguments");
@@ -66,6 +79,58 @@ void Window::parseToRenderer(SDL_Renderer *renderer, const std::string& sprite, 
         }
 }
 
+void Window::HandleMainMenuEvent(const SDL_Event *e) {
+        switch (e->type)
+    {
+        case SDL_EVENT_QUIT: {
+            Destroy();
+            break;
+        }
+        case SDL_EVENT_MOUSE_MOTION: {
+            menuData.RmlContext->ProcessMouseMove(static_cast<int>(e->motion.x), static_cast<int>(e->motion.y), 0);
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        {
+            int button = e->button.button;
+            int rml_button = button - 1;
+
+            menuData.RmlContext->ProcessMouseButtonDown(rml_button, 0);
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+        {
+            int button = e->button.button;
+            int rml_button = button - 1;
+
+            menuData.RmlContext->ProcessMouseButtonUp(rml_button, 0);
+            break;
+        }
+        case SDL_EVENT_KEY_DOWN: {
+            const SDL_Keycode keycode = e->key.key;
+
+            Rml::Input::KeyIdentifier rml_key = RmlSDL::ConvertKey(static_cast<int>(keycode));
+            menuData.RmlContext->ProcessKeyDown(rml_key, 0);
+            if (keycode == SDLK_RETURN || keycode == SDLK_KP_ENTER)
+            {
+                menuData.RmlContext->ProcessTextInput("\n");
+            }
+            switch (e->key.scancode)
+            {
+#ifdef DEBUG
+                case SDL_SCANCODE_F8: {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Changing visibility of Debugger");
+                    Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
+                    break;
+                }
+#endif
+                default:
+                    break;}
+        }
+        default:
+            break;
+    }
+};
 
 void Window::HandleEvent(const SDL_Event *e) {
     switch (e->type)
@@ -115,8 +180,8 @@ void Window::HandleEvent(const SDL_Event *e) {
                 }
                 case SDL_SCANCODE_F3: {
                     SDL_Log("Player at (%.2f, %.2f)", player.x, player.y);
-                    SDL_Log("CameraRect at (%.2f, %.2f)", CameraRect->x, CameraRect->y);
-                    SDL_Log("Rendering player at (%.2f, %.2f)",player.x - CameraRect->x, player.x - CameraRect->y);
+                    SDL_Log("data.CameraPos at (%.2f, %.2f)", data.CameraPos->x, data.CameraPos->y);
+                    SDL_Log("Rendering player at (%.2f, %.2f)",player.x - data.CameraPos->x, player.x - data.CameraPos->y);
                     break;
                 }
                 case SDL_SCANCODE_F4: {
@@ -136,7 +201,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 
 void Window::advanceFrame() {
     handlePlayerInput(player, server.deltaTime);
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], CameraRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.CameraPos, nullptr);
     renderPlayer(data.Renderer,player);
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
@@ -202,16 +267,16 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 }
 
 void Window::init(const std::string& title, int width, int height) {
-    WINDOW_TITLE = title;
-    WINDOW_WIDTH = width;
-    WINDOW_HEIGHT = height;
+    data.WINDOW_TITLE = title;
+    data.WINDOW_WIDTH = width;
+    data.WINDOW_HEIGHT = height;
 
     if (!SDL_Init(SDL_FLAGS))
     {
         return;
     }
 
-    data.Window = SDL_CreateWindow(WINDOW_TITLE.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_FLAGS);
+    data.Window = SDL_CreateWindow(data.WINDOW_TITLE.c_str(), data.WINDOW_WIDTH, data.WINDOW_HEIGHT, SDL_WINDOW_FLAGS);
     data.Renderer = SDL_CreateRenderer( data.Window, nullptr);
     LoadSurface("assets/textures/Icon.bmp", "Icon");
     SDL_SetWindowIcon(data.Window,surfaces["Icon"]);
@@ -226,8 +291,8 @@ void Window::init(const std::string& title, int width, int height) {
     menuData.system_interface = new SystemInterface_SDL();
     menuData.system_interface->SetWindow(data.Window);
 
-    SDL_SetWindowMinimumSize(data.Window, WINDOW_WIDTH, WINDOW_HEIGHT);
-    SDL_SetRenderLogicalPresentation(data.Renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+    SDL_SetWindowMinimumSize(data.Window, data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
+    SDL_SetRenderLogicalPresentation(data.Renderer, data.WINDOW_WIDTH, data.WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
     SDL_SetRenderVSync(data.Renderer, true);
 
     Rml::SetRenderInterface(menuData.render_interface);
@@ -240,7 +305,7 @@ void Window::init(const std::string& title, int width, int height) {
 
     Rml::Initialise();
 
-    menuData.RmlContext = Rml::CreateContext("main", Rml::Vector2i(WINDOW_WIDTH, WINDOW_HEIGHT), menuData.render_interface);
+    menuData.RmlContext = Rml::CreateContext("main", Rml::Vector2i(data.WINDOW_WIDTH, data.WINDOW_HEIGHT), menuData.render_interface);
 
 #ifdef DEBUG
     Rml::Debugger::Initialise(menuData.RmlContext);
@@ -254,20 +319,38 @@ void Window::init(const std::string& title, int width, int height) {
 #endif
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
-    SDL_Log("Window size: %ix%i", WINDOW_WIDTH, WINDOW_HEIGHT);
+    SDL_Log("Window size: %ix%i", data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
 
-    worldDataStruct = WorldData(42);
-    WorldData::getBlockVariationMap(worldDataStruct);
-    WorldData::getBlockVariationMap(worldDataStruct);
 
     LoadSurface("assets/textures/Sprite-0001.bmp", "Player");
     CreateTextureFromSurface("Player", "Player");
 
-    WorldRender::GenerateTexture(*this);
+    data.inMainMenu = true;
+
+    Rml::LoadFontFace("assets/fonts/my_font_face.ttf");
+    Rml::ElementDocument* document = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
+    //TODO: Implementovat menu načítané z RML
+
+    if (document) {
+        document->Show();
+    } else {
+        SDL_Log("Failed to load main menu RML document");
+    }
+    while (data.inMainMenu) {
+        renderMainMenu();
+    }
+
+
     Uint64 last = SDL_GetPerformanceCounter();
 
-    data.Running = true;
+    data.CameraPos = new SDL_FRect{
+        player.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
+        player.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
+        GAMERESW,
+        GAMERESH
+    };
+
     while (data.Running) {
         Uint64 current = SDL_GetPerformanceCounter();
         server.deltaTime = (current - last) / static_cast<float>(SDL_GetPerformanceFrequency());
@@ -292,9 +375,9 @@ void Window::Destroy() {
     SDL_DestroyRenderer(data.Renderer);
     SDL_DestroyWindow(data.Window);
     SDL_Quit();
+    exit(0);
 }
 
 Window::~Window() {
     Destroy();
 }
-

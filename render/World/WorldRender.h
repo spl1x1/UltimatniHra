@@ -13,9 +13,11 @@
 #include <filesystem>
 
 
+
 struct WorldRender {
+    static void GenerateWorld(int seed,Window& window);
     static void loadSurfacesFromDirectory(const std::string& directoryPath, Window& window) ;
-    static void GenerateTexture(Window& window);
+    static void GenerateTexture(Window& window, WorldData& worldData);
 
     private:
     static void ReleaseResources(Window& window);

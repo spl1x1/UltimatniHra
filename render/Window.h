@@ -39,51 +39,55 @@ struct WindowData {
     SDL_Window* Window;
     SDL_Renderer* Renderer;
     SDL_Event event;
+    SDL_FRect* CameraPos;
+
     bool Running;
+    bool inMainMenu;
+    bool inGameMenu;
     double refreshRate;
+
+    std::string WINDOW_TITLE;
+    int WINDOW_WIDTH;
+    int WINDOW_HEIGHT;
 };
 
 class Window {
 
 public:
-    int WINDOW_WIDTH;
-    int WINDOW_HEIGHT;
-
-    std::vector<std::vector<int>> WorldMap;
-
     Server server;
     const float PLAYER_WIDTH = 32.0f;
     const float PLAYER_HEIGHT = 32.0f;
     Player player = {480, 180, 256, 256, 200.0f};
-    SDL_FRect* CameraRect = new SDL_FRect{
-        player.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
-        player.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
-        GAMERESW,
-        GAMERESH
-    };
+
     WorldData worldDataStruct;
     WindowData data;
     WorldData worldData;
     MenuData menuData;
-    std::string WINDOW_TITLE;
+
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
 
+
     void markLocationOnMap(float x, float y);
-    void handlePlayerInput(Player& player, float deltaTime);
+    void handlePlayerInput(Player& player, float deltaTime) const;
     void renderPlayer(SDL_Renderer* renderer, const Player& player);
-    void parseToRenderer(SDL_Renderer* renderer, const std::string& sprite = "", SDL_FRect* destRect = nullptr, SDL_FRect *srcRect = nullptr);
+
+    //Start game = WorldRender::GenerateWorld(0,*this); data.inMainMenu = false; data.Running = true;
+    void renderMainMenu();
+
+    void HandleMainMenuEvent(const SDL_Event* e);
+    void HandleEvent(const SDL_Event* e);
     void advanceFrame();
     void Destroy();
+
+    void parseToRenderer(const SDL_Renderer* renderer, const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
     bool LoadSurface(const std::string& Path);
     bool LoadSurface(const std::string& Path, const std::string& SaveAs);
     bool LoadTexture(const std::string& Path);
     bool LoadTexture(const std::string& Path, const std::string& SaveAs);
     bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
-    void HandleEvent(const SDL_Event* e);
 
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
-    Window() : worldDataStruct(42) {};
     ~Window();
 };
 
