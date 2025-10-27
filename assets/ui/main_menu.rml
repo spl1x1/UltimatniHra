@@ -1,26 +1,48 @@
 <rml>
-	<head>
-		<style>
-			body {
+    <head>
+        <style>
+            body {
                 font-family: rmlui-debugger-font;
-                font-size: 12px;
-                top: 100px; right: 100px; bottom: 100px; left: 100px;
-                padding: 150px;
-                text-align: center;
-                background: #333;
+                font-size: 1.5em;      /* bigger font */
+                top: 0%; right: 0%; bottom: 0%; left: 0%;
+                margin: 0%; padding: 0%;
+                background-color: #222;
                 color: white;
+                text-align: center;
             }
-            p {
+
+            #menu {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 30%;
+                display: flex;
+                flex-direction: column;
+                gap: 1.5em;
+            }
+
+            .menu-button {
                 display: block;
-                padding: 30px;
+                width: 100%;
+                padding: 1em 0;
+                background-color: #444;
+                cursor: pointer;
+                box-sizing: border-box;
+                font-size: 1.2em;
+                text-align: center;
             }
-            p:hover {
-                background: #444;
+
+            .menu-button:hover {
+                background-color: #666;
             }
-		</style>
-	</head>
-	<body>
-	<p>Hello world!</p>
-	</body>
+        </style>
+    </head>
+    <body>
+        <div id="menu">
+            <div id="play_button" class="menu-button">Play</div>
+            <div id="options_button" class="menu-button">Options</div>
+            <div id="quit_button" class="menu-button">Quit</div>
+        </div>
+    </body>
 </rml>
-)";

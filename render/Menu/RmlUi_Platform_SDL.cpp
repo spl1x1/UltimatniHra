@@ -32,6 +32,7 @@
 #include <RmlUi/Core/Input.h>
 #include <RmlUi/Core/StringUtilities.h>
 #include <RmlUi/Core/SystemInterface.h>
+#include <SDL3/SDL_mouse.h>
 
 SystemInterface_SDL::SystemInterface_SDL()
 {
