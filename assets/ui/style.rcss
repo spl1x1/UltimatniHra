@@ -1,62 +1,43 @@
 /*
-* Default styles for all the basic elements.
-*/
+ * Default styles for all the basic elements.
+ * This file acts like a CSS reset for RMLUI.
+ */
 
-div
-{
-	display: block;
-	font-family: regular;
+body {
+    background-color: #222;
+    color: white;
+    font-family: rmlui-debugger-font;
+    margin: 0;
 }
 
-p
-{
-	display: block;
-}
-
-h1
-{
+/* Basic display defaults */
+div, p, h1, h2, h3, h4, h5, h6 {
 	display: block;
 }
 
-em
-{
+em {
 	font-style: italic;
 }
 
-strong
-{
+strong {
 	font-weight: bold;
 }
 
-select
-{
+select {
 	text-align: left;
 }
 
-tabset tabs
-{
+tabset tabs {
 	display: block;
 }
 
-table {
+/* Table defaults */
+table, tr, td, col, colgroup, thead, tbody, tfoot {
 	box-sizing: border-box;
-	display: table;
 }
-tr {
-	box-sizing: border-box;
-	display: table-row;
-}
-td {
-	box-sizing: border-box;
-	display: table-cell;
-}
-col {
-	box-sizing: border-box;
-	display: table-column;
-}
-colgroup {
-	display: table-column-group;
-}
-thead, tbody, tfoot {
-	display: table-row-group;
-}
+table { display: table; }
+tr { display: table-row; }
+td { display: table-cell; }
+col { display: table-column; }
+colgroup { display: table-column-group; }
+thead, tbody, tfoot { display: table-row-group; }

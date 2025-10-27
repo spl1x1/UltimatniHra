@@ -392,7 +392,7 @@ void Window::init(const std::string& title, int width, int height) {
 
     data.inMainMenu = true;
 
-    Rml::LoadFontFace("assets/fonts/my_font_face.ttf");
+    //Rml::LoadFontFace("assets/fonts/my_font_face.ttf");
     Rml::ElementDocument* document = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
 
     if (!document) {
