@@ -78,59 +78,94 @@ void Window::parseToRenderer(const SDL_Renderer *renderer, const std::string& sp
             SDL_RenderTexture(data.Renderer, textures["sprite"], srcRect, destRect);
         }
 }
-
+//tady jsem zmenil na lepsi alignment s scalingem obrazovky
 void Window::HandleMainMenuEvent(const SDL_Event *e) {
-        switch (e->type)
+    int window_w, window_h;
+    SDL_GetWindowSizeInPixels(data.Window, &window_w, &window_h);
+
+    float logical_w = static_cast<float>(data.WINDOW_WIDTH);
+    float logical_h = static_cast<float>(data.WINDOW_HEIGHT);
+
+    float scale_x = logical_w / window_w;
+    float scale_y = logical_h / window_h;
+
+    switch (e->type)
     {
-        case SDL_EVENT_QUIT: {
+        case SDL_EVENT_QUIT:
+        {
             Destroy();
             break;
         }
-        case SDL_EVENT_MOUSE_MOTION: {
-            menuData.RmlContext->ProcessMouseMove(static_cast<int>(e->motion.x), static_cast<int>(e->motion.y), 0);
+
+        case SDL_EVENT_MOUSE_MOTION:
+        {
+
+            int scaled_x = static_cast<int>(e->motion.x * scale_x);
+            int scaled_y = static_cast<int>(e->motion.y * scale_y);
+            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
             break;
         }
+
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         {
             int button = e->button.button;
             int rml_button = button - 1;
 
+
+            int scaled_x = static_cast<int>(e->button.x * scale_x);
+            int scaled_y = static_cast<int>(e->button.y * scale_y);
+
+            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
             menuData.RmlContext->ProcessMouseButtonDown(rml_button, 0);
             break;
         }
+
         case SDL_EVENT_MOUSE_BUTTON_UP:
         {
             int button = e->button.button;
             int rml_button = button - 1;
 
+
+            int scaled_x = static_cast<int>(e->button.x * scale_x);
+            int scaled_y = static_cast<int>(e->button.y * scale_y);
+
+            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
             menuData.RmlContext->ProcessMouseButtonUp(rml_button, 0);
             break;
         }
-        case SDL_EVENT_KEY_DOWN: {
+
+        case SDL_EVENT_KEY_DOWN:
+        {
             const SDL_Keycode keycode = e->key.key;
 
             Rml::Input::KeyIdentifier rml_key = RmlSDL::ConvertKey(static_cast<int>(keycode));
             menuData.RmlContext->ProcessKeyDown(rml_key, 0);
+
             if (keycode == SDLK_RETURN || keycode == SDLK_KP_ENTER)
             {
                 menuData.RmlContext->ProcessTextInput("\n");
             }
+
+#ifdef DEBUG
             switch (e->key.scancode)
             {
-#ifdef DEBUG
-                case SDL_SCANCODE_F8: {
+                case SDL_SCANCODE_F8:
+                {
                     SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Changing visibility of Debugger");
                     Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
                     break;
                 }
-#endif
                 default:
-                    break;}
+                    break;
+            }
+#endif
+            break;
         }
+
         default:
             break;
     }
-};
+}
 
 void Window::HandleEvent(const SDL_Event *e) {
     switch (e->type)
@@ -265,6 +300,35 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
     textures[TexturePath] = texture;
     return true;
 }
+class PlayButtonListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit PlayButtonListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event&) override {
+        SDL_Log("Play clicked!");
+        window->data.inMainMenu = false;
+        window->data.Running = true;
+    }
+};
+
+class OptionsButtonListener : public Rml::EventListener {
+public:
+    void ProcessEvent(Rml::Event&) override {
+        SDL_Log("Options clicked!");
+        // TODO: open options menu
+    }
+};
+
+class QuitButtonListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit QuitButtonListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event&) override {
+        SDL_Log("Quit clicked!");
+        window->data.inMainMenu = false;
+        window->data.Running = false;
+    }
+};
 
 void Window::init(const std::string& title, int width, int height) {
     data.WINDOW_TITLE = title;
@@ -328,19 +392,32 @@ void Window::init(const std::string& title, int width, int height) {
 
     data.inMainMenu = true;
 
-    Rml::LoadFontFace("assets/fonts/my_font_face.ttf");
+    //Rml::LoadFontFace("assets/fonts/my_font_face.ttf");
     Rml::ElementDocument* document = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
-    //TODO: Implementovat menu načítané z RML
 
-    if (document) {
-        document->Show();
-    } else {
+    if (!document) {
         SDL_Log("Failed to load main menu RML document");
+        return;
     }
+
+    Rml::Element* playButton = document->GetElementById("play_button");
+    Rml::Element* optionsButton = document->GetElementById("options_button");
+    Rml::Element* quitButton = document->GetElementById("quit_button");
+
+    if (playButton)
+        playButton->AddEventListener("click", new PlayButtonListener(this));
+
+    if (optionsButton)
+        optionsButton->AddEventListener("click", new OptionsButtonListener());
+
+    if (quitButton)
+        quitButton->AddEventListener("click", new QuitButtonListener(this));
+
+    document->Show();
+
     while (data.inMainMenu) {
         renderMainMenu();
     }
-
 
     Uint64 last = SDL_GetPerformanceCounter();
 

@@ -39,8 +39,6 @@ add_subdirectory(
         ${CMAKE_BINARY_DIR}/_deps/rmlui-src/Backends
 )
 
-
-
 add_executable(UltimatniHra
         main.cpp
         render/Window.cpp
@@ -71,7 +69,6 @@ add_executable(server_test
         server/World/WorldStructs.cpp
 )
 
-
 target_link_libraries(UltimatniHra
         SDL3::SDL3
         SDL3_image::SDL3_image
@@ -85,8 +82,6 @@ add_executable(ScalingTest
         render/ScaleFactorCalculator.cpp
         render/ScalingFactorCalculator_test.cpp
 )
-
-
 
 add_custom_command(TARGET UltimatniHra POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
