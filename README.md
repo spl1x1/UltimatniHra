@@ -28,7 +28,7 @@
 > >[FreeType](https://download.savannah.gnu.org/releases/freetype/)
 > 
 > Requiremnts:
-> > [CMake](https://cmake.org/download/), [Lua](https://www.lua.org/download.html)
+> > [CMake](https://cmake.org/download/)
 > 
 > 
 > Další linky
