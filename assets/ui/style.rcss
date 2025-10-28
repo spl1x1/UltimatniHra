@@ -1,39 +1,43 @@
 /*
  * Default styles for all the basic elements.
- * This file acts like a CSS reset for RMLUI.
+ * Acts like a CSS reset for RmlUi.
  */
 
 body {
-    background-color: #222;
-    color: white;
-    font-family: rmlui-debugger-font;
     margin: 0;
+    height: 100vh;
+    /* background-color: #203a43; */
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: 17em;
 }
 
 /* Basic display defaults */
 div, p, h1, h2, h3, h4, h5, h6 {
-	display: block;
+    display: block;
 }
 
 em {
-	font-style: italic;
+    font-style: italic;
 }
 
 strong {
-	font-weight: bold;
+    font-weight: bold;
 }
 
 select {
-	text-align: left;
+    text-align: left;
 }
 
 tabset tabs {
-	display: block;
+    display: block;
 }
 
 /* Table defaults */
 table, tr, td, col, colgroup, thead, tbody, tfoot {
-	box-sizing: border-box;
+    box-sizing: border-box;
 }
 table { display: table; }
 tr { display: table-row; }
@@ -41,3 +45,69 @@ td { display: table-cell; }
 col { display: table-column; }
 colgroup { display: table-column-group; }
 thead, tbody, tfoot { display: table-row-group; }
+
+/* Menu container */
+#menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    gap: 30px;
+    position: relative;
+}
+
+/* Buttons */
+.menu-button {
+    width: 220px;
+    min-height: 50px;
+    line-height: 50px;
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 22px;
+    font-weight: 600;
+    color: #007BFF;
+    background-color: #d3d3d3;
+
+    border-width: 2px;
+    border-style: solid;
+    border-color: #aaaaaa;
+    border-radius: 12px;
+
+    cursor: pointer;
+    position: relative;
+    margin: 0;
+    padding: 0;
+}
+
+/* Hover effects (no transitions) */
+.menu-button:hover {
+    background-color: #e0e0e0;
+    box-shadow-offset: 0 0;
+    border-color: #ffffff;
+}
+
+.menu-button:active {
+    background-color: #cccccc;
+}
+
+/* Button-specific hover shadows */
+#play_button:hover {
+    box-shadow-color: #00ff99;
+
+    box-shadow-blur-radius: 15px;
+}
+
+#options_button:hover {
+    box-shadow-color: #0099ff;
+    box-shadow-offset: 0 0;
+    box-shadow-blur-radius: 15px;
+}
+
+#quit_button:hover {
+    box-shadow-color: #ff0066;
+    box-shadow-offset: 0 0;
+    box-shadow-blur-radius: 15px;
+}

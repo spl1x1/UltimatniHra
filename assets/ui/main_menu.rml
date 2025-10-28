@@ -4,7 +4,6 @@
 
 	<!-- Load base and menu-specific styles -->
 	<link type="text/rcss" href="style.rcss" />
-	<link type="text/rcss" href="main_menu.rcss" />
 </head>
 <body>
 	<div id="menu">
