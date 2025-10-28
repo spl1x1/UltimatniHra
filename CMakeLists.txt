@@ -18,10 +18,17 @@ add_compile_definitions(DEBUG)
 CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
 CPMAddPackage("gh:libsdl-org/SDL_image#11154af")
 CPMAddPackage("https://download.savannah.gnu.org/releases/freetype/ft2141.zip")
+#lua
+CPMAddPackage("gh:lubgr/lua-cmake#master")
 
 add_library(Freetype::Freetype ALIAS freetype)
 add_library(SDL::SDL ALIAS SDL3-static )
 add_library(SDL_image::SDL_image ALIAS SDL3_image-static)
+
+add_library(Lua::Lua INTERFACE IMPORTED)
+set_target_properties(Lua::Lua PROPERTIES
+        INTERFACE_LINK_LIBRARIES "lua::lib"
+)
 
 #other libs
 CPMAddPackage("gh:nlohmann/json#55f9368")
