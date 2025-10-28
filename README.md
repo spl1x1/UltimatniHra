@@ -10,7 +10,7 @@
 > > <li> UI systém - inventář, menu, HP atd. </li>
 > > <li> Hault execution, stopnutí procesů pokud je hráč v menu (jen v singleplayeru) </li>
 > > <li> Zvukový engine </li>
-> > <li> Multithreading a synchronziace proměnných různých vláken /li>
+> > <li> Multithreading a synchronziace proměnných různých vláken </li>
 > > <li> Interface pro komunikaci serveru a klientu </li>
 > > <li> Procedurální generace (perlin  noise, nastavit parametry)</li>
 > > <li> Generace struktur </li>
