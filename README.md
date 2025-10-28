@@ -25,7 +25,8 @@
 > >[RmlUI](https://github.com/mikke89/RmlUi),
 > > [SDL](https://github.com/libsdl-org/SDL),
 > >[SDL_image](https://github.com/libsdl-org/SDL_image),
-> >[FreeType](https://download.savannah.gnu.org/releases/freetype/)
+> >[FreeType](https://download.savannah.gnu.org/releases/freetype/),
+> > [Lua-cmake-fork](https://github.com/coopeeo/lua-cmake-fork)
 > 
 > Requiremnts:
 > > [CMake](https://cmake.org/download/)
