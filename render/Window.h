@@ -44,8 +44,8 @@ struct WindowData {
 
 class Window {
 
-    float posunX = 0.0f;
-    float posunY = 0.0f;
+    float offsetX = 0.0f;
+    float offsetY = 0.0f;
 
     void markLocationOnMap(float x, float y);
     void handlePlayerInput(Player& player, float deltaTime) const;

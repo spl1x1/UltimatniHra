@@ -84,8 +84,8 @@ void Window::handlePlayerInput(Player& player, float deltaTime) const {
 
     player.x += dx * player.speed * deltaTime;
     player.y += dy * player.speed * deltaTime;
-    data.CameraPos->x = player.x - posunX;
-    data.CameraPos->y = player.y - posunY;
+    data.CameraPos->x = player.x - offsetX;
+    data.CameraPos->y = player.y - offsetY;
 }
 
 
@@ -339,8 +339,8 @@ void Window::init(const std::string& title, int width, int height) {
     data.WINDOW_WIDTH = width;
     data.WINDOW_HEIGHT = height;
 
-    posunX = (static_cast<float>(width)/ 2.0f - 32.0f / 2.0f);
-    posunY = (static_cast<float>(height) / 2.0f - 32.0f / 2.0f);
+    offsetX = (static_cast<float>(width)/ 2.0f - 32.0f / 2.0f);
+    offsetY = (static_cast<float>(height) / 2.0f - 32.0f / 2.0f);
 
     if (!SDL_Init(SDL_FLAGS))
     {
