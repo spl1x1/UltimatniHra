@@ -14,13 +14,14 @@
 
 
 
-struct WorldRender {
-    static void GenerateWorld(int seed,Window& window);
+class WorldRender {
+    static void ReleaseResources(Window& window);
     static void loadSurfacesFromDirectory(const std::string& directoryPath, Window& window) ;
     static void GenerateTexture(Window& window, WorldData& worldData);
 
-    private:
-    static void ReleaseResources(Window& window);
+    public:
+    static void GenerateWorld(int seed,Window& window);
+
 };
 
 

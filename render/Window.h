@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <RmlUi/Core.h>
 
+#include "../cmake-build-debug/_deps/rmlui-src/Source/Lua/Document.h"
 #include "../server/ServerStrucs.h"
 #include "../server/Entities/EntityStructs.h"
 #include "../server/World/WorldStructs.h"
@@ -66,6 +67,7 @@ public:
 
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
+    std::unordered_map<std::string, Rml::ElementDocument*> documents;
 
 
     void markLocationOnMap(float x, float y);

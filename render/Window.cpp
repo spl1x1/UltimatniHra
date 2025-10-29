@@ -11,6 +11,38 @@
 #include <SDL3_image/SDL_image.h>
 #include <RmlUi/Lua.h>
 
+#include "../server/World/generace_mapy.h"
+
+class PlayButtonListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit PlayButtonListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event&) override {
+        SDL_Log("Play clicked!");
+        window->data.inMainMenu = false;
+        window->data.Running = true;
+        WorldRender::GenerateWorld(0,*window);
+    }
+};
+
+class OptionsButtonListener : public Rml::EventListener {
+public:
+    void ProcessEvent(Rml::Event&) override {
+        SDL_Log("Options clicked!");
+        // TODO: open options menu
+    }
+};
+
+class QuitButtonListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit QuitButtonListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event&) override {
+        SDL_Log("Quit clicked!");
+        window->data.inMainMenu = false;
+        window->data.Running = false;
+    }
+};
 
 void Window::renderMainMenu() {
 
@@ -300,35 +332,6 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
     textures[TexturePath] = texture;
     return true;
 }
-class PlayButtonListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit PlayButtonListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event&) override {
-        SDL_Log("Play clicked!");
-        window->data.inMainMenu = false;
-        window->data.Running = true;
-    }
-};
-
-class OptionsButtonListener : public Rml::EventListener {
-public:
-    void ProcessEvent(Rml::Event&) override {
-        SDL_Log("Options clicked!");
-        // TODO: open options menu
-    }
-};
-
-class QuitButtonListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit QuitButtonListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event&) override {
-        SDL_Log("Quit clicked!");
-        window->data.inMainMenu = false;
-        window->data.Running = false;
-    }
-};
 
 void Window::init(const std::string& title, int width, int height) {
     data.WINDOW_TITLE = title;
@@ -398,6 +401,7 @@ void Window::init(const std::string& title, int width, int height) {
 
 
     Rml::ElementDocument* document = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
+    documents["main_menu"] = document;
 
     if (!document) {
         SDL_Log("Failed to load main menu RML document");
@@ -422,6 +426,8 @@ void Window::init(const std::string& title, int width, int height) {
     while (data.inMainMenu) {
         renderMainMenu();
     }
+
+    document->Hide();
 
     Uint64 last = SDL_GetPerformanceCounter();
 
