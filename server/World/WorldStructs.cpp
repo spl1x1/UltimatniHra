@@ -13,9 +13,10 @@
 #endif
 
 #include "WorldStructs.h"
-#include <cstdlib>
 
-void WorldData::dealocateMap(int** map) {
+#include <random>
+
+void WorldData::dealocateMap(int** map) const {
     for (int i = 0; i < MAP_WIDTH; ++i) {
         delete[] biomeMap[i];
         delete[] blockVariantionMap[i];
@@ -39,12 +40,37 @@ WorldData::WorldData(int seed){
     }
 }
 
-void WorldData::getBlockVariationMap(WorldData worldData) {
+void WorldData::getBlockVariationMap(const WorldData& worldData) {
     std::srand(static_cast<unsigned int>(worldData.seed));
+    std::mt19937 mt(worldData.seed);
+    std::uniform_real_distribution<double> dist(1.0,(double) VARIATION_LEVELS);
+
     for (int i = 0; i < MAP_WIDTH; ++i) {
         for (int j = 0; j < MAP_HEIGHT; ++j) {
-            int variation = rand() % VARIATION_LEVELS + 1; // Random variation level
+            int variation = static_cast<int>(dist(mt)); // Random variation level
             worldData.blockVariantionMap[i][j] = variation;
+        }
+    }
+}
+
+
+// TODO: Struktry zatím - strom, ore, voda,
+
+void WorldData::getStructureMap(const WorldData& worldData) {
+    std::srand(static_cast<unsigned int>(worldData.seed + 1)); // Different seed for structure map
+    std::mt19937 mt(worldData.seed + 1);
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+
+
+    for (int i = 0; i < MAP_WIDTH; ++i) {
+        for (int j = 0; j < MAP_HEIGHT; ++j) {
+            double chance = dist(mt);
+            if (chance < 0.05) {
+                worldData.structureMap[i][j] = 1;
+            } else {
+                worldData.structureMap[i][j] = 0;
+            }
         }
     }
 }

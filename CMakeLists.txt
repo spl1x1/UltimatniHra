@@ -81,6 +81,7 @@ add_executable(ScalingTest
         render/ScaleFactorCalculator.h
         render/ScaleFactorCalculator.cpp
         render/ScalingFactorCalculator_test.cpp
+        MACROS.h
 )
 
 add_custom_command(TARGET UltimatniHra POST_BUILD

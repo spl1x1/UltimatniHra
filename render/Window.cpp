@@ -115,8 +115,8 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
     int window_w, window_h;
     SDL_GetWindowSizeInPixels(data.Window, &window_w, &window_h);
 
-    float logical_w = static_cast<float>(data.WINDOW_WIDTH);
-    float logical_h = static_cast<float>(data.WINDOW_HEIGHT);
+    auto logical_w = static_cast<float>(data.WINDOW_WIDTH);
+    auto logical_h = static_cast<float>(data.WINDOW_HEIGHT);
 
     float scale_x = logical_w / window_w;
     float scale_y = logical_h / window_h;

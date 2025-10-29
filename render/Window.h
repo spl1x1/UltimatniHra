@@ -16,19 +16,9 @@
 #include "../server/World/WorldStructs.h"
 #include "Menu/RmlUi_Renderer_SDL.h"
 #include "Menu/RmlUi_Platform_SDL.h"
+#include "../MACROS.h"
 
 
-#ifndef GAMERESW
-#define GAMERESW 640
-#endif
-
-#ifndef GAMERESH
-#define GAMERESH 360
-#endif
-
-
-#define SDL_FLAGS (SDL_INIT_VIDEO | SDL_INIT_EVENTS)
-#define SDL_WINDOW_FLAGS SDL_WINDOW_RESIZABLE
 
 struct MenuData {
     Rml::Context* RmlContext;
@@ -54,6 +44,20 @@ struct WindowData {
 
 class Window {
 
+    void markLocationOnMap(float x, float y);
+    void handlePlayerInput(Player& player, float deltaTime) const;
+    void renderPlayer(SDL_Renderer* renderer, const Player& player);
+
+    //Start game = WorldRender::GenerateWorld(0,*this); data.inMainMenu = false; data.Running = true;
+    void renderMainMenu();
+
+    void HandleMainMenuEvent(const SDL_Event* e);
+    void HandleEvent(const SDL_Event* e);
+    void advanceFrame();
+    void Destroy();
+
+
+
 public:
     Server server;
     const float PLAYER_WIDTH = 32.0f;
@@ -69,18 +73,6 @@ public:
     std::unordered_map<std::string, SDL_Surface*> surfaces;
     std::unordered_map<std::string, Rml::ElementDocument*> documents;
 
-
-    void markLocationOnMap(float x, float y);
-    void handlePlayerInput(Player& player, float deltaTime) const;
-    void renderPlayer(SDL_Renderer* renderer, const Player& player);
-
-    //Start game = WorldRender::GenerateWorld(0,*this); data.inMainMenu = false; data.Running = true;
-    void renderMainMenu();
-
-    void HandleMainMenuEvent(const SDL_Event* e);
-    void HandleEvent(const SDL_Event* e);
-    void advanceFrame();
-    void Destroy();
 
     void parseToRenderer(const SDL_Renderer* renderer, const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
     bool LoadSurface(const std::string& Path);

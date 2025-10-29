@@ -9,8 +9,15 @@
 void WorldRender::GenerateWorld(int seed, Window& window) {
     WorldData worldData;
 
-    GeneraceMapy generaceMapy = GeneraceMapy();
-    worldData.WorldMap = generaceMapy.biomMapa;
+    GeneraceMapy *generaceMapy = new GeneraceMapy();
+
+    //TODO: implementovat přímo do generace generace mapy
+    for (int x = 0; x < generaceMapy->biomMapa.size(); x++) {
+        for (int y = 0; y < generaceMapy->biomMapa.at(x).size(); y++) {
+            worldData.biomeMap[x][y] = generaceMapy->biomMapa.at(x).at(y);
+        }
+    }
+    delete generaceMapy;
     WorldData::getBlockVariationMap(worldData);
 
     GenerateTexture(window, worldData);
@@ -75,9 +82,9 @@ void WorldRender::GenerateTexture(Window& window, WorldData& worldData) {
     }
     SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 
-    for (int x = 0; x < worldData.WorldMap.size(); x++) {
-        for (int y = 0; y < worldData.WorldMap.at(x).size(); y++) {
-            int tileType = worldData.WorldMap.at(x).at(y);
+    for (int x = 0; x < MAPSIZE; x++) {
+        for (int y = 0; y < MAPSIZE; y++) {
+            int tileType = worldData.biomeMap[x][y];
             SDL_Rect destRect;
             destRect.x = x * TEXTURERES;
             destRect.y = y * TEXTURERES;
