@@ -4,7 +4,6 @@
 
 #ifndef WORLDDATASTRUCT_H
 #define WORLDDATASTRUCT_H
-#include <vector>
 
 
 class WorldData {

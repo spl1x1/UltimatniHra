@@ -41,6 +41,7 @@ add_subdirectory(
 
 add_executable(UltimatniHra
         main.cpp
+        MACROS.h
         render/Window.cpp
         render/Window.h
         server/Event.h

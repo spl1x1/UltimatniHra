@@ -61,8 +61,8 @@ void WorldData::getStructureMap(const WorldData& worldData) {
     std::mt19937 mt(worldData.seed + 1);
     std::uniform_real_distribution<double> dist(0.0, 1.0);
 
-
-
+    //TODO: Check based on biome type
+    // zatím place holder
     for (int i = 0; i < MAP_WIDTH; ++i) {
         for (int j = 0; j < MAP_HEIGHT; ++j) {
             double chance = dist(mt);

@@ -84,9 +84,10 @@ void Window::handlePlayerInput(Player& player, float deltaTime) const {
 
     player.x += dx * player.speed * deltaTime;
     player.y += dy * player.speed * deltaTime;
-    data.CameraPos->x = player.x - (data.WINDOW_WIDTH / 2.0f - 32.0 / 2.0f);
-    data.CameraPos->y = player.y - (data.WINDOW_HEIGHT / 2.0f - 32.0 / 2.0f);
+    data.CameraPos->x = player.x - posunX;
+    data.CameraPos->y = player.y - posunY;
 }
+
 
 void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
     SDL_FRect rect;
@@ -338,6 +339,9 @@ void Window::init(const std::string& title, int width, int height) {
     data.WINDOW_WIDTH = width;
     data.WINDOW_HEIGHT = height;
 
+    posunX = (static_cast<float>(width)/ 2.0f - 32.0f / 2.0f);
+    posunY = (static_cast<float>(height) / 2.0f - 32.0f / 2.0f);
+
     if (!SDL_Init(SDL_FLAGS))
     {
         return;
@@ -382,11 +386,6 @@ void Window::init(const std::string& title, int width, int height) {
     Rml::Debugger::Initialise(menuData.RmlContext);
     Rml::Lua::Initialise();
     Rml::Debugger::SetVisible(false);
-#endif
-#ifdef FRAMERATE
-    data.refreshRate = 1000.0 / FRAMERATE;
-#else
-    data.refreshRate = 1000.0/SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(data.Window))->refresh_rate;
 #endif
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
