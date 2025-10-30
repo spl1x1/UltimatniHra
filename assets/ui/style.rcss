@@ -5,20 +5,14 @@
 
 body {
     margin: 0;
-    height: 100vh;
     /* background-color: #203a43; */
     font-family: 'Poppins', sans-serif;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    padding-left: 17em;
+    align-items: center;
 }
 
 /* Basic display defaults */
-div, p, h1, h2, h3, h4, h5, h6 {
-    display: block;
-}
-
 em {
     font-style: italic;
 }
@@ -53,9 +47,9 @@ thead, tbody, tfoot { display: table-row-group; }
     align-items: center;
     justify-content: center;
     height: 100%;
-    width: 100%;
+    width: 640px;
     gap: 30px;
-    position: relative;
+    align-content: center;
 }
 
 /* Buttons */
@@ -65,15 +59,16 @@ thead, tbody, tfoot { display: table-row-group; }
     line-height: 50px;
     text-align: center;
     vertical-align: middle;
-
+    justify-content: center;
+    align-content: center;
+    align-items: center;
     font-size: 22px;
     font-weight: 600;
     color: #007BFF;
     background-color: #d3d3d3;
+    align-self: center;
 
     border-width: 2px;
-    border-style: solid;
-    border-color: #aaaaaa;
     border-radius: 12px;
 
     cursor: pointer;
@@ -85,8 +80,8 @@ thead, tbody, tfoot { display: table-row-group; }
 /* Hover effects (no transitions) */
 .menu-button:hover {
     background-color: #e0e0e0;
-    box-shadow-offset: 0 0;
     border-color: #ffffff;
+    offset-fixed: true;
 }
 
 .menu-button:active {
@@ -95,19 +90,14 @@ thead, tbody, tfoot { display: table-row-group; }
 
 /* Button-specific hover shadows */
 #play_button:hover {
-    box-shadow-color: #00ff99;
+    box-shadow: #00ff99 15px 15px 15px 15px;
 
-    box-shadow-blur-radius: 15px;
 }
 
 #options_button:hover {
-    box-shadow-color: #0099ff;
-    box-shadow-offset: 0 0;
-    box-shadow-blur-radius: 15px;
+    box-shadow: #0099ff 15px 15px 15px 15px;
 }
 
 #quit_button:hover {
-    box-shadow-color: #ff0066;
-    box-shadow-offset: 0 0;
-    box-shadow-blur-radius: 15px;
+    box-shadow: #ff0066 0;
 }
