@@ -5,8 +5,8 @@
 
 body {
     margin: 0;
-    /* background-color: #203a43; */
-    font-family: 'Poppins', sans-serif;
+    background-color: #203a43;
+    font-family: "Poppins-Regular";
     display: flex;
     justify-content: center;
     align-items: center;
@@ -75,29 +75,21 @@ thead, tbody, tfoot { display: table-row-group; }
     position: relative;
     margin: 0;
     padding: 0;
+    z-index: 0;
 }
-
 /* Hover effects (no transitions) */
-.menu-button:hover {
-    background-color: #e0e0e0;
-    border-color: #ffffff;
-    offset-fixed: true;
-}
 
-.menu-button:active {
-    background-color: #cccccc;
-}
-
-/* Button-specific hover shadows */
 #play_button:hover {
-    box-shadow: #00ff99 15px 15px 15px 15px;
-
+    border-color: #00ff99;
+    color: black;
 }
 
 #options_button:hover {
-    box-shadow: #0099ff 15px 15px 15px 15px;
+    border-color: #0099ff;
+    color: black
 }
 
 #quit_button:hover {
-    box-shadow: #ff0066 0;
+    border-color: #ff0066;
+    color: black;
 }

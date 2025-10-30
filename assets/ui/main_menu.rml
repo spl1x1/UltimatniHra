@@ -1,15 +1,13 @@
 <rml>
-<head>
-	<title>Main Menu</title>
-
-	<!-- Load base and menu-specific styles -->
-	<link type="text/rcss" href="style.rcss" />
-</head>
-<body>
+	<head>
+		<title>Main Menu</title>
+		<link type="text/rcss" href="style.rcss" />
+	</head>
+	<body>
 	<div id="menu">
 		<div id="play_button" class="menu-button">Play</div>
 		<div id="options_button" class="menu-button">Options</div>
 		<div id="quit_button" class="menu-button">Quit</div>
 	</div>
-</body>
+	</body>
 </rml>
