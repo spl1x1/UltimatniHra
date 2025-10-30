@@ -25,7 +25,23 @@ add_library(Freetype::Freetype ALIAS freetype)
 add_library(SDL::SDL ALIAS SDL3-static )
 add_library(SDL_image::SDL_image ALIAS SDL3_image-static)
 
-add_library(Lua::Lua INTERFACE IMPORTED)
+add_library(Lua::Lua INTERFACE IMPORTED
+        server/World/Biome/Biome.cpp
+        server/World/Biome/Biome.h
+        server/World/Biome/Snow/SnowBiome.cpp
+        server/World/Biome/Snow/SnowBiome.h
+        server/World/Biome/Water/WaterBiome.cpp
+        server/World/Biome/Water/WaterBiome.h
+        server/World/Biome/NONE/NONE.cpp
+        server/World/Biome/NONE/NONE.h
+        server/World/Biome/Grassland/GrasslandBiome.cpp
+        server/World/Biome/Grassland/GrasslandBiome.h
+        server/World/Biome/Forest/ForestBiome.cpp
+        server/World/Biome/Forest/ForestBiome.h
+        server/World/Biome/Desert/DesertBiome.cpp
+        server/World/Biome/Desert/DesertBiome.h
+        server/World/Biome/Beach/BeachBiome.cpp
+        server/World/Biome/Beach/BeachBiome.h)
 set_target_properties(Lua::Lua PROPERTIES
         INTERFACE_LINK_LIBRARIES "lua::lib"
 )
@@ -41,6 +57,7 @@ add_subdirectory(
 
 add_executable(UltimatniHra
         main.cpp
+        MACROS.h
         render/Window.cpp
         render/Window.h
         server/Event.h
@@ -81,6 +98,7 @@ add_executable(ScalingTest
         render/ScaleFactorCalculator.h
         render/ScaleFactorCalculator.cpp
         render/ScalingFactorCalculator_test.cpp
+        MACROS.h
 )
 
 add_custom_command(TARGET UltimatniHra POST_BUILD

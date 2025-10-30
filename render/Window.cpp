@@ -84,9 +84,10 @@ void Window::handlePlayerInput(Player& player, float deltaTime) const {
 
     player.x += dx * player.speed * deltaTime;
     player.y += dy * player.speed * deltaTime;
-    data.CameraPos->x = player.x - (data.WINDOW_WIDTH / 2.0f - 32.0 / 2.0f);
-    data.CameraPos->y = player.y - (data.WINDOW_HEIGHT / 2.0f - 32.0 / 2.0f);
+    data.CameraPos->x = player.x - offsetX;
+    data.CameraPos->y = player.y - offsetY;
 }
+
 
 void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
     SDL_FRect rect;
@@ -115,8 +116,8 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
     int window_w, window_h;
     SDL_GetWindowSizeInPixels(data.Window, &window_w, &window_h);
 
-    float logical_w = static_cast<float>(data.WINDOW_WIDTH);
-    float logical_h = static_cast<float>(data.WINDOW_HEIGHT);
+    auto logical_w = static_cast<float>(data.WINDOW_WIDTH);
+    auto logical_h = static_cast<float>(data.WINDOW_HEIGHT);
 
     float scale_x = logical_w / window_w;
     float scale_y = logical_h / window_h;
@@ -338,6 +339,9 @@ void Window::init(const std::string& title, int width, int height) {
     data.WINDOW_WIDTH = width;
     data.WINDOW_HEIGHT = height;
 
+    offsetX = (static_cast<float>(width)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
+    offsetY = (static_cast<float>(height) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
+
     if (!SDL_Init(SDL_FLAGS))
     {
         return;
@@ -382,11 +386,6 @@ void Window::init(const std::string& title, int width, int height) {
     Rml::Debugger::Initialise(menuData.RmlContext);
     Rml::Lua::Initialise();
     Rml::Debugger::SetVisible(false);
-#endif
-#ifdef FRAMERATE
-    data.refreshRate = 1000.0 / FRAMERATE;
-#else
-    data.refreshRate = 1000.0/SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(data.Window))->refresh_rate;
 #endif
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);

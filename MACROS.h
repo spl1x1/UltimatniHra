@@ -1,0 +1,25 @@
+//
+// Created by Lukáš Kaplánek on 29.10.2025.
+//
+
+#ifndef MACROS_H
+#define MACROS_H
+
+#define GAMERESW 640
+#define GAMERESH 360
+
+#define MAPSIZE 512
+#define VARIATION_LEVELS 5
+#define MAXTREECOUNT 100
+#define MAXORECOUNT 100
+#define MAXCACTUSCOUNT 100
+
+
+#define PLAYER_WIDTH 32
+#define PLAYER_HEIGHT 32
+
+#define SDL_FLAGS (SDL_INIT_VIDEO | SDL_INIT_EVENTS)
+#define SDL_WINDOW_FLAGS SDL_WINDOW_RESIZABLE
+
+
+#endif //MACROS_H

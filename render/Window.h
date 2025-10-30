@@ -16,19 +16,9 @@
 #include "../server/World/WorldStructs.h"
 #include "Menu/RmlUi_Renderer_SDL.h"
 #include "Menu/RmlUi_Platform_SDL.h"
+#include "../MACROS.h"
 
 
-#ifndef GAMERESW
-#define GAMERESW 640
-#endif
-
-#ifndef GAMERESH
-#define GAMERESH 360
-#endif
-
-
-#define SDL_FLAGS (SDL_INIT_VIDEO | SDL_INIT_EVENTS)
-#define SDL_WINDOW_FLAGS SDL_WINDOW_RESIZABLE
 
 struct MenuData {
     Rml::Context* RmlContext;
@@ -54,21 +44,8 @@ struct WindowData {
 
 class Window {
 
-public:
-    Server server;
-    const float PLAYER_WIDTH = 32.0f;
-    const float PLAYER_HEIGHT = 32.0f;
-    Player player = {480, 180, 256, 256, 200.0f};
-
-    WorldData worldDataStruct;
-    WindowData data;
-    WorldData worldData;
-    MenuData menuData;
-
-    std::unordered_map<std::string, SDL_Texture*> textures;
-    std::unordered_map<std::string, SDL_Surface*> surfaces;
-    std::unordered_map<std::string, Rml::ElementDocument*> documents;
-
+    float offsetX = 0.0f;
+    float offsetY = 0.0f;
 
     void markLocationOnMap(float x, float y);
     void handlePlayerInput(Player& player, float deltaTime) const;
@@ -81,6 +58,22 @@ public:
     void HandleEvent(const SDL_Event* e);
     void advanceFrame();
     void Destroy();
+
+
+
+public:
+    Server server;
+    Player player = {480, 180, 256, 256, 200.0f};
+
+    WorldData worldDataStruct;
+    WindowData data;
+    WorldData worldData;
+    MenuData menuData;
+
+    std::unordered_map<std::string, SDL_Texture*> textures;
+    std::unordered_map<std::string, SDL_Surface*> surfaces;
+    std::unordered_map<std::string, Rml::ElementDocument*> documents;
+
 
     void parseToRenderer(const SDL_Renderer* renderer, const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
     bool LoadSurface(const std::string& Path);
