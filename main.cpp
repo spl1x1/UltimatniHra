@@ -2,7 +2,6 @@
 #include "server/World/generace_mapy.h"
 
 
-
 int main(int argc, char *argv[]) {;
   /*  s.onTick.add([]() {
         std::cout << "Server Tick Event" << std::endl;

@@ -15,7 +15,7 @@ public:
     int** blockVariantionMap; // 2D array for block variation map
     int** structureMap; // 2D array for structure map
 
-    WorldData(int seed = 0);
+    explicit WorldData(int seed = 0);
 
     static void getBlockVariationMap(const WorldData& worldData);
     static void getStructureMap(const WorldData& worldData);

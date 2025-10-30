@@ -9,7 +9,7 @@
 void WorldRender::GenerateWorld(int seed, Window& window) {
     WorldData worldData;
 
-    GeneraceMapy *generaceMapy = new GeneraceMapy();
+    auto *generaceMapy = new GeneraceMapy();
 
     //TODO: implementovat přímo do generace generace mapy
     for (int x = 0; x < generaceMapy->biomMapa.size(); x++) {

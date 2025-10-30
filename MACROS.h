@@ -5,19 +5,21 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#ifndef GAMERESW
 #define GAMERESW 640
-#endif
-
-#ifndef GAMERESH
 #define GAMERESH 360
-#endif
 
-#ifndef MAPSIZE
 #define MAPSIZE 512
-#endif
+#define VARIATION_LEVELS 5
+#define MAXTREECOUNT 100
+#define MAXORECOUNT 100
+#define MAXCACTUSCOUNT 100
+
+
+#define PLAYER_WIDTH 32
+#define PLAYER_HEIGHT 32
 
 #define SDL_FLAGS (SDL_INIT_VIDEO | SDL_INIT_EVENTS)
 #define SDL_WINDOW_FLAGS SDL_WINDOW_RESIZABLE
+
 
 #endif //MACROS_H

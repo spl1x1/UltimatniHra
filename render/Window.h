@@ -63,8 +63,6 @@ class Window {
 
 public:
     Server server;
-    const float PLAYER_WIDTH = 32.0f;
-    const float PLAYER_HEIGHT = 32.0f;
     Player player = {480, 180, 256, 256, 200.0f};
 
     WorldData worldDataStruct;

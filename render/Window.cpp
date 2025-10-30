@@ -339,8 +339,8 @@ void Window::init(const std::string& title, int width, int height) {
     data.WINDOW_WIDTH = width;
     data.WINDOW_HEIGHT = height;
 
-    offsetX = (static_cast<float>(width)/ 2.0f - 32.0f / 2.0f);
-    offsetY = (static_cast<float>(height) / 2.0f - 32.0f / 2.0f);
+    offsetX = (static_cast<float>(width)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
+    offsetY = (static_cast<float>(height) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
 
     if (!SDL_Init(SDL_FLAGS))
     {
