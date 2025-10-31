@@ -2,19 +2,19 @@
 // Created by Lukáš Kaplánek on 31.10.2025.
 //
 
-#ifndef WATERBIOME_H
-#define WATERBIOME_H
+#ifndef SNOWBIOME_H
+#define SNOWBIOME_H
 #include "../Biome.h"
 
 
 
 class WaterBiome : public Biome {
 
-    BiomeType _type = BiomeType::Water;
+    BiomeType _type = BiomeType::Snow;
     float _temperature = 0.0f;
 
     int _biomeId = 0;
-    std::string _assetPath = "water.bmp";
+    std::string _assetPath = "snow.bmp";
     int _variationLevels = 8;
 
 public:
@@ -25,4 +25,4 @@ public:
 
 
 
-#endif //WATERBIOME_H
+#endif //SNOWBIOME_H

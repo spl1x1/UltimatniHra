@@ -2,27 +2,27 @@
 // Created by Lukáš Kaplánek on 31.10.2025.
 //
 
-#ifndef WATERBIOME_H
-#define WATERBIOME_H
+#ifndef FORESTBIOME_H
+#define FORESTBIOME_H
 #include "../Biome.h"
 
 
 
-class WaterBiome : public Biome {
+class ForestBiome : public Biome {
 
-    BiomeType _type = BiomeType::Water;
+    BiomeType _type = BiomeType::Forest;
     float _temperature = 0.0f;
 
     int _biomeId = 0;
-    std::string _assetPath = "water.bmp";
+    std::string _assetPath = "forest.bmp";
     int _variationLevels = 8;
 
 public:
-    ~WaterBiome() override = default;
+    ~ForestBiome() override = default;
     SDL_Rect GetAssetRect(int VariantionId) override;
 
 };
 
 
 
-#endif //WATERBIOME_H
+#endif //FORESTBIOME_H

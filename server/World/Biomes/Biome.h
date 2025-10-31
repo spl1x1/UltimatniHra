@@ -8,6 +8,7 @@
 #include <SDL3/SDL_rect.h>
 #include <string>
 #include <tuple>
+#include "Structure.h"
 
 enum BiomeType {
     None = -1,
@@ -29,32 +30,38 @@ protected:
     int _biomeId = -1;
 
     std::vector<std::tuple<int,int>> _blocks; // Lists coordinates of blocks belonging to this biome
-    std::string _assetPath = "";
+    std::vector<Structure> _structures; // Lists structures belonging to this biome
+    std::string _assetPath;
     int _variationLevels = 1;
 
 
 public:
+
     virtual ~Biome() = default;
 
-    virtual SDL_Rect GetAssetRect(int VariantionId){return SDL_Rect();};
+    virtual SDL_Rect GetAssetRect(int VariantionId){return {};};
 
-    int GetVariationLevels() const {return _variationLevels;}
+    [[nodiscard]] int GetVariationLevels() const {return _variationLevels;}
 
-    std::string GetAssetPath() const {
+    [[nodiscard]] std::string GetAssetPath() const {
         return _assetPath;
     }
 
-    BiomeType GetType() const {
+    [[nodiscard]] BiomeType GetType() const {
         return _type;
     }
-    float GetTemperature() const {
+    [[nodiscard]] float GetTemperature() const {
         return _temperature;
     }
-    int GetBiomeId() const {
+    [[nodiscard]] int GetBiomeId() const {
         return _biomeId;
     }
 
-    const std::vector<std::tuple<int, int>>& GetBlocks() const {
+    [[nodiscard]] std::vector<Structure>  GetStructureList() const {
+        return _structures;
+    }
+
+    [[nodiscard]] const std::vector<std::tuple<int, int>>& GetBlocks() const {
         return _blocks;
     }
 

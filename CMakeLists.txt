@@ -25,7 +25,8 @@ add_library(Freetype::Freetype ALIAS freetype)
 add_library(SDL::SDL ALIAS SDL3-static )
 add_library(SDL_image::SDL_image ALIAS SDL3_image-static)
 
-add_library(Lua::Lua INTERFACE IMPORTED)
+add_library(Lua::Lua INTERFACE IMPORTED
+        server/World/Biomes/Structure.h)
 
 set_target_properties(Lua::Lua PROPERTIES
         INTERFACE_LINK_LIBRARIES "lua::lib"
@@ -61,7 +62,7 @@ add_executable(UltimatniHra
         server/Entities/EntityStructs.cpp
         server/Entities/EntityStructs.h
         server/ServerStrucs.h
-        server/World/Biomes/Biomes.h
+        server/World/Biomes/Biome.h
         server/World/Biomes/Water/WaterBiome.h
         server/World/Biomes/Water/WaterBiome.cpp
 )

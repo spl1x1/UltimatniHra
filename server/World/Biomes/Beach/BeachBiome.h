@@ -2,8 +2,8 @@
 // Created by Lukáš Kaplánek on 31.10.2025.
 //
 
-#ifndef WATERBIOME_H
-#define WATERBIOME_H
+#ifndef BEACHBIOME_H
+#define BEACHBIOME_H
 #include "../Biome.h"
 
 
@@ -25,4 +25,4 @@ public:
 
 
 
-#endif //WATERBIOME_H
+#endif //BEACHBIOME_H
