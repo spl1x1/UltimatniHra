@@ -376,11 +376,9 @@ void Window::init(const std::string& title, int width, int height) {
 
     Rml::Initialise();
 
-    Rml::LoadFontFace("assets/fonts/my_font_face.ttf");
-    Rml::LoadFontFace("assets/fonts/Poppins-Regular.ttf");
-    Rml::LoadFontFace("assets/fonts/Poppins-Bold.ttf");
-
     menuData.RmlContext = Rml::CreateContext("main", Rml::Vector2i(data.WINDOW_WIDTH, data.WINDOW_HEIGHT), menuData.render_interface);
+
+    Rml::LoadFontFace("assets/fonts/Poppins-Regular.ttf");
 
 #ifdef DEBUG
     Rml::Debugger::Initialise(menuData.RmlContext);

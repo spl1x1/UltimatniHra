@@ -41,7 +41,8 @@ add_library(Lua::Lua INTERFACE IMPORTED
         server/World/Biome/Desert/DesertBiome.cpp
         server/World/Biome/Desert/DesertBiome.h
         server/World/Biome/Beach/BeachBiome.cpp
-        server/World/Biome/Beach/BeachBiome.h)
+        server/World/Biome/Beach/BeachBiome.h
+        server/World/Biomes/Biomes.h)
 set_target_properties(Lua::Lua PROPERTIES
         INTERFACE_LINK_LIBRARIES "lua::lib"
 )
