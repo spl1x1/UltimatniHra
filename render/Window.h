@@ -24,6 +24,7 @@ struct MenuData {
     Rml::Context* RmlContext;
     RenderInterface_SDL* render_interface;
     SystemInterface_SDL* system_interface;
+    Rml::ElementDocument* mainMenuDocument;
 };
 
 struct WindowData {
@@ -35,11 +36,12 @@ struct WindowData {
     bool Running;
     bool inMainMenu;
     bool inGameMenu;
-    double refreshRate;
 
     std::string WINDOW_TITLE;
     int WINDOW_WIDTH;
     int WINDOW_HEIGHT;
+
+    Uint64 last;
 };
 
 class Window {
@@ -72,8 +74,6 @@ public:
 
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
-    std::unordered_map<std::string, Rml::ElementDocument*> documents;
-
 
     void parseToRenderer(const SDL_Renderer* renderer, const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
     bool LoadSurface(const std::string& Path);
@@ -82,6 +82,9 @@ public:
     bool LoadTexture(const std::string& Path, const std::string& SaveAs);
     bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
 
+
+    void tick();
+    void initGame();
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
     ~Window();
 };

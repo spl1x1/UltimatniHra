@@ -9,6 +9,7 @@
 struct Server{
     int maxPlayers;
     int port;
+    int seed;
     const char* ipAddress;
 
     float deltaTime;

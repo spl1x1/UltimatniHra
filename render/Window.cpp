@@ -19,9 +19,9 @@ public:
     explicit PlayButtonListener(Window* win) : window(win) {}
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Play clicked!");
-        window->data.inMainMenu = false;
-        window->data.Running = true;
-        WorldRender::GenerateWorld(0,*window);
+        window->menuData.mainMenuDocument->Hide();
+        window->initGame();
+        window->server.seed = 0; // TODO: get seed from user input
     }
 };
 
@@ -268,6 +268,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 
 
 void Window::advanceFrame() {
+    SDL_RenderClear(data.Renderer);
     handlePlayerInput(player, server.deltaTime);
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.CameraPos, nullptr);
     renderPlayer(data.Renderer,player);
@@ -334,6 +335,35 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
     return true;
 }
 
+void Window::tick() {
+
+    Uint64 current = SDL_GetPerformanceCounter();
+    server.deltaTime = (current - data.last) / static_cast<float>(SDL_GetPerformanceFrequency());
+    data.last = current;
+
+    if (data.inMainMenu) {
+        renderMainMenu();
+    }
+    else if (data.Running) {
+        advanceFrame();
+    }
+}
+
+void Window::initGame() {
+    data.inMainMenu = false;
+    data.Running = true;
+    WorldRender::GenerateWorld(0,*this);
+    data.last = SDL_GetPerformanceCounter();
+
+    data.CameraPos = new SDL_FRect{
+        player.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
+        player.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
+        GAMERESW,
+        GAMERESH
+    };
+    SDL_RenderClear(data.Renderer);
+}
+
 void Window::init(const std::string& title, int width, int height) {
     data.WINDOW_TITLE = title;
     data.WINDOW_WIDTH = width;
@@ -369,11 +399,6 @@ void Window::init(const std::string& title, int width, int height) {
     Rml::SetRenderInterface(menuData.render_interface);
     Rml::SetSystemInterface(menuData.system_interface);
 
-    if (!menuData.system_interface || !menuData.render_interface) {
-        SDL_Log("Failed to initialize RmlUi interfaces");
-        return;
-    }
-
     Rml::Initialise();
 
     menuData.RmlContext = Rml::CreateContext("main", Rml::Vector2i(data.WINDOW_WIDTH, data.WINDOW_HEIGHT), menuData.render_interface);
@@ -387,6 +412,9 @@ void Window::init(const std::string& title, int width, int height) {
 #endif
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
+    int count = 0;
+    SDL_GetFullscreenDisplayModes(SDL_GetDisplayForWindow(data.Window), &count);
+    SDL_Log("Display modes: %i ",count);
     SDL_Log("Window size: %ix%i", data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
 
@@ -397,17 +425,16 @@ void Window::init(const std::string& title, int width, int height) {
     data.inMainMenu = true;
 
 
-    Rml::ElementDocument* document = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
-    documents["main_menu"] = document;
+    menuData.mainMenuDocument = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
 
-    if (!document) {
+    if (!menuData.mainMenuDocument) {
         SDL_Log("Failed to load main menu RML document");
         return;
     }
 
-    Rml::Element* playButton = document->GetElementById("play_button");
-    Rml::Element* optionsButton = document->GetElementById("options_button");
-    Rml::Element* quitButton = document->GetElementById("quit_button");
+    Rml::Element* playButton = menuData.mainMenuDocument->GetElementById("play_button");
+    Rml::Element* optionsButton = menuData.mainMenuDocument->GetElementById("options_button");
+    Rml::Element* quitButton = menuData.mainMenuDocument->GetElementById("quit_button");
 
     if (playButton)
         playButton->AddEventListener("click", new PlayButtonListener(this));
@@ -418,32 +445,7 @@ void Window::init(const std::string& title, int width, int height) {
     if (quitButton)
         quitButton->AddEventListener("click", new QuitButtonListener(this));
 
-    document->Show();
-
-    while (data.inMainMenu) {
-        renderMainMenu();
-    }
-
-    document->Hide();
-
-    Uint64 last = SDL_GetPerformanceCounter();
-
-    data.CameraPos = new SDL_FRect{
-        player.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
-        player.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
-        GAMERESW,
-        GAMERESH
-    };
-
-    while (data.Running) {
-        Uint64 current = SDL_GetPerformanceCounter();
-        server.deltaTime = (current - last) / static_cast<float>(SDL_GetPerformanceFrequency());
-        last = current;
-
-        SDL_RenderClear(data.Renderer);
-        advanceFrame();
-        SDL_Delay(static_cast<Uint32>(data.refreshRate));
-    }
+    menuData.mainMenuDocument->Show();
 }
 
 void Window::Destroy() {
