@@ -1,0 +1,44 @@
+﻿<rml>
+    <head>
+        <title>Options Menu</title>
+        <link type="text/rcss" href="style.rcss" />
+        <script type="text/lua">
+            function dropdown_click(event)
+                local dropdown = document:GetElementById("myDropdown")
+                if dropdown then
+                    dropdown.classList:Toggle("show")
+                end
+            end
+
+            function window_click(event)
+                local target = event.current_element
+                if not target.classList:Contains("dropbtn") then
+                    local dropdowns = document:GetElementsByClassName("dropdown-content")
+                    for i = 0, dropdowns.length - 1 do
+                        local openDropdown = dropdowns[i]
+                        if openDropdown.classList:Contains("show") then
+                            openDropdown.classList:Remove("show")
+                        end
+                    end
+                end
+            end
+
+            document:AddEventListener("click", window_click)
+        </script>
+        <style>
+            .dropdown-content { display: none; }
+            .dropdown-content.show { display: block; }
+        </style>
+    </head>
+
+    <body>
+    <div class="dropdown">
+        <button class="dropbtn" onclick="dropdown_click(event)">Options</button>
+        <div id="myDropdown" class="dropdown-content">
+            <p>Graphics</p>
+            <p>Audio</p>
+            <p>Controls</p>
+        </div>
+    </div>
+    </body>
+</rml>
