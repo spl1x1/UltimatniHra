@@ -1,16 +1,10 @@
 ﻿#include "render/Window.h"
 #include "server/World/generace_mapy.h"
-#include "server/World/Biomes/Water/WaterBiome.h"
+#include "server/World/Biomes/Water/BeachBiome.h"
 #include "server/World/Biomes/Biome.h"
 
 
 #define CLIENT
-
-void RegisterBiomes(Server &server) {
-    server.biomes.push_back(new WaterBiome());
-}
-
-
 
 
 int main(int argc, char *argv[]) {;
@@ -24,8 +18,7 @@ int main(int argc, char *argv[]) {;
     */
 
 #ifdef CLIENT
-    Server server;
-    RegisterBiomes(server);
+    Server server = {};
     auto *c = new Window();
     c->server = server;
     c->init("Game window");

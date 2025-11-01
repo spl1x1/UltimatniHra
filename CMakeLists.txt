@@ -79,6 +79,8 @@ add_executable(server_test
         server/World/test.cpp
         server/World/WorldStructs.h
         server/World/WorldStructs.cpp
+        server/World/BossPathfinding.cpp
+        server/World/BossPathfinding.h
 )
 
 target_link_libraries(UltimatniHra
