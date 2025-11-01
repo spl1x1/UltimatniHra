@@ -27,9 +27,20 @@ public:
 };
 class OptionsButtonListener : public Rml::EventListener {
 public:
+    Window* window;
+    explicit OptionsButtonListener(Window* win) : window(win) {}
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Options clicked!");
         // TODO: open options menu
+        Rml::ElementDocument* optionsDoc = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
+
+        if (!optionsDoc) {
+            SDL_Log("Failed to load options_menu.rml");
+            return;
+        }
+
+        optionsDoc->Show();
+        window->documents["options_menu"] = optionsDoc;
     }
 };
 
@@ -459,7 +470,7 @@ void Window::init(const std::string& title, int width, int height) {
         playButton->AddEventListener("click", new PlayButtonListener(this));
 
     if (optionsButton)
-        optionsButton->AddEventListener("click", new OptionsButtonListener());
+        optionsButton->AddEventListener("click", new OptionsButtonListener(this));
 
     if (quitButton)
         quitButton->AddEventListener("click", new QuitButtonListener(this));
