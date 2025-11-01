@@ -23,7 +23,9 @@ struct MenuData {
     Rml::Context* RmlContext;
     RenderInterface_SDL* render_interface;
     SystemInterface_SDL* system_interface;
-    Rml::ElementDocument* mainMenuDocument;
+    std::unordered_map<std::string, Rml::ElementDocument*> documents;
+
+
 };
 
 struct WindowData {
@@ -49,7 +51,7 @@ class Window {
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
-    void handlePlayerInput(Player& player, float deltaTime);
+    void handlePlayerInput(Player& player, float deltaTime) const;
     void renderPlayer(SDL_Renderer* renderer, const Player& player);
 
     //Start game = WorldRender::GenerateWorld(0,*this); data.inMainMenu = false; data.Running = true;

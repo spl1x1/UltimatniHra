@@ -20,7 +20,7 @@ public:
     explicit PlayButtonListener(Window* win) : window(win) {}
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Play clicked!");
-        window->menuData.mainMenuDocument->Hide();
+        window->menuData.documents["main_menu"] ->Hide();
         window->server.seed = 0; // TODO: get seed from user input
         window->initGame();
     }
@@ -32,15 +32,14 @@ public:
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Options clicked!");
         // TODO: open options menu
-        Rml::ElementDocument* optionsDoc = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
+        window->menuData.documents["options_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
 
-        if (!optionsDoc) {
+        if (!window->menuData.documents["options_menu"] ) {
             SDL_Log("Failed to load options_menu.rml");
             return;
         }
-
-        optionsDoc->Show();
-        window->documents["options_menu"] = optionsDoc;
+        window->menuData.documents["main_menu"]->Hide();
+        window->menuData.documents["options_menu"] ->Show();
     }
 };
 
@@ -67,7 +66,7 @@ void Window::renderMainMenu() {
 }
 
 
-void Window::handlePlayerInput(Player& player, float deltaTime) {
+void Window::handlePlayerInput(Player& player, float deltaTime) const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
     float dx = 0.0f;
@@ -455,16 +454,16 @@ void Window::init(const std::string& title, int width, int height) {
     data.inMainMenu = true;
 
 
-    menuData.mainMenuDocument = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
+    menuData.documents["main_menu"] = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
 
-    if (!menuData.mainMenuDocument) {
+    if (!menuData.documents["main_menu"]) {
         SDL_Log("Failed to load main menu RML document");
         return;
     }
 
-    Rml::Element* playButton = menuData.mainMenuDocument->GetElementById("play_button");
-    Rml::Element* optionsButton = menuData.mainMenuDocument->GetElementById("options_button");
-    Rml::Element* quitButton = menuData.mainMenuDocument->GetElementById("quit_button");
+    Rml::Element* playButton = menuData.documents["main_menu"]->GetElementById("play_button");
+    Rml::Element* optionsButton = menuData.documents["main_menu"]->GetElementById("options_button");
+    Rml::Element* quitButton = menuData.documents["main_menu"]->GetElementById("quit_button");
 
     if (playButton)
         playButton->AddEventListener("click", new PlayButtonListener(this));
@@ -475,7 +474,7 @@ void Window::init(const std::string& title, int width, int height) {
     if (quitButton)
         quitButton->AddEventListener("click", new QuitButtonListener(this));
 
-    menuData.mainMenuDocument->Show();
+    menuData.documents["main_menu"]->Show();
 }
 
 void Window::Destroy() {
