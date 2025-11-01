@@ -24,14 +24,5 @@ int main() {
     //     }
     //     std::cout << "\n";
     // }
-    WorldData worldData = WorldData(42);
-    WorldData::getBlockVariationMap(worldData);
-
-    for (int y = 0; y < MAP_HEIGHT; y++) {
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            std::cout << worldData.blockVariantionMap[x][y] << " ";
-        }
-        std::cout << "\n";
-    }
     return 0;
 }

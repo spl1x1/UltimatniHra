@@ -10,14 +10,13 @@
 #include <unordered_map>
 #include <RmlUi/Core.h>
 
-#include "../cmake-build-debug/_deps/rmlui-src/Source/Lua/Document.h"
-#include "../server/ServerStrucs.h"
+#include "../server/Server.h"
 #include "../server/Entities/EntityStructs.h"
 #include "../server/World/WorldStructs.h"
 #include "Menu/RmlUi_Renderer_SDL.h"
 #include "Menu/RmlUi_Platform_SDL.h"
 #include "../MACROS.h"
-
+#include "Sprites/Sprite.h"
 
 
 struct MenuData {
@@ -32,6 +31,7 @@ struct WindowData {
     SDL_Renderer* Renderer;
     SDL_Event event;
     SDL_FRect* CameraPos;
+    SDL_FRect* WaterPos;
 
     bool Running;
     bool inMainMenu;
@@ -49,8 +49,7 @@ class Window {
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
-    void markLocationOnMap(float x, float y);
-    void handlePlayerInput(Player& player, float deltaTime) const;
+    void handlePlayerInput(Player& player, float deltaTime);
     void renderPlayer(SDL_Renderer* renderer, const Player& player);
 
     //Start game = WorldRender::GenerateWorld(0,*this); data.inMainMenu = false; data.Running = true;
@@ -64,12 +63,13 @@ class Window {
 
 
 public:
+
+    std::vector<Sprite> sprites_;
     Server server;
     Player player = {480, 180, 256, 256, 200.0f};
 
     WorldData worldDataStruct;
     WindowData data;
-    WorldData worldData;
     MenuData menuData;
 
     std::unordered_map<std::string, SDL_Texture*> textures;

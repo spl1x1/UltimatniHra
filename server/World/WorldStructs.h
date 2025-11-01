@@ -10,15 +10,11 @@ class WorldData {
     void dealocateMap(int** map) const;
 
 public:
-    int seed;
     int** biomeMap; // 2D array for biome map
     int** blockVariantionMap; // 2D array for block variation map
     int** structureMap; // 2D array for structure map
 
-    explicit WorldData(int seed = 0);
-
-    static void getBlockVariationMap(const WorldData& worldData);
-    static void getStructureMap(const WorldData& worldData);
+    WorldData();
 };
 
 #endif //WORLDDATASTRUCT_H

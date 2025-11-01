@@ -11,17 +11,28 @@
 
 #include "../Window.h"
 #include <filesystem>
+#include <SDL3/SDL.h>
+#include <string>
 
 
+
+struct WaterSurface {
+    int id;
+    std::string textureName;
+    SDL_Surface* surface;
+};
 
 class WorldRender {
-    static void ReleaseResources(Window& window);
-    static void loadSurfacesFromDirectory(const std::string& directoryPath, Window& window) ;
-    static void GenerateTexture(Window& window, WorldData& worldData);
-    static void GenerateTexturesForStructures(Window& window, WorldData& worldData);
+    Window& window;
+
+    void ReleaseResources() const;
+    void loadSurfacesFromDirectory(const std::string& directoryPath) const;
+    void GenerateWorldTexture() const;
+    void GenerateWaterTextures() const;
 
     public:
-    static void GenerateWorld(int seed,Window& window);
+    WorldRender(Window& window) : window(window) {};
+    void GenerateTextures();
 
 };
 

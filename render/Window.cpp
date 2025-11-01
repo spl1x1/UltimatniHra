@@ -12,6 +12,7 @@
 #include <RmlUi/Lua.h>
 
 #include "../server/World/generace_mapy.h"
+#include "Sprites/WaterSprite.h"
 
 class PlayButtonListener : public Rml::EventListener {
 public:
@@ -20,11 +21,10 @@ public:
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Play clicked!");
         window->menuData.mainMenuDocument->Hide();
-        window->initGame();
         window->server.seed = 0; // TODO: get seed from user input
+        window->initGame();
     }
 };
-
 class OptionsButtonListener : public Rml::EventListener {
 public:
     void ProcessEvent(Rml::Event&) override {
@@ -56,16 +56,7 @@ void Window::renderMainMenu() {
 }
 
 
-void Window::markLocationOnMap(float x, float y) {
-    auto* Rectangle = new SDL_Rect{static_cast<int>(x),static_cast<int>(y),16,16};
-    SDL_BlitSurface(surfaces["mark.bmp"], nullptr, surfaces["WorldMap"], Rectangle);
-    CreateTextureFromSurface("WorldMap","WorldMap");
-    SDL_SaveBMP(surfaces["WorldMap"], "assets/worldmap.bmp");
-    delete Rectangle;
-    SDL_Log("Marked location on map at (%.2f, %.2f)", x, y);
-}
-
-void Window::handlePlayerInput(Player& player, float deltaTime) const {
+void Window::handlePlayerInput(Player& player, float deltaTime) {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
     float dx = 0.0f;
@@ -76,16 +67,32 @@ void Window::handlePlayerInput(Player& player, float deltaTime) const {
     if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  dx -= 1.0f;
     if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) dx += 1.0f;
 
+    if (dx == 0 && dy == 0) {
+        return; // No movement
+    }
     // Normalize diagonal movement
     if (dx != 0 && dy != 0) {
         dx *= 0.7071f;
         dy *= 0.7071f;
     }
 
-    player.x += dx * player.speed * deltaTime;
-    player.y += dy * player.speed * deltaTime;
+    float relativeX = dx * player.speed * deltaTime;
+    float relativeY = dy * player.speed * deltaTime;
+    player.x += relativeX;
+    player.y += relativeY;
     data.CameraPos->x = player.x - offsetX;
     data.CameraPos->y = player.y - offsetY;
+
+
+
+    data.WaterPos->x += relativeX;
+    data.WaterPos->y += relativeY;
+
+
+    if (data.WaterPos->x > 96) data.WaterPos->x -= 32;
+    if (data.WaterPos->x < 32) data.WaterPos->x += 32;
+    if (data.WaterPos->y > 96) data.WaterPos->y -= 32;
+    if (data.WaterPos->y < 32) data.WaterPos->y += 32;
 }
 
 
@@ -253,7 +260,6 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
                 case SDL_SCANCODE_F4: {
-                    markLocationOnMap(player.x, player.y);
                     break;
                 }
 #endif
@@ -270,6 +276,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
     handlePlayerInput(player, server.deltaTime);
+    SDL_RenderTexture(data.Renderer, textures["water" + std::to_string(sprites_.at(0).getCurrentFrame())], data.WaterPos, nullptr);
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.CameraPos, nullptr);
     renderPlayer(data.Renderer,player);
     menuData.RmlContext->Update();
@@ -341,6 +348,10 @@ void Window::tick() {
     server.deltaTime = (current - data.last) / static_cast<float>(SDL_GetPerformanceFrequency());
     data.last = current;
 
+    for (auto& sprite : sprites_) {
+        sprite.tick(server.deltaTime);
+    }
+
     if (data.inMainMenu) {
         renderMainMenu();
     }
@@ -352,7 +363,6 @@ void Window::tick() {
 void Window::initGame() {
     data.inMainMenu = false;
     data.Running = true;
-    WorldRender::GenerateWorld(0,*this);
     data.last = SDL_GetPerformanceCounter();
 
     data.CameraPos = new SDL_FRect{
@@ -361,6 +371,15 @@ void Window::initGame() {
         GAMERESW,
         GAMERESH
     };
+    data.WaterPos = new SDL_FRect{
+        64,64,
+        static_cast<float>(data.WINDOW_WIDTH),
+        static_cast<float>(data.WINDOW_HEIGHT) };
+    WaterSprite water_sprite;
+    SDL_Log("Water sprite created with %d frames", water_sprite.getFrameCount());
+    sprites_.push_back(water_sprite);
+    WorldRender wr(*this);
+    wr.GenerateTextures();
     SDL_RenderClear(data.Renderer);
 }
 

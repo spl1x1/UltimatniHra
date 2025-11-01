@@ -1,6 +1,6 @@
 //
 // Created by Lukáš Kaplánek on 29.10.2025.
-//
+// 30 x 22 tiles for 640x360 resolution
 
 #ifndef MACROS_H
 #define MACROS_H

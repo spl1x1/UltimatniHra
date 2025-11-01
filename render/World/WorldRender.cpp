@@ -4,69 +4,32 @@
 
 #include "WorldRender.h"
 
-#include "../../server/World/generace_mapy.h"
+#include <SDL3_image/SDL_image.h>
 
-void WorldRender::GenerateWorld(int seed, Window& window) {
-    WorldData worldData;
 
-    auto *generaceMapy = new GeneraceMapy();
+void WorldRender::GenerateTextures() {
+    window.server.generateWorld();
+    GenerateWorldTexture();
+    GenerateWaterTextures();
+    ReleaseResources();
 
-    //TODO: implementovat přímo do generace generace mapy
-    for (int x = 0; x < generaceMapy->biomMapa.size(); x++) {
-        for (int y = 0; y < generaceMapy->biomMapa.at(x).size(); y++) {
-            worldData.biomeMap[x][y] = generaceMapy->biomMapa.at(x).at(y);
+}
+
+
+void WorldRender::ReleaseResources() const {
+    for (auto it = window.surfaces.begin(); it != window.surfaces.end(); ) {
+        if (it->first.empty()) {
+            ++it;
+            continue;
         }
+        SDL_Log("Releasing surface: %s", it->first.c_str());
+        SDL_DestroySurface(it->second);
+        it = window.surfaces.erase(it);
     }
-    delete generaceMapy;
-    WorldData::getBlockVariationMap(worldData);
-
-    GenerateTexture(window, worldData);
-    window.worldData = worldData;
-}
-
-void WorldRender::ReleaseResources(Window &window) {
-    SDL_DestroySurface(window.surfaces["grass_1.bmp"]);
-    window.surfaces.erase("grass_1.bmp");
-
-    SDL_DestroySurface(window.surfaces["grass_2.bmp"]);
-    window.surfaces.erase("grass_2.bmp");
-
-    SDL_DestroySurface(window.surfaces["grass_3.bmp"]);
-    window.surfaces.erase("grass_3.bmp");
-
-    SDL_DestroySurface(window.surfaces["grass_4.bmp"]);
-    window.surfaces.erase("grass_4.bmp");
-
-    SDL_DestroySurface(window.surfaces["grass_5.bmp"]);
-    window.surfaces.erase("grass_5.bmp");
-
-    SDL_DestroySurface(window.surfaces["Snow1.bmp"]);
-    window.surfaces.erase("Snow1.bmp");
-
-    SDL_DestroySurface(window.surfaces["Snow2.bmp"]);
-    window.surfaces.erase("Snow2.bmp");
-
-    SDL_DestroySurface(window.surfaces["Snow3.bmp"]);
-    window.surfaces.erase("Snow3.bmp");
-
-    SDL_DestroySurface(window.surfaces["beach.bmp"]);
-    window.surfaces.erase("beach.bmp");
-
-    SDL_DestroySurface(window.surfaces["sand.bmp"]);
-    window.surfaces.erase("sand.bmp");
-
-    SDL_DestroySurface(window.surfaces["mountain.bmp"]);
-    window.surfaces.erase("mountain.bmp");
-
-    SDL_DestroySurface(window.surfaces["forest.bmp"]);
-    window.surfaces.erase("forest.bmp");
-
-    SDL_DestroySurface(window.surfaces["WorldMap"]);
-    window.surfaces.erase("WorldMap");
 }
 
 
-void WorldRender::loadSurfacesFromDirectory(const std::string& directoryPath, Window& window) {
+void WorldRender::loadSurfacesFromDirectory(const std::string& directoryPath) const {
     for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
         std::string fileName = entry.path().string();
         SDL_Log("Loading surface: %s", fileName.c_str());
@@ -74,17 +37,53 @@ void WorldRender::loadSurfacesFromDirectory(const std::string& directoryPath, Wi
     }
 }
 
-void WorldRender::GenerateTexture(Window& window, WorldData& worldData) {
+void WorldRender::GenerateWaterTextures() const {
+    std::vector<WaterSurface> waterFrames;
+    int spriteCount = window.sprites_.at(0).getFrameCount();
+
+    for (int frame = 1; frame <= spriteCount; frame++) {
+        WaterSurface waterSurface;
+        waterSurface.id = frame;
+        waterSurface.textureName = "water" + std::to_string(frame) + ".bmp";;
+        waterSurface.surface = SDL_CreateSurface(768,512,SDL_PIXELFORMAT_ABGR8888);
+        waterFrames.push_back(waterSurface);
+    }
+
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 24; j++) {
+            SDL_Rect destRect;
+            destRect.x = j * 32;
+            destRect.y = i * 32;
+            destRect.w = 32;
+            destRect.h = 32;
+
+            for (int frame = 0; frame <= spriteCount-1; frame++) {
+                auto srcSurface = window.surfaces[waterFrames.at(frame).textureName];
+                auto targetSurface = waterFrames.at(frame).surface;
+
+                SDL_BlitSurface(srcSurface, nullptr, targetSurface, &destRect);
+            }
+        }
+    }
+
+    for (const auto& waterFrame : waterFrames) {
+        window.surfaces[waterFrame.textureName] = waterFrame.surface;
+        window.CreateTextureFromSurface(waterFrame.textureName, "water" + std::to_string(waterFrame.id));
+        IMG_SavePNG(waterFrame.surface, ("assets/water" + std::to_string(waterFrame.id) + ".png").c_str());
+    }
+}
+
+void WorldRender::GenerateWorldTexture() const {
     for (const auto& entry : std::filesystem::directory_iterator("assets/textures/world")) {
         std::string fileName = entry.path().string();
         SDL_Log("Directory:: %s", fileName.c_str());
-        loadSurfacesFromDirectory(fileName, window);
+        loadSurfacesFromDirectory(fileName);
     }
     SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 
     for (int x = 0; x < MAPSIZE; x++) {
         for (int y = 0; y < MAPSIZE; y++) {
-            int tileType = worldData.biomeMap[x][y];
+            int tileType = window.server.worldData.biomeMap[x][y];
             SDL_Rect destRect;
             destRect.x = x * TEXTURERES;
             destRect.y = y * TEXTURERES;
@@ -105,7 +104,7 @@ void WorldRender::GenerateTexture(Window& window, WorldData& worldData) {
                 }
                 case 3:
                 {
-                    std::string variationTexture = "grass" + std::to_string(worldData.blockVariantionMap[x][y]) + ".bmp";
+                    std::string variationTexture = "grass" + std::to_string(window.server.worldData.blockVariantionMap[x][y]) + ".bmp";
                     srcSurface = window.surfaces[variationTexture];
                     break;
                 }
@@ -121,7 +120,7 @@ void WorldRender::GenerateTexture(Window& window, WorldData& worldData) {
                 }
                 case 6:
                 {
-                    std::string variationTexture = "Snow" + std::to_string(worldData.blockVariantionMap[x][y]) + ".bmp";
+                    std::string variationTexture = "Snow" + std::to_string(window.server.worldData.blockVariantionMap[x][y]) + ".bmp";
                     srcSurface = window.surfaces[variationTexture];
                     break;
                 }
@@ -133,6 +132,5 @@ void WorldRender::GenerateTexture(Window& window, WorldData& worldData) {
     }
     window.surfaces["WorldMap"] = finalSurface;
     window.CreateTextureFromSurface("WorldMap","WorldMap");
-    SDL_SaveBMP(finalSurface, "assets/worldmap.bmp");
-    //ReleaseResources(window);
+    IMG_SavePNG(finalSurface, "assets/worldmap.png");
 };

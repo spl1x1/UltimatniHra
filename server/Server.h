@@ -4,15 +4,22 @@
 
 #ifndef SERVERSTRUCS_H
 #define SERVERSTRUCS_H
+#include "World/WorldStructs.h"
+#include "World/Biomes/Biome.h"
 
 
-struct Server{
+class Server{
+public:
     int maxPlayers;
     int port;
     int seed;
     const char* ipAddress;
+    std::vector<Biome*> biomes;
+    WorldData worldData;
 
     float deltaTime;
+
+    void generateWorld();
 };
 
 #endif //SERVERSTRUCS_H
