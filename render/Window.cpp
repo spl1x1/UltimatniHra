@@ -12,6 +12,7 @@
 #include <RmlUi/Lua.h>
 
 #include "../server/World/generace_mapy.h"
+#include "Sprites/WaterSprite.h"
 
 class PlayButtonListener : public Rml::EventListener {
 public:
@@ -19,12 +20,11 @@ public:
     explicit PlayButtonListener(Window* win) : window(win) {}
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Play clicked!");
-       window->menuData.documents["main_menu"]->Hide();
-        window->initGame();
+        window->menuData.documents["main_menu"] ->Hide();
         window->server.seed = 0; // TODO: get seed from user input
+        window->initGame();
     }
 };
-
 class OptionsButtonListener : public Rml::EventListener {
 public:
     Window* window;
@@ -34,12 +34,12 @@ public:
         // TODO: open options menu
         window->menuData.documents["options_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
 
-        if (!window->menuData.documents["options_menu"]) {
+        if (!window->menuData.documents["options_menu"] ) {
             SDL_Log("Failed to load options_menu.rml");
             return;
         }
-
-        window->menuData.documents["options_menu"]->Show();
+        window->menuData.documents["main_menu"]->Hide();
+        window->menuData.documents["options_menu"] ->Show();
     }
 };
 
@@ -66,7 +66,6 @@ void Window::renderMainMenu() {
 }
 
 
-
 void Window::handlePlayerInput(Player& player, float deltaTime) const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
@@ -78,16 +77,32 @@ void Window::handlePlayerInput(Player& player, float deltaTime) const {
     if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  dx -= 1.0f;
     if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) dx += 1.0f;
 
+    if (dx == 0 && dy == 0) {
+        return; // No movement
+    }
     // Normalize diagonal movement
     if (dx != 0 && dy != 0) {
         dx *= 0.7071f;
         dy *= 0.7071f;
     }
 
-    player.x += dx * player.speed * deltaTime;
-    player.y += dy * player.speed * deltaTime;
+    float relativeX = dx * player.speed * deltaTime;
+    float relativeY = dy * player.speed * deltaTime;
+    player.x += relativeX;
+    player.y += relativeY;
     data.CameraPos->x = player.x - offsetX;
     data.CameraPos->y = player.y - offsetY;
+
+
+
+    data.WaterPos->x += relativeX;
+    data.WaterPos->y += relativeY;
+
+
+    if (data.WaterPos->x > 96) data.WaterPos->x -= 32;
+    if (data.WaterPos->x < 32) data.WaterPos->x += 32;
+    if (data.WaterPos->y > 96) data.WaterPos->y -= 32;
+    if (data.WaterPos->y < 32) data.WaterPos->y += 32;
 }
 
 
@@ -121,8 +136,8 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
     auto logical_w = static_cast<float>(data.WINDOW_WIDTH);
     auto logical_h = static_cast<float>(data.WINDOW_HEIGHT);
 
-    float scale_x = logical_w / static_cast<float>(window_w);
-    float scale_y = logical_h / static_cast<float>(window_h);
+    float scale_x = logical_w / window_w;
+    float scale_y = logical_h / window_h;
 
     switch (e->type)
     {
@@ -254,6 +269,9 @@ void Window::HandleEvent(const SDL_Event *e) {
                     SDL_Log("Rendering player at (%.2f, %.2f)",player.x - data.CameraPos->x, player.x - data.CameraPos->y);
                     break;
                 }
+                case SDL_SCANCODE_F4: {
+                    break;
+                }
 #endif
                 default:
                     break;}
@@ -268,6 +286,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
     handlePlayerInput(player, server.deltaTime);
+    SDL_RenderTexture(data.Renderer, textures["water" + std::to_string(sprites_.at(0).getCurrentFrame())], data.WaterPos, nullptr);
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.CameraPos, nullptr);
     renderPlayer(data.Renderer,player);
     menuData.RmlContext->Update();
@@ -336,8 +355,12 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 void Window::tick() {
 
     Uint64 current = SDL_GetPerformanceCounter();
-    server.deltaTime = (static_cast<float>(current) - static_cast<float>(data.last)) / static_cast<float>(SDL_GetPerformanceFrequency());
-    data.last = static_cast<float>(current);
+    server.deltaTime = (current - data.last) / static_cast<float>(SDL_GetPerformanceFrequency());
+    data.last = current;
+
+    for (auto& sprite : sprites_) {
+        sprite.tick(server.deltaTime);
+    }
 
     if (data.inMainMenu) {
         renderMainMenu();
@@ -350,9 +373,6 @@ void Window::tick() {
 void Window::initGame() {
     data.inMainMenu = false;
     data.Running = true;
-    WorldRender wr(*this);
-    wr.GenerateTextures();
-
     data.last = SDL_GetPerformanceCounter();
 
     data.CameraPos = new SDL_FRect{
@@ -361,6 +381,15 @@ void Window::initGame() {
         GAMERESW,
         GAMERESH
     };
+    data.WaterPos = new SDL_FRect{
+        64,64,
+        static_cast<float>(data.WINDOW_WIDTH),
+        static_cast<float>(data.WINDOW_HEIGHT) };
+    WaterSprite water_sprite;
+    SDL_Log("Water sprite created with %d frames", water_sprite.getFrameCount());
+    sprites_.push_back(water_sprite);
+    WorldRender wr(*this);
+    wr.GenerateTextures();
     SDL_RenderClear(data.Renderer);
 }
 
