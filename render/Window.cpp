@@ -19,7 +19,7 @@ public:
     explicit PlayButtonListener(Window* win) : window(win) {}
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Play clicked!");
-        window->menuData.mainMenuDocument->Hide();
+       window->menuData.documents["main_menu"]->Hide();
         window->initGame();
         window->server.seed = 0; // TODO: get seed from user input
     }
@@ -32,15 +32,14 @@ public:
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Options clicked!");
         // TODO: open options menu
-        Rml::ElementDocument* optionsDoc = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
+        window->menuData.documents["options_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
 
-        if (!optionsDoc) {
+        if (!window->menuData.documents["options_menu"]) {
             SDL_Log("Failed to load options_menu.rml");
             return;
         }
 
-        optionsDoc->Show();
-        window->documents["options_menu"] = optionsDoc;
+        window->menuData.documents["options_menu"]->Show();
     }
 };
 
@@ -67,14 +66,6 @@ void Window::renderMainMenu() {
 }
 
 
-void Window::markLocationOnMap(float x, float y) {
-    auto* Rectangle = new SDL_Rect{static_cast<int>(x),static_cast<int>(y),16,16};
-    SDL_BlitSurface(surfaces["mark.bmp"], nullptr, surfaces["WorldMap"], Rectangle);
-    CreateTextureFromSurface("WorldMap","WorldMap");
-    SDL_SaveBMP(surfaces["WorldMap"], "assets/worldmap.bmp");
-    delete Rectangle;
-    SDL_Log("Marked location on map at (%.2f, %.2f)", x, y);
-}
 
 void Window::handlePlayerInput(Player& player, float deltaTime) const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
@@ -130,8 +121,8 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
     auto logical_w = static_cast<float>(data.WINDOW_WIDTH);
     auto logical_h = static_cast<float>(data.WINDOW_HEIGHT);
 
-    float scale_x = logical_w / window_w;
-    float scale_y = logical_h / window_h;
+    float scale_x = logical_w / static_cast<float>(window_w);
+    float scale_y = logical_h / static_cast<float>(window_h);
 
     switch (e->type)
     {
@@ -263,10 +254,6 @@ void Window::HandleEvent(const SDL_Event *e) {
                     SDL_Log("Rendering player at (%.2f, %.2f)",player.x - data.CameraPos->x, player.x - data.CameraPos->y);
                     break;
                 }
-                case SDL_SCANCODE_F4: {
-                    markLocationOnMap(player.x, player.y);
-                    break;
-                }
 #endif
                 default:
                     break;}
@@ -349,8 +336,8 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 void Window::tick() {
 
     Uint64 current = SDL_GetPerformanceCounter();
-    server.deltaTime = (current - data.last) / static_cast<float>(SDL_GetPerformanceFrequency());
-    data.last = current;
+    server.deltaTime = (static_cast<float>(current) - static_cast<float>(data.last)) / static_cast<float>(SDL_GetPerformanceFrequency());
+    data.last = static_cast<float>(current);
 
     if (data.inMainMenu) {
         renderMainMenu();
@@ -363,7 +350,9 @@ void Window::tick() {
 void Window::initGame() {
     data.inMainMenu = false;
     data.Running = true;
-    WorldRender::GenerateWorld(0,*this);
+    WorldRender wr(*this);
+    wr.GenerateTextures();
+
     data.last = SDL_GetPerformanceCounter();
 
     data.CameraPos = new SDL_FRect{
@@ -436,16 +425,16 @@ void Window::init(const std::string& title, int width, int height) {
     data.inMainMenu = true;
 
 
-    menuData.mainMenuDocument = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
+    menuData.documents["main_menu"] = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
 
-    if (!menuData.mainMenuDocument) {
+    if (!menuData.documents["main_menu"]) {
         SDL_Log("Failed to load main menu RML document");
         return;
     }
 
-    Rml::Element* playButton = menuData.mainMenuDocument->GetElementById("play_button");
-    Rml::Element* optionsButton = menuData.mainMenuDocument->GetElementById("options_button");
-    Rml::Element* quitButton = menuData.mainMenuDocument->GetElementById("quit_button");
+    Rml::Element* playButton = menuData.documents["main_menu"]->GetElementById("play_button");
+    Rml::Element* optionsButton = menuData.documents["main_menu"]->GetElementById("options_button");
+    Rml::Element* quitButton = menuData.documents["main_menu"]->GetElementById("quit_button");
 
     if (playButton)
         playButton->AddEventListener("click", new PlayButtonListener(this));
@@ -456,7 +445,7 @@ void Window::init(const std::string& title, int width, int height) {
     if (quitButton)
         quitButton->AddEventListener("click", new QuitButtonListener(this));
 
-    menuData.mainMenuDocument->Show();
+    menuData.documents["main_menu"]->Show();
 }
 
 void Window::Destroy() {
