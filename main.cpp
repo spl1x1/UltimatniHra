@@ -1,4 +1,9 @@
 ﻿#include "render/Window.h"
+#include "server/World/generace_mapy.h"
+#include "server/World/Biomes/Beach/BeachBiome.h"
+#include "server/World/Biomes/Biome.h"
+
+
 #define CLIENT
 
 
