@@ -25,6 +25,143 @@ public:
         window->initGame();
     }
 };
+class BackButtonListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit BackButtonListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event&) override {
+        SDL_Log("Back clicked!");
+
+        if (window->menuData.documents["options_menu"]) {
+            window->menuData.documents["options_menu"]->Hide();
+            window->menuData.documents["options_menu"]->Close();
+            window->menuData.documents.erase("options_menu");
+        }
+
+        if (window->menuData.documents["main_menu"]) {
+            window->menuData.documents["main_menu"]->Show();
+        }
+    }
+};
+// Resolution Dropdown Toggle
+class ToggleDropdownListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit ToggleDropdownListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event&) override {
+        Rml::Element* dropdown = window->menuData.documents["options_menu"]->GetElementById("resolutionDropdown");
+        if (dropdown) {
+            // Check if it has the 'show' class
+            if (dropdown->IsClassSet("show")) {
+                // Remove the 'show' class
+                dropdown->SetClass("show", false);
+            } else {
+                // Add the 'show' class
+                dropdown->SetClass("show", true);
+            }
+        }
+    }
+};
+
+// Set Resolution
+class SetResolutionListener : public Rml::EventListener {
+public:
+    Window* window;
+    int width;
+    int height;
+    SetResolutionListener(Window* win, int w, int h) : window(win), width(w), height(h) {}
+    void ProcessEvent(Rml::Event&) override {
+        window->menuData.resolutionWidth = width;
+        window->menuData.resolutionHeight = height;
+
+        // Update button text
+        Rml::Element* button = window->menuData.documents["options_menu"]->GetElementById("resolutionButton");
+        if (button) {
+            button->SetInnerRML(std::to_string(width) + " x " + std::to_string(height));
+        }
+
+        SDL_Log("Setting resolution to: %dx%d", width, height);
+
+        // TODO: change resolution aj v game
+        // SDL_SetWindowSize(window->sdlWindow, width, height);
+
+        // Close dropdown
+        Rml::Element* dropdown = window->menuData.documents["options_menu"]->GetElementById("resolutionDropdown");
+        if (dropdown) {
+            dropdown->SetClass("dropdown-content", true);
+            dropdown->SetClass("show", false);
+        }
+    }
+};
+
+// Master Volume Slider
+class MasterVolumeListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit MasterVolumeListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event& event) override {
+        Rml::Element* slider = event.GetCurrentElement();
+        if (slider) {
+            float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
+            window->menuData.masterVolume = static_cast<int>(value);
+
+            // Update label
+            Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("masterLabel");
+            if (label) {
+                label->SetInnerRML("Master Volume: " + std::to_string(static_cast<int>(value)) + "%");
+            }
+
+            SDL_Log("Master volume: %d%%", static_cast<int>(value));
+            // TODO: actually zmenit pak audio
+        }
+    }
+};
+
+// Music Volume Slider
+class MusicVolumeListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit MusicVolumeListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event& event) override {
+        Rml::Element* slider = event.GetCurrentElement();
+        if (slider) {
+            float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
+            window->menuData.musicVolume = static_cast<int>(value);
+
+            // Update label
+            Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("musicLabel");
+            if (label) {
+                label->SetInnerRML("Music Volume: " + std::to_string(static_cast<int>(value)) + "%");
+            }
+
+            SDL_Log("Music volume: %d%%", static_cast<int>(value));
+            // TODO: actually zmenit pak audio
+        }
+    }
+};
+
+// SFX Volume Slider
+class SFXVolumeListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit SFXVolumeListener(Window* win) : window(win) {}
+    void ProcessEvent(Rml::Event& event) override {
+        Rml::Element* slider = event.GetCurrentElement();
+        if (slider) {
+            float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
+            window->menuData.sfxVolume = static_cast<int>(value);
+
+            // Update label
+            Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("sfxLabel");
+            if (label) {
+                label->SetInnerRML("SFX Volume: " + std::to_string(static_cast<int>(value)) + "%");
+            }
+
+            SDL_Log("SFX volume: %d%%", static_cast<int>(value));
+            // TODO: actually zmenit pak audio
+        }
+    }
+};
 class OptionsButtonListener : public Rml::EventListener {
 public:
     Window* window;
@@ -37,6 +174,41 @@ public:
         if (!window->menuData.documents["options_menu"] ) {
             SDL_Log("Failed to load options_menu.rml");
             return;
+        }
+        Rml::Element* backButton = window->menuData.documents["options_menu"]->GetElementById("backButton");
+        if (backButton) {
+            backButton->AddEventListener(Rml::EventId::Click, new BackButtonListener(window));
+        }
+        Rml::Element* resButton = window->menuData.documents["options_menu"]->GetElementById("resolutionButton");
+        if (resButton) {
+            resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window));
+        }
+
+        // Resolution options
+        Rml::Element* res600 = window->menuData.documents["options_menu"]->GetElementById("res600x360");
+        if (res600) {
+            res600->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 600, 360));
+        }
+
+        Rml::Element* res1200 = window->menuData.documents["options_menu"]->GetElementById("res1200x720");
+        if (res1200) {
+            res1200->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1200, 720));
+        }
+
+        // Volume sliders
+        Rml::Element* masterSlider = window->menuData.documents["options_menu"]->GetElementById("masterSlider");
+        if (masterSlider) {
+            masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window));
+        }
+
+        Rml::Element* musicSlider = window->menuData.documents["options_menu"]->GetElementById("musicSlider");
+        if (musicSlider) {
+            musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window));
+        }
+
+        Rml::Element* sfxSlider = window->menuData.documents["options_menu"]->GetElementById("sfxSlider");
+        if (sfxSlider) {
+            sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window));
         }
         window->menuData.documents["main_menu"]->Hide();
         window->menuData.documents["options_menu"] ->Show();
@@ -53,6 +225,7 @@ public:
         window->data.Running = false;
     }
 };
+
 
 void Window::renderMainMenu() {
 
@@ -464,6 +637,7 @@ void Window::init(const std::string& title, int width, int height) {
     Rml::Element* playButton = menuData.documents["main_menu"]->GetElementById("play_button");
     Rml::Element* optionsButton = menuData.documents["main_menu"]->GetElementById("options_button");
     Rml::Element* quitButton = menuData.documents["main_menu"]->GetElementById("quit_button");
+
 
     if (playButton)
         playButton->AddEventListener("click", new PlayButtonListener(this));

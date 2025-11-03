@@ -93,3 +93,160 @@ thead, tbody, tfoot { display: table-row-group; }
     border-color: #ff0066;
     color: black;
 }
+/*------------Options Menu------------------- */
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0dp;
+    padding: 0dp;
+    background-color: #2c3e50;
+}
+
+.options-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40dp;
+}
+
+.content-wrapper {
+    width: 600dp;
+    max-width: 90%;
+}
+
+h1 {
+    font-size: 48dp;
+    color: white;
+    text-align: center;
+    margin-bottom: 50dp;
+    margin-top: 0dp;
+}
+
+.section {
+    margin-bottom: 40dp;
+    background-color: rgba(52, 73, 94, 0.8);
+    padding: 25dp;
+    border-radius: 10dp;
+}
+
+.section-title {
+    font-size: 24dp;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 15dp;
+    margin-top: 0dp;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.dropbtn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15dp 20dp;
+    font-size: 18dp;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    border-radius: 5dp;
+}
+
+.dropbtn:hover {
+    background-color: #45a049;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #34495e;
+    width: 100%;
+    box-shadow: 0dp 8dp 16dp 0dp rgba(0,0,0,0.3);
+    z-index: 1;
+    margin-top: 5dp;
+    border-radius: 5dp;
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+.dropdown-content p {
+    color: white;
+    padding: 15dp 20dp;
+    margin: 0dp;
+    cursor: pointer;
+    text-align: center;
+}
+
+.dropdown-content p:hover {
+    background-color: #4CAF50;
+    border-radius: 5dp;
+}
+
+.slider-container {
+    margin-bottom: 30dp;
+}
+
+.slider-label {
+    display: block;
+    margin-bottom: 12dp;
+    color: white;
+    font-size: 18dp;
+}
+
+input[type="range"] {
+    width: 100%;
+}
+
+/* Slider track styling */
+input[type="range"] slidertrack {
+    background-color: #1a252f;
+    height: 8dp;
+    border-radius: 4dp;
+}
+
+/* Slider bar (filled portion) styling */
+input[type="range"] sliderbar {
+    background-color: #4CAF50;
+    height: 8dp;
+    border-radius: 4dp;
+}
+
+/* Slider thumb (the draggable circle) styling */
+input[type="range"] sliderbar:hover {
+    /* background-color: #45a049;*/
+    width: 25px;
+    height: 25px;
+    background: #c0392b;
+    cursor: pointer;
+}
+
+/* Hide the arrow buttons */
+sliderarrowdec,
+sliderarrowinc {
+    display: none;
+}
+
+.button-container {
+    text-align: center;
+    margin-top: 40dp;
+}
+
+.back-button {
+    background-color: #e74c3c;
+    color: white;
+    padding: 15dp 50dp;
+    font-size: 20dp;
+    cursor: pointer;
+    border-radius: 5dp;
+}
+
+.back-button:hover {
+    background-color: #c0392b;
+}
