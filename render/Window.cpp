@@ -567,7 +567,7 @@ void Window::initGame() {
         static_cast<float>(data.WINDOW_WIDTH),
         static_cast<float>(data.WINDOW_HEIGHT) };
     WaterSprite *water_sprite = new WaterSprite();
-s    sprites["water"] = water_sprite;
+    sprites["water"] = water_sprite;
     WorldRender wr(*this);
     wr.GenerateTextures();
     SDL_RenderClear(data.Renderer);
