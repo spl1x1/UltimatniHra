@@ -3,7 +3,7 @@
 //
 #include <cstdio>
 
-#include "ScaleFactorCalculator.h"
+#include "../DeprecatedCode/ScaleFactorCalculator.h"
 
 
 

@@ -2,8 +2,8 @@
 // Created by Jar Jar Banton on 19. 10. 2025.
 //
 
-#include "generace_mapy.h"
-#include "WorldStructs.h"
+#include "../server/World/generace_mapy.h"
+#include "../server/World/WorldStructs.h"
 
 #ifndef MAP_WIDTH
 #define MAP_WIDTH 512

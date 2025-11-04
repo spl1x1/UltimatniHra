@@ -5,7 +5,6 @@
 #ifndef SERVERSTRUCS_H
 #define SERVERSTRUCS_H
 #include "World/WorldStructs.h"
-#include "World/Biomes/Biome.h"
 
 
 class Server{
@@ -14,7 +13,6 @@ public:
     int port;
     int seed;
     const char* ipAddress;
-    std::vector<Biome*> biomes;
     WorldData worldData;
 
     float deltaTime;

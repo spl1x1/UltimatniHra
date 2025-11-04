@@ -51,10 +51,11 @@ class Window {
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
-    void handlePlayerInput(Player& player, float deltaTime) const;
-    void renderPlayer(SDL_Renderer* renderer, const Player& player);
+    void renderWaterLayer();
 
-    //Start game = WorldRender::GenerateWorld(0,*this); data.inMainMenu = false; data.Running = true;
+    void handlePlayerInput(Entity& player, float deltaTime) const;
+    void renderPlayer(SDL_Renderer* renderer, const Entity& player);
+
     void renderMainMenu();
 
     void HandleMainMenuEvent(const SDL_Event* e);
@@ -66,13 +67,14 @@ class Window {
 
 public:
 
-    std::vector<Sprite> sprites_;
     Server server;
-    Player player = {480, 180, 256, 256, 200.0f};
+    Entity player = {480, 180, 256, 0, PLAYER, 100, 100, {}, Sprite()};
 
     WorldData worldDataStruct;
     WindowData data;
     MenuData menuData;
+
+    std::unordered_map<std::string, Sprite*> sprites;
 
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;

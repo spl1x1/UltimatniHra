@@ -39,15 +39,20 @@ void WorldRender::loadSurfacesFromDirectory(const std::string& directoryPath) co
 
 void WorldRender::GenerateWaterTextures() const {
     std::vector<WaterSurface> waterFrames;
-    int spriteCount = window.sprites_.at(0).getFrameCount();
+    int spriteCount = 4;
+    std::string textureName = "water.bmp";
 
     for (int frame = 1; frame <= spriteCount; frame++) {
-        WaterSurface waterSurface;
-        waterSurface.id = frame;
-        waterSurface.textureName = "water" + std::to_string(frame) + ".bmp";;
-        waterSurface.surface = SDL_CreateSurface(768,512,SDL_PIXELFORMAT_ABGR8888);
-        waterFrames.push_back(waterSurface);
+        auto* rect = new SDL_Rect{
+            (frame - 1) * 32,
+            0,
+            32,
+            32
+        };
+        auto *surface = SDL_CreateSurface(768,512,SDL_PIXELFORMAT_ABGR8888);
+        waterFrames.push_back(WaterSurface{frame, "water_"+std::to_string(frame),surface, rect});
     }
+    auto srcSurface = window.surfaces["water.bmp"];
 
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 24; j++) {
@@ -58,18 +63,18 @@ void WorldRender::GenerateWaterTextures() const {
             destRect.h = 32;
 
             for (int frame = 0; frame <= spriteCount-1; frame++) {
-                auto srcSurface = window.surfaces[waterFrames.at(frame).textureName];
                 auto targetSurface = waterFrames.at(frame).surface;
 
-                SDL_BlitSurface(srcSurface, nullptr, targetSurface, &destRect);
+                SDL_BlitSurface(srcSurface,waterFrames.at(frame).rect, targetSurface, &destRect);
             }
         }
     }
 
     for (const auto& waterFrame : waterFrames) {
         window.surfaces[waterFrame.textureName] = waterFrame.surface;
-        window.CreateTextureFromSurface(waterFrame.textureName, "water" + std::to_string(waterFrame.id));
-        IMG_SavePNG(waterFrame.surface, ("assets/water" + std::to_string(waterFrame.id) + ".png").c_str());
+        delete waterFrame.rect;
+        window.CreateTextureFromSurface(waterFrame.textureName,waterFrame.textureName);
+        IMG_SavePNG(waterFrame.surface, ("assets/" + waterFrame.textureName + ".png").c_str());
     }
 }
 

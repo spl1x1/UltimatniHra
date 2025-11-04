@@ -13,10 +13,12 @@ public:
     WaterSprite() {
         frameDuration = 0.2f; // 5 FPS
         frameCount = 4;
-        texturePrefix = "water";
-
+        textureName = "water";
     }
-
+    std::tuple<std::string,SDL_FRect*> getFrame() override {
+        auto texture = std::tuple<std::string,SDL_FRect*>{textureName + "_" + std::to_string(currentFrame), nullptr};
+        return texture;
+    }
 };
 
 

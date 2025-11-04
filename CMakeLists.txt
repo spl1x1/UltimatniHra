@@ -48,7 +48,7 @@ add_executable(UltimatniHra
         MACROS.h
         render/Window.cpp
         render/Window.h
-        server/Event.h
+        DeprecatedCode/Event.h
         render/World/WorldRender.cpp
         render/World/WorldRender.h
         server/World/generace_mapy.h
@@ -57,26 +57,29 @@ add_executable(UltimatniHra
         render/Menu/RmlUi_Renderer_SDL.h
         render/Menu/RmlUi_Platform_SDL.cpp
         render/Menu/RmlUi_Platform_SDL.h
-        render/ScaleFactorCalculator.h
-        render/ScaleFactorCalculator.cpp
+        DeprecatedCode/ScaleFactorCalculator.h
+        DeprecatedCode/ScaleFactorCalculator.cpp
         server/World/WorldStructs.h
         server/World/WorldStructs.cpp
         server/Entities/EntityStructs.cpp
         server/Entities/EntityStructs.h
         server/Server.h
         server/Server.cpp
-        server/World/Biomes/Biome.h
-        server/World/Biomes/Water/WaterBiome.h
-        server/World/Biomes/Water/WaterBiome.cpp
         render/Sprites/WaterSprite.cpp
         render/Sprites/WaterSprite.h
         render/Sprites/Sprite.h
+        server/Entities/ItemStructs.cpp
+        server/Entities/ItemStructs.h
+        Event.cpp
+        Event.h
+        render/Sprites/PlayerSprite.cpp
+        render/Sprites/PlayerSprite.h
 )
 
 add_executable(server_test
         server/World/generace_mapy.h
         server/World/generace_mapy.cpp
-        server/World/test.cpp
+        Tests/Generace_test.cpp
         server/World/WorldStructs.h
         server/World/WorldStructs.cpp
         server/World/BossPathfinding.cpp
@@ -92,9 +95,9 @@ target_link_libraries(UltimatniHra
 )
 
 add_executable(ScalingTest
-        render/ScaleFactorCalculator.h
-        render/ScaleFactorCalculator.cpp
-        render/ScalingFactorCalculator_test.cpp
+        DeprecatedCode/ScaleFactorCalculator.h
+        DeprecatedCode/ScaleFactorCalculator.cpp
+        Tests/ScalingFactorCalculator_test.cpp
         MACROS.h
 )
 

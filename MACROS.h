@@ -5,6 +5,8 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+#define CLIENT
+
 #define GAMERESW 640
 #define GAMERESH 360
 

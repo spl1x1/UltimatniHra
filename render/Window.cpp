@@ -49,8 +49,7 @@ public:
     explicit QuitButtonListener(Window* win) : window(win) {}
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Quit clicked!");
-        window->data.inMainMenu = false;
-        window->data.Running = false;
+        delete window;
     }
 };
 
@@ -66,7 +65,7 @@ void Window::renderMainMenu() {
 }
 
 
-void Window::handlePlayerInput(Player& player, float deltaTime) const {
+void Window::handlePlayerInput(Entity& player, float deltaTime) const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
     float dx = 0.0f;
@@ -106,12 +105,13 @@ void Window::handlePlayerInput(Player& player, float deltaTime) const {
 }
 
 
-void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
+void Window::renderPlayer(SDL_Renderer* renderer, const Entity& player) {
     SDL_FRect rect;
     rect.x = player.x - data.CameraPos->x;
     rect.y = player.y - data.CameraPos->y;
     rect.w = 32;
     rect.h = 32;
+
 
     SDL_RenderTexture(renderer, textures["Player"], nullptr, &rect);
 }
@@ -136,8 +136,8 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
     auto logical_w = static_cast<float>(data.WINDOW_WIDTH);
     auto logical_h = static_cast<float>(data.WINDOW_HEIGHT);
 
-    float scale_x = logical_w / window_w;
-    float scale_y = logical_h / window_h;
+    float scale_x = logical_w / static_cast<float>(window_w);
+    float scale_y = logical_h / static_cast<float>(window_h);
 
     switch (e->type)
     {
@@ -281,16 +281,24 @@ void Window::HandleEvent(const SDL_Event *e) {
     }
 };
 
+void Window::renderWaterLayer() {
+    const auto texture = std::get<0>(sprites["water"]->getFrame());
+    SDL_RenderTexture(data.Renderer, textures[texture], data.WaterPos, nullptr);
+}
+
 
 
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
+
     handlePlayerInput(player, server.deltaTime);
-    SDL_RenderTexture(data.Renderer, textures["water" + std::to_string(sprites_.at(0).getCurrentFrame())], data.WaterPos, nullptr);
+    renderWaterLayer();
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.CameraPos, nullptr);
     renderPlayer(data.Renderer,player);
+
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
+
     SDL_RenderPresent(data.Renderer);
     SDL_Event e;
     if (SDL_PollEvent(&e)) HandleEvent(&e);
@@ -358,8 +366,8 @@ void Window::tick() {
     server.deltaTime = (current - data.last) / static_cast<float>(SDL_GetPerformanceFrequency());
     data.last = current;
 
-    for (auto& sprite : sprites_) {
-        sprite.tick(server.deltaTime);
+    for (auto& sprite : sprites) {
+        sprite.second->tick(server.deltaTime);
     }
 
     if (data.inMainMenu) {
@@ -385,9 +393,8 @@ void Window::initGame() {
         64,64,
         static_cast<float>(data.WINDOW_WIDTH),
         static_cast<float>(data.WINDOW_HEIGHT) };
-    WaterSprite water_sprite;
-    SDL_Log("Water sprite created with %d frames", water_sprite.getFrameCount());
-    sprites_.push_back(water_sprite);
+    WaterSprite *water_sprite = new WaterSprite();
+s    sprites["water"] = water_sprite;
     WorldRender wr(*this);
     wr.GenerateTextures();
     SDL_RenderClear(data.Renderer);
