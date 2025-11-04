@@ -24,6 +24,11 @@ struct MenuData {
     RenderInterface_SDL* render_interface;
     SystemInterface_SDL* system_interface;
     std::unordered_map<std::string, Rml::ElementDocument*> documents;
+    int resolutionWidth = 640;
+    int resolutionHeight = 360;
+    int masterVolume = 100;
+    int musicVolume = 100;
+    int sfxVolume = 100;
 
 
 };

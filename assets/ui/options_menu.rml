@@ -2,206 +2,6 @@
     <head>
         <title>Options Menu</title>
         <link type="text/rcss" href="style.rcss" />
-        <script>
-            local settings = {
-                masterVolume = 100,
-                musicVolume = 100,
-                sfxVolume = 100,
-                resolutionWidth = 640,
-                resolutionHeight = 360
-            }
-
-            function ToggleDropdown()
-            local dropdown = document:GetElementById("resolutionDropdown")
-            if dropdown.class_name == "dropdown-content" then
-            dropdown.class_name = "dropdown-content show"
-            else
-            dropdown.class_name = "dropdown-content"
-            end
-            end
-
-            function SetResolution(width, height)
-            settings.resolutionWidth = width
-            settings.resolutionHeight = height
-
-            local button = document:GetElementById("resolutionButton")
-            button.inner_rml = width .. " x " .. height
-
-            print("Setting resolution to: " .. width .. "x" .. height)
-
-            ToggleDropdown()
-            end
-
-            function UpdateMaster()
-            local slider = document:GetElementById("masterSlider")
-            local value = slider.value
-            settings.masterVolume = value
-
-            local label = document:GetElementById("masterLabel")
-            label.inner_rml = "Master Volume: " .. value .. "%"
-
-            print("Master volume: " .. value .. "%")
-            end
-
-            function UpdateMusic()
-            local slider = document:GetElementById("musicSlider")
-            local value = slider.value
-            settings.musicVolume = value
-
-            local label = document:GetElementById("musicLabel")
-            label.inner_rml = "Music Volume: " .. value .. "%"
-
-            print("Music volume: " .. value .. "%")
-            end
-
-            function UpdateSFX()
-            local slider = document:GetElementById("sfxSlider")
-            local value = slider.value
-            settings.sfxVolume = value
-
-            local label = document:GetElementById("sfxLabel")
-            label.inner_rml = "SFX Volume: " .. value .. "%"
-
-            print("SFX volume: " .. value .. "%")
-            end
-
-            function GoBack()
-            print("Going back to main menu...")
-            print("Saved settings:")
-            print("  Resolution: " .. settings.resolutionWidth .. "x" .. settings.resolutionHeight)
-            print("  Master: " .. settings.masterVolume .. "%")
-            print("  Music: " .. settings.musicVolume .. "%")
-            print("  SFX: " .. settings.sfxVolume .. "%")
-
-            end
-        </script>
-        <style>
-            body {
-                width: 100%;
-                height: 100%;
-                margin: 0dp;
-                padding: 0dp;
-                background-color: #2c3e50;
-            }
-
-            .options-container {
-                width: 100%;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                padding: 40dp;
-            }
-
-            .content-wrapper {
-                width: 600dp;
-                max-width: 90%;
-            }
-
-            h1 {
-                font-size: 48dp;
-                color: white;
-                text-align: center;
-                margin-bottom: 50dp;
-            }
-
-            .section {
-                margin-bottom: 40dp;
-                background-color: rgba(255, 255, 255, 0.1);
-                padding: 25dp;
-                border-radius: 10dp;
-            }
-
-            .section-title {
-                font-size: 24dp;
-                font-weight: bold;
-                color: white;
-                margin-bottom: 15dp;
-            }
-
-            .dropdown {
-                position: relative;
-                display: inline-block;
-                width: 100%;
-            }
-
-            .dropbtn {
-                background-color: #4CAF50;
-                color: white;
-                padding: 15dp 20dp;
-                font-size: 18dp;
-                cursor: pointer;
-                width: 100%;
-                text-align: center;
-                border-radius: 5dp;
-            }
-
-            .dropbtn:hover {
-                background-color: #45a049;
-            }
-
-            .dropdown-content {
-                display: none;
-                position: absolute;
-                background-color: #34495e;
-                width: 100%;
-                box-shadow: 0dp 8dp 16dp 0dp rgba(0,0,0,0.3);
-                z-index: 1;
-                margin-top: 5dp;
-                border-radius: 5dp;
-            }
-
-            .dropdown-content.show {
-                display: block;
-            }
-
-            .dropdown-content p {
-                color: white;
-                padding: 15dp 20dp;
-                margin: 0dp;
-                cursor: pointer;
-                text-align: center;
-            }
-
-            .dropdown-content p:hover {
-                background-color: #4CAF50;
-            }
-
-            .slider-container {
-                margin-bottom: 20dp;
-            }
-
-            .slider-label {
-                display: block;
-                margin-bottom: 10dp;
-                color: white;
-                font-size: 16dp;
-            }
-
-            input[type="range"] {
-                width: 100%;
-                height: 8dp;
-            }
-
-            .button-container {
-                text-align: center;
-                margin-top: 40dp;
-            }
-
-            .back-button {
-                background-color: #e74c3c;
-                color: white;
-                padding: 15dp 50dp;
-                font-size: 20dp;
-                cursor: pointer;
-                border-radius: 5dp;
-            }
-
-            .back-button:hover {
-                background-color: #c0392b;
-            }
-        </style>
     </head>
 
     <body>
@@ -213,10 +13,10 @@
             <div class="section">
                 <div class="section-title">Resolution</div>
                 <div class="dropdown">
-                    <button id="resolutionButton" class="dropbtn" onclick="ToggleDropdown()">640 x 360</button>
+                    <button id="resolutionButton" class="dropbtn">640 x 360</button>
                     <div id="resolutionDropdown" class="dropdown-content">
-                        <p onclick="SetResolution(600, 360)">640 x 360</p>
-                        <p onclick="SetResolution(1200, 720)">1200 x 720</p>
+                        <p id="res600x360">600 x 360</p>
+                        <p id="res1200x720">1200 x 720</p>
                     </div>
                 </div>
             </div>
@@ -227,23 +27,23 @@
 
                 <div class="slider-container">
                     <span id="masterLabel" class="slider-label">Master Volume: 100%</span>
-                    <input id="masterSlider" type="range" min="0" max="100" value="100" onchange="UpdateMaster()" />
+                    <input id="masterSlider" type="range" min="0" max="100" value="100" step="1" />
                 </div>
 
                 <div class="slider-container">
                     <span id="musicLabel" class="slider-label">Music Volume: 100%</span>
-                    <input id="musicSlider" type="range" min="0" max="100" value="100" onchange="UpdateMusic()" />
+                    <input id="musicSlider" type="range" min="0" max="100" value="100" step="1" />
                 </div>
 
                 <div class="slider-container">
                     <span id="sfxLabel" class="slider-label">SFX Volume: 100%</span>
-                    <input id="sfxSlider" type="range" min="0" max="100" value="100" onchange="UpdateSFX()" />
+                    <input id="sfxSlider" type="range" min="0" max="100" value="100" step="1" />
                 </div>
             </div>
 
             <!-- Back Button -->
             <div class="button-container">
-                <button class="back-button" onclick="GoBack()">Back</button>
+                <button id="backButton" class="back-button">Back</button>
             </div>
         </div>
     </div>
