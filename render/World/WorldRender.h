@@ -27,7 +27,6 @@ class WorldRender {
     Window& window;
 
     void ReleaseResources() const;
-    void loadSurfacesFromDirectory(const std::string& directoryPath) const;
     void GenerateWorldTexture() const;
     void GenerateWaterTextures() const;
 

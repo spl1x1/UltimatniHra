@@ -12,7 +12,7 @@
 #include <RmlUi/Lua.h>
 
 #include "../server/World/generace_mapy.h"
-#include "Sprites/WaterSprite.h"
+#include "Sprites/WaterSprite.hpp"
 
 class PlayButtonListener : public Rml::EventListener {
 public:
@@ -244,12 +244,13 @@ void Window::handlePlayerInput(Entity& player, float deltaTime) const {
     float dx = 0.0f;
     float dy = 0.0f;
 
-    if (keystates[SDL_SCANCODE_W] || keystates[SDL_SCANCODE_UP])    dy -= 1.0f;
-    if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])  dy += 1.0f;
-    if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  dx -= 1.0f;
-    if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) dx += 1.0f;
+    if (keystates[SDL_SCANCODE_W] || keystates[SDL_SCANCODE_UP])    {dy -= 1.0f;player.sprite->changeAnimation(RUNNING,UP,8);}
+    if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])  {dy += 1.0f;player.sprite->changeAnimation(RUNNING,DOWN,8);}
+    if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  {dx -= 1.0f;player.sprite->changeAnimation(RUNNING,LEFT,8);}
+    if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) {dx += 1.0f;player.sprite->changeAnimation(RUNNING,RIGHT,8);}
 
     if (dx == 0 && dy == 0) {
+        player.sprite->changeAnimation(IDLE,player.sprite->direction,8);
         return; // No movement
     }
     // Normalize diagonal movement
@@ -282,15 +283,31 @@ void Window::renderPlayer(SDL_Renderer* renderer, const Entity& player) {
     SDL_FRect rect;
     rect.x = player.x - data.CameraPos->x;
     rect.y = player.y - data.CameraPos->y;
-    rect.w = 32;
-    rect.h = 32;
+    rect.w = PLAYER_WIDTH;
+    rect.h = PLAYER_HEIGHT;
 
-
-    SDL_RenderTexture(renderer, textures["Player"], nullptr, &rect);
+    auto texture = player.sprite->getFrame();
+    SDL_RenderTexture(renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
 }
 
-void Window::parseToRenderer(const SDL_Renderer *renderer, const std::string& sprite, const SDL_FRect *destRect, const SDL_FRect *srcRect) {
-    if (!renderer || sprite.empty()) {
+void Window::loadSurfacesFromDirectory(const std::string& directoryPath){
+    for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
+        std::string fileName = entry.path().string();
+        SDL_Log("Loading surface: %s", fileName.c_str());
+        LoadSurface(fileName,entry.path().filename().string());
+    }
+}
+
+void Window::loadTexturesFromDirectory(const std::string& directoryPath){
+    for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
+        std::string fileName = entry.path().string();
+        SDL_Log("Loading surface: %s", fileName.c_str());
+        LoadTexture(fileName,entry.path().filename().replace_extension("").string());
+    }
+}
+
+void Window::parseToRenderer(const std::string& sprite, const SDL_FRect *destRect, const SDL_FRect *srcRect) {
+    if (sprite.empty()) {
 #ifdef DEBUG
         SDL_Log("Called parseToRenderer(), without valid arguments");
 #endif
@@ -536,7 +553,7 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 void Window::tick() {
 
     Uint64 current = SDL_GetPerformanceCounter();
-    server.deltaTime = (current - data.last) / static_cast<float>(SDL_GetPerformanceFrequency());
+    server.deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
     data.last = current;
 
     for (auto& sprite : sprites) {
@@ -555,6 +572,7 @@ void Window::initGame() {
     data.inMainMenu = false;
     data.Running = true;
     data.last = SDL_GetPerformanceCounter();
+    player.sprite = new PlayerSprite();
 
     data.CameraPos = new SDL_FRect{
         player.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
@@ -566,8 +584,14 @@ void Window::initGame() {
         64,64,
         static_cast<float>(data.WINDOW_WIDTH),
         static_cast<float>(data.WINDOW_HEIGHT) };
-    WaterSprite *water_sprite = new WaterSprite();
+
+    auto *water_sprite = new WaterSprite();
+
+    loadTexturesFromDirectory("assets/textures/entities/player");
+
+
     sprites["water"] = water_sprite;
+    sprites["player"] = player.sprite;
     WorldRender wr(*this);
     wr.GenerateTextures();
     SDL_RenderClear(data.Renderer);
@@ -626,10 +650,6 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_Log("Display modes: %i ",count);
     SDL_Log("Window size: %ix%i", data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
-
-
-    LoadSurface("assets/textures/Sprite-0001.bmp", "Player");
-    CreateTextureFromSurface("Player", "Player");
 
     data.inMainMenu = true;
 

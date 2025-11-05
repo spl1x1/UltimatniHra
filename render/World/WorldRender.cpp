@@ -28,15 +28,6 @@ void WorldRender::ReleaseResources() const {
     }
 }
 
-
-void WorldRender::loadSurfacesFromDirectory(const std::string& directoryPath) const {
-    for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
-        std::string fileName = entry.path().string();
-        SDL_Log("Loading surface: %s", fileName.c_str());
-        window.LoadSurface(fileName,entry.path().filename().string());
-    }
-}
-
 void WorldRender::GenerateWaterTextures() const {
     std::vector<WaterSurface> waterFrames;
     int spriteCount = 4;
@@ -82,7 +73,7 @@ void WorldRender::GenerateWorldTexture() const {
     for (const auto& entry : std::filesystem::directory_iterator("assets/textures/world")) {
         std::string fileName = entry.path().string();
         SDL_Log("Directory:: %s", fileName.c_str());
-        loadSurfacesFromDirectory(fileName);
+        window.loadSurfacesFromDirectory(fileName);
     }
     SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 

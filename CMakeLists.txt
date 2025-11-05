@@ -65,15 +65,16 @@ add_executable(UltimatniHra
         server/Entities/EntityStructs.h
         server/Server.h
         server/Server.cpp
-        render/Sprites/WaterSprite.cpp
-        render/Sprites/WaterSprite.h
-        render/Sprites/Sprite.h
+        render/Sprites/WaterSprite.hpp
+        render/Sprites/Sprite.hpp
         server/Entities/ItemStructs.cpp
         server/Entities/ItemStructs.h
         Event.cpp
         Event.h
+        render/Sprites/PlayerSprite.hpp
         render/Sprites/PlayerSprite.cpp
-        render/Sprites/PlayerSprite.h
+        render/Sprites/Sprite.cpp
+        render/Sprites/WaterSprite.cpp
 )
 
 add_executable(server_test
@@ -101,8 +102,10 @@ add_executable(ScalingTest
         MACROS.h
 )
 
-add_custom_command(TARGET UltimatniHra POST_BUILD
+add_custom_target(copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-        "${CMAKE_BINARY_DIR}/assets")
+        "${CMAKE_BINARY_DIR}/assets"
+        COMMENT "Copying assets directory")
 
+add_dependencies(UltimatniHra copy_assets)

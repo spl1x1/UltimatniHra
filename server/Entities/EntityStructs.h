@@ -7,7 +7,7 @@
 #include <vector>
 #include "../../MACROS.h"
 
-#include "../../render/Sprites/Sprite.h"
+#include "../../render/Sprites/Sprite.hpp"
 
 
 enum TaskType{
@@ -51,9 +51,7 @@ struct Entity{
 
 
     std::vector<Task> tasks;
-#ifdef CLIENT
-    Sprite sprite;
-#endif
+    Sprite *sprite;
 };
 
 struct Player : Entity{

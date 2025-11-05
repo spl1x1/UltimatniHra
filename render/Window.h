@@ -16,7 +16,8 @@
 #include "Menu/RmlUi_Renderer_SDL.h"
 #include "Menu/RmlUi_Platform_SDL.h"
 #include "../MACROS.h"
-#include "Sprites/Sprite.h"
+#include "Sprites/PlayerSprite.hpp"
+#include "Sprites/Sprite.hpp"
 
 
 struct MenuData {
@@ -73,7 +74,7 @@ class Window {
 public:
 
     Server server;
-    Entity player = {480, 180, 256, 0, PLAYER, 100, 100, {}, Sprite()};
+    Entity player = {480, 180, 256, 0, PLAYER, 100, 100, {}, nullptr};
 
     WorldData worldDataStruct;
     WindowData data;
@@ -84,13 +85,14 @@ public:
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
 
-    void parseToRenderer(const SDL_Renderer* renderer, const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
+    void parseToRenderer(const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
     bool LoadSurface(const std::string& Path);
     bool LoadSurface(const std::string& Path, const std::string& SaveAs);
     bool LoadTexture(const std::string& Path);
     bool LoadTexture(const std::string& Path, const std::string& SaveAs);
     bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
-
+    void loadSurfacesFromDirectory(const std::string& directoryPath);
+    void loadTexturesFromDirectory(const std::string& directoryPath);
 
     void tick();
     void initGame();
