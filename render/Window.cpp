@@ -168,7 +168,6 @@ public:
     explicit OptionsButtonListener(Window* win) : window(win) {}
     void ProcessEvent(Rml::Event&) override {
         SDL_Log("Options clicked!");
-        // TODO: open options menu
         window->menuData.documents["options_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
 
         if (!window->menuData.documents["options_menu"] ) {
@@ -185,14 +184,14 @@ public:
         }
 
         // Resolution options
-        Rml::Element* res600 = window->menuData.documents["options_menu"]->GetElementById("res600x360");
-        if (res600) {
-            res600->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 600, 360));
+        Rml::Element* res640 = window->menuData.documents["options_menu"]->GetElementById("res640x360");
+        if (res640) {
+            res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 640, 360));
         }
 
-        Rml::Element* res1200 = window->menuData.documents["options_menu"]->GetElementById("res1200x720");
-        if (res1200) {
-            res1200->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1200, 720));
+        Rml::Element* res1280 = window->menuData.documents["options_menu"]->GetElementById("res1280x720");
+        if (res1280) {
+            res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1280, 720));
         }
 
         // Volume sliders
