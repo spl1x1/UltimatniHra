@@ -53,15 +53,12 @@ double GeneraceMapy::perlin_noise(double x, double y, vector<int>& permutace) {
     return lerp(x1, x2, v);
 }
 
-void GeneraceMapy::generovat_permutaci(vector<int>& permutace) {
+void GeneraceMapy::generovat_permutaci(vector<int>& permutace, std::mt19937& rng) {
     for (int i = 0; i < 256; i++) {
         permutace[i] = i;
     }
-    std::random_device rd;
-    std::default_random_engine rng(rd());
-    std::shuffle(permutace.begin(), permutace.end(), rng);
-    permutace.insert(permutace.end(), permutace.begin(), permutace.end());
-
+    std::shuffle(permutace.begin(), permutace.begin() + 256, rng);
+    permutace.insert(permutace.end(), permutace.begin(), permutace.begin() + 256);
 }
 
 void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& permutace, double scale) {
@@ -74,10 +71,10 @@ void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& pe
     }
 }
 
-void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& outbiomMapa) {
+void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& outbiomMapa, std::mt19937& rng, std::uniform_real_distribution<double>& dist) {
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
-            int random_border = std::rand()%14+BORDER_SIZE; //14 je o kolik navic
+            int random_border = static_cast<int>(dist(rng)) + BORDER_SIZE;
             if (x < random_border || y < random_border || x >= MAP_WIDTH - random_border || y >= MAP_HEIGHT - random_border) {
                 outbiomMapa[x][y] = VODA;
                 continue;
@@ -88,6 +85,7 @@ void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const ve
         }
     }
 }
+
 int GeneraceMapy::ziskat_biom(double vyska, double vlhkost) {
     if (vyska < 0.3) {
         return VODA;
@@ -102,26 +100,28 @@ int GeneraceMapy::ziskat_biom(double vyska, double vlhkost) {
     }
 }
 
-GeneraceMapy::GeneraceMapy() {
+GeneraceMapy::GeneraceMapy(unsigned int seed) {
+    std::srand(static_cast<unsigned int>(seed));
+    std::mt19937 mt(seed);
+    std::uniform_real_distribution<double> dist(1.0, VARIATION_LEVELS);
+
     vector<int> permutace1(512);
     vector<int> permutace2(512);
-    generovat_permutaci(permutace1);
-    generovat_permutaci(permutace2);
+    generovat_permutaci(permutace1, mt);
+    generovat_permutaci(permutace2, mt);
 
     vector<vector<double>> vyskaMapa(MAP_WIDTH, vector<double>(MAP_HEIGHT));
     vector<vector<double>> vlhkostMapa(MAP_WIDTH, vector<double>(MAP_HEIGHT));
 
-    biomMapa.resize(MAP_WIDTH, vector<int>(MAP_HEIGHT)); // Resize the class member
+    biomMapa.resize(MAP_WIDTH, vector<int>(MAP_HEIGHT));
 
-    double scale = 150.0; //velikost biomu
+    double scale = 150.0;
     generovat_teren(vyskaMapa, permutace1, scale);
     generovat_teren(vlhkostMapa, permutace2, scale);
 
-    nacist_mapu(vyskaMapa, vlhkostMapa, biomMapa);
+    nacist_mapu(vyskaMapa, vlhkostMapa, biomMapa, mt, dist);
 }
+
 const vector<vector<int>>& GeneraceMapy::getBiomMapa() const {
     return biomMapa;
 }
-
-
-
