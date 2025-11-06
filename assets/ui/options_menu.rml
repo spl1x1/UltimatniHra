@@ -8,18 +8,18 @@
     <div class="options-container">
         <div class="content-wrapper">
             <div class = "center">
-            <h1>Options Menu</h1></div>
+            <h1 class = "center">Options Menu</h1></div>
 
             <!-- Resolution Section -->
             <div class="section">
-                <div class="section-title">Resolution
+                <div class="section-title">Resolution</div>
                 <div class="dropdown">
                     <button id="resolutionButton" class="dropbtn">640 x 360</button>
                     <div id="resolutionDropdown" class="dropdown-content">
                         <p id="res640x360">640 x 360</p>
                         <p id="res1280x720">1280 x 720</p>
                     </div>
-                </div></div>
+                </div>
             </div>
 
             <!-- Audio Section -->
@@ -42,12 +42,12 @@
                 </div>
             </div>
         </div>
-        <div class="section">
+<!--        <div class="section">-->
             <!-- Back Button -->
             <div class="button-container">
                 <button id="backButton" class="back-button">Back</button>
             </div>
         </div>
-    </div>
+<!--    </div>-->
     </body>
 </rml>

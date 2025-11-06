@@ -7,11 +7,11 @@
 #include "World/generace_mapy.h"
 
 void Server::generateWorld() {
-    auto *generaceMapy = new GeneraceMapy(seed);
+    auto *generaceMapy = new GeneraceMapy(8);
 
-    // std::srand(static_cast<unsigned int>(seed));
-    // std::mt19937 mt(seed);
-    // std::uniform_real_distribution<double> dist(1.0,VARIATION_LEVELS);
+    std::srand(static_cast<unsigned int>(seed));
+    std::mt19937 mt(seed);
+    std::uniform_real_distribution<double> dist(1.0,VARIATION_LEVELS);
 
     //TODO: implementovat přímo do generace generace mapy
     for (int x = 0; x < generaceMapy->biomMapa.size(); x++) {

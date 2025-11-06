@@ -71,10 +71,12 @@ void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& pe
     }
 }
 
-void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& outbiomMapa, std::mt19937& rng, std::uniform_real_distribution<double>& dist) {
+void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& outbiomMapa, std::mt19937& rng) {
+    std::uniform_int_distribution<int> dist(0, 13); // 0 to 13 for the random variation
+
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
-            int random_border = static_cast<int>(dist(rng)) + BORDER_SIZE;
+            int random_border = dist(rng) + BORDER_SIZE;
             if (x < random_border || y < random_border || x >= MAP_WIDTH - random_border || y >= MAP_HEIGHT - random_border) {
                 outbiomMapa[x][y] = VODA;
                 continue;
@@ -103,7 +105,6 @@ int GeneraceMapy::ziskat_biom(double vyska, double vlhkost) {
 GeneraceMapy::GeneraceMapy(unsigned int seed) {
     std::srand(static_cast<unsigned int>(seed));
     std::mt19937 mt(seed);
-    std::uniform_real_distribution<double> dist(1.0, VARIATION_LEVELS);
 
     vector<int> permutace1(512);
     vector<int> permutace2(512);
@@ -119,7 +120,7 @@ GeneraceMapy::GeneraceMapy(unsigned int seed) {
     generovat_teren(vyskaMapa, permutace1, scale);
     generovat_teren(vlhkostMapa, permutace2, scale);
 
-    nacist_mapu(vyskaMapa, vlhkostMapa, biomMapa, mt, dist);
+    nacist_mapu(vyskaMapa, vlhkostMapa, biomMapa, mt);
 }
 
 const vector<vector<int>>& GeneraceMapy::getBiomMapa() const {
