@@ -148,7 +148,7 @@ h1 {
 
 .dropdown {
     position: relative;
-    display: inline-block;
+    display: flex;
     align-self: flex-end;
     /*width: 100%;*/
 }
@@ -180,7 +180,8 @@ h1 {
 }
 
 .dropdown-content.show {
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 .dropdown-content p {
@@ -214,23 +215,23 @@ input[type="range"] {
 /* Slider track styling */
 input[type="range"] slidertrack {
     background-color: #1a252f;
-    height: 8dp;
+    height: 13dp;
     border-radius: 4dp;
 }
 
 /* Slider bar (filled portion) styling */
 input[type="range"] sliderbar {
-    background-color: #4CAF50;
-    height: 8dp;
+    height: 13dp;
     border-radius: 4dp;
 }
 
 /* Slider thumb (the draggable circle) styling */
-input[type="range"] sliderbar:hover {
+input[type="range"] sliderbar {
     /* background-color: #45a049;*/
-    width: 25px;
-    height: 25px;
+    width: 15px;
+    height: 15px;
     background: #c0392b;
+    border-radius: 3px;
     cursor: pointer;
 }
 
