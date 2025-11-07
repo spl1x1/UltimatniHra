@@ -31,6 +31,8 @@ struct MenuData {
     int musicVolume = 100;
     int sfxVolume = 100;
 
+    bool inGameMenu = false;
+
 
 };
 
@@ -53,7 +55,6 @@ struct WindowData {
 };
 
 class Window {
-
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 

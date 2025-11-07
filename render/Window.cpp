@@ -11,6 +11,7 @@
 #include <SDL3_image/SDL_image.h>
 #include <RmlUi/Lua.h>
 
+#include "../cmake-build-debug/_deps/rmlui-src/Source/Lua/Context.h"
 #include "../server/World/generace_mapy.h"
 #include "Sprites/WaterSprite.hpp"
 
@@ -374,8 +375,7 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
             break;
         }
 
-        case SDL_EVENT_KEY_DOWN:
-        {
+        case SDL_EVENT_KEY_DOWN: {
             const SDL_Keycode keycode = e->key.key;
 
             Rml::Input::KeyIdentifier rml_key = RmlSDL::ConvertKey(static_cast<int>(keycode));
@@ -463,6 +463,9 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
 #endif
+                    case SDL_SCANCODE_ESCAPE: {
+                    menuData.inGameMenu = ! menuData.inGameMenu;
+                }
                 default:
                     break;}
         }
@@ -595,6 +598,7 @@ void Window::initGame() {
     WorldRender wr(*this);
     wr.GenerateTextures();
     SDL_RenderClear(data.Renderer);
+    menuData.documents["temp"] = menuData.RmlContext->LoadDocument("assets/ui/temp.rml");
 }
 
 void Window::init(const std::string& title, int width, int height) {
