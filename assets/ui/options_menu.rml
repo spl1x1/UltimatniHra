@@ -7,7 +7,8 @@
     <body>
     <div class="options-container">
         <div class="content-wrapper">
-            <h1>Options Menu</h1>
+            <div class = "center">
+            <h1 class = "center">Options Menu</h1></div>
 
             <!-- Resolution Section -->
             <div class="section">
@@ -15,8 +16,8 @@
                 <div class="dropdown">
                     <button id="resolutionButton" class="dropbtn">640 x 360</button>
                     <div id="resolutionDropdown" class="dropdown-content">
-                        <p id="res600x360">600 x 360</p>
-                        <p id="res1200x720">1200 x 720</p>
+                        <p id="res640x360">640 x 360</p>
+                        <p id="res1280x720">1280 x 720</p>
                     </div>
                 </div>
             </div>
@@ -40,12 +41,13 @@
                     <input id="sfxSlider" type="range" min="0" max="100" value="100" step="1" />
                 </div>
             </div>
-
+        </div>
+<!--        <div class="section">-->
             <!-- Back Button -->
             <div class="button-container">
                 <button id="backButton" class="back-button">Back</button>
             </div>
         </div>
-    </div>
+<!--    </div>-->
     </body>
 </rml>

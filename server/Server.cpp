@@ -7,7 +7,7 @@
 #include "World/generace_mapy.h"
 
 void Server::generateWorld() {
-    auto *generaceMapy = new GeneraceMapy();
+    auto *generaceMapy = new GeneraceMapy(8);
 
     std::srand(static_cast<unsigned int>(seed));
     std::mt19937 mt(seed);

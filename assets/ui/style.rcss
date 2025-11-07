@@ -103,7 +103,7 @@ body {
 }
 
 .options-container {
-    width: 100%;
+    /*width: 100%;*/
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -113,37 +113,51 @@ body {
 }
 
 .content-wrapper {
-    width: 600dp;
-    max-width: 90%;
+    width: 640dp;
+    max-width: 100%;
+
+}
+.center{
+    align-content: center;
+    align-self: center;
+    text-align: center;
 }
 
 h1 {
     font-size: 48dp;
     color: white;
     text-align: center;
-    margin-bottom: 50dp;
-    margin-top: 0dp;
+    padding-top: 5dp;
+    margin-bottom: 20dp;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .section {
-    margin-bottom: 40dp;
+    /*margin-bottom: 40dp;*/
     background-color: rgba(52, 73, 94, 0.8);
-    padding: 25dp;
+    padding: 15dp;
     border-radius: 10dp;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20dp;
 }
 
 .section-title {
     font-size: 24dp;
     font-weight: bold;
     color: white;
-    margin-bottom: 15dp;
+    margin-bottom: 0dp;
     margin-top: 0dp;
+    min-width: 150dp;
 }
 
 .dropdown {
     position: relative;
-    display: inline-block;
-    width: 100%;
+    display: flex;
+    flex: 1;
+    /*width: 100%;*/
 }
 
 .dropbtn {
@@ -166,14 +180,15 @@ h1 {
     position: absolute;
     background-color: #34495e;
     width: 100%;
-    box-shadow: 0dp 8dp 16dp 0dp rgba(0,0,0,0.3);
     z-index: 1;
     margin-top: 5dp;
     border-radius: 5dp;
+    top: 100%;
 }
 
 .dropdown-content.show {
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 .dropdown-content p {
@@ -207,23 +222,23 @@ input[type="range"] {
 /* Slider track styling */
 input[type="range"] slidertrack {
     background-color: #1a252f;
-    height: 8dp;
+    height: 13dp;
     border-radius: 4dp;
 }
 
 /* Slider bar (filled portion) styling */
 input[type="range"] sliderbar {
-    background-color: #4CAF50;
-    height: 8dp;
+    height: 13dp;
     border-radius: 4dp;
 }
 
 /* Slider thumb (the draggable circle) styling */
-input[type="range"] sliderbar:hover {
+input[type="range"] sliderbar {
     /* background-color: #45a049;*/
-    width: 25px;
-    height: 25px;
+    width: 15px;
+    height: 15px;
     background: #c0392b;
+    border-radius: 3px;
     cursor: pointer;
 }
 
@@ -235,7 +250,7 @@ sliderarrowinc {
 
 .button-container {
     text-align: center;
-    margin-top: 40dp;
+    margin-top: 5dp;
 }
 
 .back-button {

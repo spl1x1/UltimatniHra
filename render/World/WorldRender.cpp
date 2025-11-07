@@ -9,6 +9,7 @@
 
 void WorldRender::GenerateTextures() {
     window.server.generateWorld();
+    window.loadSurfacesFromDirectory("assets/textures/world");
     GenerateWorldTexture();
     GenerateWaterTextures();
     ReleaseResources();
@@ -34,12 +35,12 @@ void WorldRender::GenerateWaterTextures() const {
     std::string textureName = "water.bmp";
 
     for (int frame = 1; frame <= spriteCount; frame++) {
-        auto* rect = new SDL_Rect{
-            (frame - 1) * 32,
-            0,
-            32,
-            32
-        };
+        auto* rect = new SDL_Rect();
+        rect->x = (frame - 1) * TEXTURERES;
+        rect->y = 0;
+        rect->w = TEXTURERES;
+        rect->h = TEXTURERES;
+
         auto *surface = SDL_CreateSurface(768,512,SDL_PIXELFORMAT_ABGR8888);
         waterFrames.push_back(WaterSurface{frame, "water_"+std::to_string(frame),surface, rect});
     }
@@ -70,21 +71,24 @@ void WorldRender::GenerateWaterTextures() const {
 }
 
 void WorldRender::GenerateWorldTexture() const {
-    for (const auto& entry : std::filesystem::directory_iterator("assets/textures/world")) {
-        std::string fileName = entry.path().string();
-        SDL_Log("Directory:: %s", fileName.c_str());
-        window.loadSurfacesFromDirectory(fileName);
-    }
     SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 
     for (int x = 0; x < MAPSIZE; x++) {
         for (int y = 0; y < MAPSIZE; y++) {
             int tileType = window.server.worldData.biomeMap[x][y];
+            int variation = window.server.worldData.blockVariantionMap[x][y];
+
             SDL_Rect destRect;
             destRect.x = x * TEXTURERES;
             destRect.y = y * TEXTURERES;
             destRect.w = TEXTURERES;
             destRect.h = TEXTURERES;
+
+            SDL_Rect srcRect;
+            srcRect.x = variation * TEXTURERES;
+            srcRect.y = 0;
+            srcRect.w = TEXTURERES;
+            srcRect.h = TEXTURERES;
 
             SDL_Surface* srcSurface = nullptr;
             switch (tileType) {
@@ -100,8 +104,7 @@ void WorldRender::GenerateWorldTexture() const {
                 }
                 case 3:
                 {
-                    std::string variationTexture = "grass" + std::to_string(window.server.worldData.blockVariantionMap[x][y]) + ".bmp";
-                    srcSurface = window.surfaces[variationTexture];
+                    srcSurface = window.surfaces["grass.bmp"];
                     break;
                 }
                 case 4:
@@ -116,13 +119,12 @@ void WorldRender::GenerateWorldTexture() const {
                 }
                 case 6:
                 {
-                    std::string variationTexture = "Snow" + std::to_string(window.server.worldData.blockVariantionMap[x][y]) + ".bmp";
-                    srcSurface = window.surfaces[variationTexture];
+                    srcSurface = window.surfaces["snow.bmp"];
                     break;
                 }
                 default: break;
             }
-            SDL_BlitSurface(srcSurface, nullptr, finalSurface, &destRect);
+            SDL_BlitSurface(srcSurface, &srcRect, finalSurface, &destRect);
 
         }
     }
