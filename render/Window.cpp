@@ -14,217 +14,7 @@
 #include "../cmake-build-debug/_deps/rmlui-src/Source/Lua/Context.h"
 #include "../server/World/generace_mapy.h"
 #include "Sprites/WaterSprite.hpp"
-
-class PlayButtonListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit PlayButtonListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event&) override {
-        SDL_Log("Play clicked!");
-        window->menuData.documents["main_menu"] ->Hide();
-        window->server.seed = 0; // TODO: get seed from user input
-        window->initGame();
-    }
-};
-class BackButtonListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit BackButtonListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event&) override {
-        SDL_Log("Back clicked!");
-
-        if (window->menuData.documents["options_menu"]) {
-            window->menuData.documents["options_menu"]->Hide();
-            window->menuData.documents["options_menu"]->Close();
-            window->menuData.documents.erase("options_menu");
-        }
-
-        if (window->menuData.documents["main_menu"]) {
-            window->menuData.documents["main_menu"]->Show();
-        }
-    }
-};
-// Resolution Dropdown Toggle
-class ToggleDropdownListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit ToggleDropdownListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event&) override {
-        Rml::Element* dropdown = window->menuData.documents["options_menu"]->GetElementById("resolutionDropdown");
-        if (dropdown) {
-            // Check if it has the 'show' class
-            if (dropdown->IsClassSet("show")) {
-                // Remove the 'show' class
-                dropdown->SetClass("show", false);
-            } else {
-                // Add the 'show' class
-                dropdown->SetClass("show", true);
-            }
-        }
-    }
-};
-
-// Set Resolution
-class SetResolutionListener : public Rml::EventListener {
-public:
-    Window* window;
-    int width;
-    int height;
-    SetResolutionListener(Window* win, int w, int h) : window(win), width(w), height(h) {}
-    void ProcessEvent(Rml::Event&) override {
-        window->menuData.resolutionWidth = width;
-        window->menuData.resolutionHeight = height;
-
-        // Update button text
-        Rml::Element* button = window->menuData.documents["options_menu"]->GetElementById("resolutionButton");
-        if (button) {
-            button->SetInnerRML(std::to_string(width) + " x " + std::to_string(height));
-        }
-
-        SDL_Log("Setting resolution to: %dx%d", width, height);
-
-        // TODO: change resolution aj v game
-        // SDL_SetWindowSize(window->sdlWindow, width, height);
-
-        // Close dropdown
-        Rml::Element* dropdown = window->menuData.documents["options_menu"]->GetElementById("resolutionDropdown");
-        if (dropdown) {
-            dropdown->SetClass("dropdown-content", true);
-            dropdown->SetClass("show", false);
-        }
-    }
-};
-
-// Master Volume Slider
-class MasterVolumeListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit MasterVolumeListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event& event) override {
-        Rml::Element* slider = event.GetCurrentElement();
-        if (slider) {
-            float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
-            window->menuData.masterVolume = static_cast<int>(value);
-
-            // Update label
-            Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("masterLabel");
-            if (label) {
-                label->SetInnerRML("Master Volume: " + std::to_string(static_cast<int>(value)) + "%");
-            }
-
-            SDL_Log("Master volume: %d%%", static_cast<int>(value));
-            // TODO: actually zmenit pak audio
-        }
-    }
-};
-
-// Music Volume Slider
-class MusicVolumeListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit MusicVolumeListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event& event) override {
-        Rml::Element* slider = event.GetCurrentElement();
-        if (slider) {
-            float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
-            window->menuData.musicVolume = static_cast<int>(value);
-
-            // Update label
-            Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("musicLabel");
-            if (label) {
-                label->SetInnerRML("Music Volume: " + std::to_string(static_cast<int>(value)) + "%");
-            }
-
-            SDL_Log("Music volume: %d%%", static_cast<int>(value));
-            // TODO: actually zmenit pak audio
-        }
-    }
-};
-
-// SFX Volume Slider
-class SFXVolumeListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit SFXVolumeListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event& event) override {
-        Rml::Element* slider = event.GetCurrentElement();
-        if (slider) {
-            float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
-            window->menuData.sfxVolume = static_cast<int>(value);
-
-            // Update label
-            Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("sfxLabel");
-            if (label) {
-                label->SetInnerRML("SFX Volume: " + std::to_string(static_cast<int>(value)) + "%");
-            }
-
-            SDL_Log("SFX volume: %d%%", static_cast<int>(value));
-            // TODO: actually zmenit pak audio
-        }
-    }
-};
-class OptionsButtonListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit OptionsButtonListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event&) override {
-        SDL_Log("Options clicked!");
-        window->menuData.documents["options_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
-
-        if (!window->menuData.documents["options_menu"] ) {
-            SDL_Log("Failed to load options_menu.rml");
-            return;
-        }
-        Rml::Element* backButton = window->menuData.documents["options_menu"]->GetElementById("backButton");
-        if (backButton) {
-            backButton->AddEventListener(Rml::EventId::Click, new BackButtonListener(window));
-        }
-        Rml::Element* resButton = window->menuData.documents["options_menu"]->GetElementById("resolutionButton");
-        if (resButton) {
-            resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window));
-        }
-
-        // Resolution options
-        Rml::Element* res640 = window->menuData.documents["options_menu"]->GetElementById("res640x360");
-        if (res640) {
-            res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 640, 360));
-        }
-
-        Rml::Element* res1280 = window->menuData.documents["options_menu"]->GetElementById("res1280x720");
-        if (res1280) {
-            res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1280, 720));
-        }
-
-        // Volume sliders
-        Rml::Element* masterSlider = window->menuData.documents["options_menu"]->GetElementById("masterSlider");
-        if (masterSlider) {
-            masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window));
-        }
-
-        Rml::Element* musicSlider = window->menuData.documents["options_menu"]->GetElementById("musicSlider");
-        if (musicSlider) {
-            musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window));
-        }
-
-        Rml::Element* sfxSlider = window->menuData.documents["options_menu"]->GetElementById("sfxSlider");
-        if (sfxSlider) {
-            sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window));
-        }
-        window->menuData.documents["main_menu"]->Hide();
-        window->menuData.documents["options_menu"] ->Show();
-    }
-};
-
-class QuitButtonListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit QuitButtonListener(Window* win) : window(win) {}
-    void ProcessEvent(Rml::Event&) override {
-        SDL_Log("Quit clicked!");
-        delete window;
-    }
-};
-
+#include "Menu_listeners.h"
 
 void Window::renderMainMenu() {
 
@@ -317,6 +107,40 @@ void Window::parseToRenderer(const std::string& sprite, const SDL_FRect *destRec
             CreateTextureFromSurface(sprite, sprite);
             SDL_RenderTexture(data.Renderer, textures["sprite"], srcRect, destRect);
         }
+}
+void Window::initPauseMenu() {
+    menuData.documents["pause_menu"] = menuData.RmlContext->LoadDocument("assets/ui/pause_menu.rml");
+
+    if (!menuData.documents["pause_menu"]) {
+        SDL_Log("Failed to load pause_menu.rml");
+        return;
+    }
+
+    // Resume button
+    Rml::Element* resumeButton = menuData.documents["pause_menu"]->GetElementById("resume_button");
+    if (resumeButton) {
+        resumeButton->AddEventListener(Rml::EventId::Click, new ResumeButtonListener(this));
+    }
+
+    // Settings button
+    Rml::Element* settingsButton = menuData.documents["pause_menu"]->GetElementById("settings_button");
+    if (settingsButton) {
+        settingsButton->AddEventListener(Rml::EventId::Click, new PauseSettingsButtonListener(this));
+    }
+
+    // Main Menu button
+    Rml::Element* mainMenuButton = menuData.documents["pause_menu"]->GetElementById("main_menu_button");
+    if (mainMenuButton) {
+        mainMenuButton->AddEventListener(Rml::EventId::Click, new MainMenuButtonListener(this));
+    }
+
+    // Quit Game button
+    Rml::Element* quitGameButton = menuData.documents["pause_menu"]->GetElementById("quit_game_button");
+    if (quitGameButton) {
+        quitGameButton->AddEventListener(Rml::EventId::Click, new QuitGameButtonListener(this));
+    }
+
+    SDL_Log("Pause menu initialized");
 }
 //tady jsem zmenil na lepsi alignment s scalingem obrazovky
 void Window::HandleMainMenuEvent(const SDL_Event *e) {
@@ -463,7 +287,23 @@ void Window::HandleEvent(const SDL_Event *e) {
                 }
 #endif
                     case SDL_SCANCODE_ESCAPE: {
-                    menuData.inGameMenu = ! menuData.inGameMenu;
+                    menuData.inGameMenu = !menuData.inGameMenu;
+
+                    if (menuData.inGameMenu) {
+                        if (!menuData.documents["pause_menu"]) {
+                            initPauseMenu();
+                        }
+                        if (menuData.documents["pause_menu"]) {
+                            menuData.documents["pause_menu"]->Show();
+                        }
+                        SDL_Log("Pause menu opened");
+                    } else {
+                        if (menuData.documents["pause_menu"]) {
+                            menuData.documents["pause_menu"]->Hide();
+                        }
+                        SDL_Log("Pause menu closed");
+                    }
+                    break;
                 }
                 default:
                     break;}

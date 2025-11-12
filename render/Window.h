@@ -94,6 +94,7 @@ public:
     bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
     void loadSurfacesFromDirectory(const std::string& directoryPath);
     void loadTexturesFromDirectory(const std::string& directoryPath);
+    void initPauseMenu();
 
     void tick();
     void initGame();

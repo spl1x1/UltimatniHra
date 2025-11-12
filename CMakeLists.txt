@@ -75,6 +75,8 @@ add_executable(UltimatniHra
         render/Sprites/PlayerSprite.cpp
         render/Sprites/Sprite.cpp
         render/Sprites/WaterSprite.cpp
+        render/Menu_listeners.cpp
+        render/Menu_listeners.h
 )
 
 add_executable(server_test
