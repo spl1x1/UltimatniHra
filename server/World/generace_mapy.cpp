@@ -72,15 +72,74 @@ void GeneraceMapy::generovat_teren(vector<vector<double>>& mapa, vector<int>& pe
 }
 
 void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const vector<vector<double>>& vlhkostMapa, vector<vector<int>>& outbiomMapa, std::mt19937& rng) {
-    std::uniform_int_distribution<int> dist(0, 13); // 0 to 13 for the random variation
+    std::uniform_int_distribution<int> dist(0, 13);
+
+    // Generate smooth wavy borders using interpolation
+    vector<double> topBorder(MAP_WIDTH);
+    vector<double> bottomBorder(MAP_WIDTH);
+    vector<double> leftBorder(MAP_HEIGHT);
+    vector<double> rightBorder(MAP_HEIGHT);
+
+    // Generate control points every 20-30 pixels and interpolate between them
+    int controlPointSpacing = 25;
+
+    // Top and bottom borders
+    for (int i = 0; i <= MAP_WIDTH; i += controlPointSpacing) {
+        int idx = std::min(i, MAP_WIDTH - 1);
+        topBorder[idx] = BORDER_SIZE + dist(rng);
+        bottomBorder[idx] = BORDER_SIZE + dist(rng);
+    }
+
+    // Interpolate between control points for top and bottom
+    for (int i = 0; i < MAP_WIDTH; i++) {
+        int prevControl = (i / controlPointSpacing) * controlPointSpacing;
+        int nextControl = std::min(prevControl + controlPointSpacing, MAP_WIDTH - 1);
+
+        if (prevControl == nextControl) {
+            topBorder[i] = topBorder[prevControl];
+            bottomBorder[i] = bottomBorder[prevControl];
+        } else {
+            double t = static_cast<double>(i - prevControl) / (nextControl - prevControl);
+            topBorder[i] = lerp(topBorder[prevControl], topBorder[nextControl], t);
+            bottomBorder[i] = lerp(bottomBorder[prevControl], bottomBorder[nextControl], t);
+        }
+    }
+
+    // Left and right borders
+    for (int i = 0; i <= MAP_HEIGHT; i += controlPointSpacing) {
+        int idx = std::min(i, MAP_HEIGHT - 1);
+        leftBorder[idx] = BORDER_SIZE + dist(rng);
+        rightBorder[idx] = BORDER_SIZE + dist(rng);
+    }
+
+    // Interpolate between control points for left and right
+    for (int i = 0; i < MAP_HEIGHT; i++) {
+        int prevControl = (i / controlPointSpacing) * controlPointSpacing;
+        int nextControl = std::min(prevControl + controlPointSpacing, MAP_HEIGHT - 1);
+
+        if (prevControl == nextControl) {
+            leftBorder[i] = leftBorder[prevControl];
+            rightBorder[i] = rightBorder[prevControl];
+        } else {
+            double t = static_cast<double>(i - prevControl) / (nextControl - prevControl);
+            leftBorder[i] = lerp(leftBorder[prevControl], leftBorder[nextControl], t);
+            rightBorder[i] = lerp(rightBorder[prevControl], rightBorder[nextControl], t);
+        }
+    }
 
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
-            int random_border = dist(rng) + BORDER_SIZE;
-            if (x < random_border || y < random_border || x >= MAP_WIDTH - random_border || y >= MAP_HEIGHT - random_border) {
+            // Check if in border zone using the smoothed values
+            bool inBorder = (x < leftBorder[y] ||
+                           y < topBorder[x] ||
+                           x >= MAP_WIDTH - rightBorder[y] ||
+                           y >= MAP_HEIGHT - bottomBorder[x]);
+
+            if (inBorder) {
                 outbiomMapa[x][y] = VODA;
                 continue;
             }
+
             double vyska = (vyskaMapa[x][y] + 1.0) / 2.0;
             double vlhkost = (vlhkostMapa[x][y] + 1.0) / 2.0;
             outbiomMapa[x][y] = ziskat_biom(vyska, vlhkost);
