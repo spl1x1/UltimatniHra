@@ -9,8 +9,8 @@
         <div class="pause-title">PAUSED</div>
         <button id="resume_button" class="pause-button">Resume</button>
         <button id="settings_button" class="pause-button">Settings</button>
-        <button id="main_menu_button" class="pause-button">Main Menu</button>
-        <button id="quit_game_button" class="pause-button">Quit Game</button>
+        <button id="main_menu_button" class="pause-button">Return to Main Menu</button>
+        <button id="quit_game_button" class="pause-button">Save and Quit Game</button>
     </div>
     </body>
 </rml>

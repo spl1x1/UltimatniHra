@@ -82,6 +82,7 @@ void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const ve
 
     // Generate control points every 20-30 pixels and interpolate between them
     int controlPointSpacing = 25;
+    int padding_left_right = 6;
 
     // Top and bottom borders
     for (int i = 0; i <= MAP_WIDTH; i += controlPointSpacing) {
@@ -108,8 +109,8 @@ void GeneraceMapy::nacist_mapu(const vector<vector<double>>& vyskaMapa, const ve
     // Left and right borders
     for (int i = 0; i <= MAP_HEIGHT; i += controlPointSpacing) {
         int idx = std::min(i, MAP_HEIGHT - 1);
-        leftBorder[idx] = BORDER_SIZE + dist(rng);
-        rightBorder[idx] = BORDER_SIZE + dist(rng);
+        leftBorder[idx] = BORDER_SIZE + dist(rng)+padding_left_right;
+        rightBorder[idx] = BORDER_SIZE + dist(rng)+padding_left_right;
     }
 
     // Interpolate between control points for left and right
