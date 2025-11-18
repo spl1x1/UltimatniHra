@@ -15,6 +15,7 @@
 #include "../server/World/generace_mapy.h"
 #include "Sprites/WaterSprite.hpp"
 #include "Menu_listeners.h"
+#include "Sprites/PlayerSprite.hpp"
 
 void Window::renderMainMenu() {
 
@@ -28,7 +29,7 @@ void Window::renderMainMenu() {
 }
 
 
-void Window::handlePlayerInput(Entity& player, float deltaTime) const {
+void Window::handlePlayerInput(Player& player, float deltaTime) const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
     float dx = 0.0f;
@@ -49,9 +50,15 @@ void Window::handlePlayerInput(Entity& player, float deltaTime) const {
         dy *= 0.7071f;
     }
 
-    float relativeX = dx * player.speed * deltaTime;
-    float relativeY = dy * player.speed * deltaTime;
-    player.x += relativeX;
+    float relativeX = dx * player.GetSpeed() * deltaTime;
+    float relativeY = dy * player.GetSpeed() * deltaTime;
+
+    player.Tick(relativeX, relativeY);
+
+
+
+    /*
+     player.x += relativeX;
     player.y += relativeY;
     data.CameraPos->x = player.x - offsetX;
     data.CameraPos->y = player.y - offsetY;
@@ -62,17 +69,19 @@ void Window::handlePlayerInput(Entity& player, float deltaTime) const {
     data.WaterPos->y += relativeY;
 
 
+
     if (data.WaterPos->x > 96) data.WaterPos->x -= 32;
     if (data.WaterPos->x < 32) data.WaterPos->x += 32;
     if (data.WaterPos->y > 96) data.WaterPos->y -= 32;
     if (data.WaterPos->y < 32) data.WaterPos->y += 32;
+    */
 }
 
 
-void Window::renderPlayer(SDL_Renderer* renderer, const Entity& player) {
+void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
     SDL_FRect rect;
-    rect.x = player.x - data.CameraPos->x;
-    rect.y = player.y - data.CameraPos->y;
+    rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
+    rect.y = GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f;
     rect.w = PLAYER_WIDTH;
     rect.h = PLAYER_HEIGHT;
 
@@ -277,9 +286,9 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
                 case SDL_SCANCODE_F3: {
-                    SDL_Log("Player at (%.2f, %.2f)", player.x, player.y);
-                    SDL_Log("data.CameraPos at (%.2f, %.2f)", data.CameraPos->x, data.CameraPos->y);
-                    SDL_Log("Rendering player at (%.2f, %.2f)",player.x - data.CameraPos->x, player.x - data.CameraPos->y);
+                    SDL_Log("Player at (%.2f, %.2f)", player->x, player->y);
+                    SDL_Log("data.CameraPos at (%.2f, %.2f)", player->cameraRect->x, player->cameraRect->y);
+                    SDL_Log("Rendering player at (%.2f, %.2f)",player->x, player->x);
                     break;
                 }
                 case SDL_SCANCODE_F4: {
@@ -315,7 +324,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 
 void Window::renderWaterLayer() {
     const auto texture = std::get<0>(sprites["water"]->getFrame());
-    SDL_RenderTexture(data.Renderer, textures[texture], data.WaterPos, nullptr);
+    SDL_RenderTexture(data.Renderer, textures[texture], player->cameraWaterRect, nullptr);
 }
 
 
@@ -323,10 +332,10 @@ void Window::renderWaterLayer() {
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
 
-    handlePlayerInput(player, server.deltaTime);
+    handlePlayerInput(*player, server.deltaTime);
     renderWaterLayer();
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.CameraPos, nullptr);
-    renderPlayer(data.Renderer,player);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], player->cameraRect, nullptr);
+    renderPlayer(data.Renderer,*player);
 
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
@@ -414,18 +423,9 @@ void Window::initGame() {
     data.inMainMenu = false;
     data.Running = true;
     data.last = SDL_GetPerformanceCounter();
-    player.sprite = new PlayerSprite();
 
-    data.CameraPos = new SDL_FRect{
-        player.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
-        player.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
-        GAMERESW,
-        GAMERESH
-    };
-    data.WaterPos = new SDL_FRect{
-        64,64,
-        static_cast<float>(data.WINDOW_WIDTH),
-        static_cast<float>(data.WINDOW_HEIGHT) };
+    player = new Player(100,4000,4000,PLAYER,200,new PlayerSprite());
+
 
     auto *water_sprite = new WaterSprite();
 
@@ -433,7 +433,7 @@ void Window::initGame() {
 
 
     sprites["water"] = water_sprite;
-    sprites["player"] = player.sprite;
+    sprites["player"] = player->sprite;
     WorldRender wr(*this);
     wr.GenerateTextures();
     SDL_RenderClear(data.Renderer);

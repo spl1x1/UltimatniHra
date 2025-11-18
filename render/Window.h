@@ -11,13 +11,13 @@
 #include <RmlUi/Core.h>
 
 #include "../server/Server.h"
-#include "../server/Entities/EntityStructs.h"
 #include "../server/World/WorldStructs.h"
 #include "Menu/RmlUi_Renderer_SDL.h"
 #include "Menu/RmlUi_Platform_SDL.h"
 #include "../MACROS.h"
-#include "Sprites/PlayerSprite.hpp"
 #include "Sprites/Sprite.hpp"
+#include "../server/Entities/Player.hpp"
+
 
 
 struct MenuData {
@@ -40,8 +40,8 @@ struct WindowData {
     SDL_Window* Window;
     SDL_Renderer* Renderer;
     SDL_Event event;
-    SDL_FRect* CameraPos;
-    SDL_FRect* WaterPos;
+    //SDL_FRect* CameraPos;
+    //SDL_FRect* WaterPos;
 
     bool Running;
     bool inMainMenu;
@@ -60,8 +60,8 @@ class Window {
 
     void renderWaterLayer();
 
-    void handlePlayerInput(Entity& player, float deltaTime) const;
-    void renderPlayer(SDL_Renderer* renderer, const Entity& player);
+    void handlePlayerInput(Player& player, float deltaTime) const;
+    void renderPlayer(SDL_Renderer* renderer, const Player& player);
 
     void renderMainMenu();
 
@@ -75,7 +75,7 @@ class Window {
 public:
 
     Server server;
-    Entity player = {480, 180, 256, 0, PLAYER, 100, 100, {}, nullptr};
+    Player *player;
 
     WorldData worldDataStruct;
     WindowData data;

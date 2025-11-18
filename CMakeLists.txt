@@ -61,14 +61,14 @@ add_executable(UltimatniHra
         DeprecatedCode/ScaleFactorCalculator.cpp
         server/World/WorldStructs.h
         server/World/WorldStructs.cpp
-        server/Entities/EntityStructs.cpp
-        server/Entities/EntityStructs.h
+        server/Entities/Entity.h
+        server/Entities/Entity.cpp
+        server/Entities/Player.hpp
+        server/Entities/Player.cpp
         server/Server.h
         server/Server.cpp
         render/Sprites/WaterSprite.hpp
         render/Sprites/Sprite.hpp
-        server/Entities/ItemStructs.cpp
-        server/Entities/ItemStructs.h
         Event.cpp
         Event.h
         render/Sprites/PlayerSprite.hpp
