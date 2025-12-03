@@ -76,6 +76,8 @@ add_executable(UltimatniHra
         render/Sprites/WaterSprite.cpp
         render/Menu_listeners.cpp
         render/Menu_listeners.h
+        render/World/Item.cpp
+        render/World/Item.h
 )
 
 
