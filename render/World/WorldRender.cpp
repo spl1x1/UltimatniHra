@@ -13,7 +13,6 @@ void WorldRender::GenerateTextures() {
     GenerateWorldTexture();
     GenerateWaterTextures();
     ReleaseResources();
-
 }
 
 

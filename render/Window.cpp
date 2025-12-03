@@ -11,7 +11,6 @@
 #include <SDL3_image/SDL_image.h>
 #include <RmlUi/Lua.h>
 
-#include "../cmake-build-debug/_deps/rmlui-src/Source/Lua/Context.h"
 #include "../server/World/generace_mapy.h"
 #include "Sprites/WaterSprite.hpp"
 #include "Menu_listeners.h"
@@ -28,6 +27,28 @@ void Window::renderMainMenu() {
     if (SDL_PollEvent(&e)) HandleMainMenuEvent(&e);
 }
 
+
+void Window::loadMarkerSurface() {
+    surfaces["marker"]= SDL_CreateSurface(MAPSIZE*32, MAPSIZE*32, SDL_PIXELFORMAT_ABGR8888);
+}
+
+void Window::markOnMap(float x, float y) {
+
+    //TODO: coords ukazuji levy horni roh, je nutné pricist 32 na 32 rectangle
+    SDL_Rect rect = {
+            static_cast<int>(x+32),
+            static_cast<int>(y+32),
+            32,
+            32
+    };
+    SDL_Surface* markerSurface = surfaces["marker"];
+
+    SDL_Color color = {0, 0, 255, 255};
+    SDL_FillSurfaceRect(markerSurface, &rect, SDL_MapSurfaceRGB(markerSurface, color.r, color.g, color.b));
+    SDL_BlitSurface(markerSurface, nullptr, markerSurface, nullptr);
+
+    textures["marker"] = SDL_CreateTextureFromSurface(data.Renderer, markerSurface);
+}
 
 void Window::handlePlayerInput(Player& player, float deltaTime) const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
@@ -54,31 +75,11 @@ void Window::handlePlayerInput(Player& player, float deltaTime) const {
     float relativeY = dy * player.GetSpeed() * deltaTime;
 
     player.Tick(relativeX, relativeY);
-
-
-
-    /*
-     player.x += relativeX;
-    player.y += relativeY;
-    data.CameraPos->x = player.x - offsetX;
-    data.CameraPos->y = player.y - offsetY;
-
-
-
-    data.WaterPos->x += relativeX;
-    data.WaterPos->y += relativeY;
-
-
-
-    if (data.WaterPos->x > 96) data.WaterPos->x -= 32;
-    if (data.WaterPos->x < 32) data.WaterPos->x += 32;
-    if (data.WaterPos->y > 96) data.WaterPos->y -= 32;
-    if (data.WaterPos->y < 32) data.WaterPos->y += 32;
-    */
 }
 
 
-void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
+void Window::renderPlayer(SDL_Renderer* renderer, Player& player) {
+
     SDL_FRect rect;
     rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
     rect.y = GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f;
@@ -86,7 +87,34 @@ void Window::renderPlayer(SDL_Renderer* renderer, const Player& player) {
     rect.h = PLAYER_HEIGHT;
 
     auto texture = player.sprite->getFrame();
+
     SDL_RenderTexture(renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
+
+    if (debugMenu.showDebug) {
+        if (player.isColliding()) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        else{
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+
+        }
+
+        Hitbox *hitbox = player.GetHitbox();
+
+         for (auto& corner : hitbox->corners) {
+            Coordinates *end= &hitbox ->corners[0];
+            if (&corner != &hitbox->corners[3]) {
+                end= &corner + 1;
+            }
+
+            SDL_RenderLine(renderer,
+                              rect.x + corner.x,
+                              rect.y + corner.y,
+                              rect.x + end->x,
+                               rect.y + end->y);
+        }
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+    }
 }
 
 void Window::loadSurfacesFromDirectory(const std::string& directoryPath){
@@ -286,16 +314,30 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
                 case SDL_SCANCODE_F3: {
-                    SDL_Log("Player at (%.2f, %.2f)", player->x, player->y);
+                    debugMenu.showDebug = !debugMenu.showDebug;
+                    if (debugMenu.showDebug) {
+                        SDL_Log("Debug info enabled");
+                    } else {
+                        SDL_Log("Debug info disabled");
+                    }
+
+                    //TODO: Vytvořit debug overlay
+                    SDL_Log("Player at (%.2f, %.2f)", player->coordinates.x, player->coordinates.y);
                     SDL_Log("data.CameraPos at (%.2f, %.2f)", player->cameraRect->x, player->cameraRect->y);
-                    SDL_Log("Rendering player at (%.2f, %.2f)",player->x, player->x);
+                    SDL_Log("Rendering player at (%.2f, %.2f)",player->coordinates.x, player->coordinates.y);
                     break;
                 }
                 case SDL_SCANCODE_F4: {
+                    markOnMap(player->coordinates.x, player->coordinates.y);
+                    break;
+                }
+                case SDL_SCANCODE_F5: {
+                    player->disableCollision(!player->collisionDisabled());
+                    SDL_Log("Player collision disabled: %s", player->collisionDisabled() ? "true" : "false");
                     break;
                 }
 #endif
-                    case SDL_SCANCODE_ESCAPE: {
+                case SDL_SCANCODE_ESCAPE: {
                     menuData.inGameMenu = !menuData.inGameMenu;
 
                     if (menuData.inGameMenu) {
@@ -335,6 +377,11 @@ void Window::advanceFrame() {
     handlePlayerInput(*player, server.deltaTime);
     renderWaterLayer();
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], player->cameraRect, nullptr);
+
+#ifdef DEBUG
+    SDL_RenderTexture(data.Renderer, textures["marker"], player->cameraRect, nullptr);
+#endif
+
     renderPlayer(data.Renderer,*player);
 
     menuData.RmlContext->Update();
@@ -436,8 +483,13 @@ void Window::initGame() {
     sprites["player"] = player->sprite;
     WorldRender wr(*this);
     wr.GenerateTextures();
+    player->SetCollisionMap(server.worldData.structureMap);
     SDL_RenderClear(data.Renderer);
     menuData.documents["temp"] = menuData.RmlContext->LoadDocument("assets/ui/temp.rml");
+
+    #ifdef DEBUG
+    loadMarkerSurface();
+    #endif
 }
 
 void Window::init(const std::string& title, int width, int height) {
@@ -469,7 +521,7 @@ void Window::init(const std::string& title, int width, int height) {
     menuData.system_interface->SetWindow(data.Window);
 
     SDL_SetWindowMinimumSize(data.Window, data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
-    SDL_SetRenderLogicalPresentation(data.Renderer, data.WINDOW_WIDTH, data.WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+    SDL_SetRenderLogicalPresentation(data.Renderer, data.WINDOW_WIDTH, data.WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     SDL_SetRenderVSync(data.Renderer, true);
 
     Rml::SetRenderInterface(menuData.render_interface);

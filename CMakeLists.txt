@@ -12,7 +12,6 @@ set(RMLUI_LUA_BINDINGS ON "Build Lua bindings." FORCE)
 
 add_compile_definitions(RMLUI_SDL_VERSION_MAJOR=3)
 add_compile_definitions(SDL_VERSION_MAJOR=3)
-add_compile_definitions(DEBUG)
 
 #sdl
 CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
@@ -79,15 +78,6 @@ add_executable(UltimatniHra
         render/Menu_listeners.h
 )
 
-add_executable(server_test
-        server/World/generace_mapy.h
-        server/World/generace_mapy.cpp
-        Tests/Generace_test.cpp
-        server/World/WorldStructs.h
-        server/World/WorldStructs.cpp
-        server/World/BossPathfinding.cpp
-        server/World/BossPathfinding.h
-)
 
 target_link_libraries(UltimatniHra
         SDL3::SDL3
@@ -97,12 +87,6 @@ target_link_libraries(UltimatniHra
         RmlUi::Lua
 )
 
-add_executable(ScalingTest
-        DeprecatedCode/ScaleFactorCalculator.h
-        DeprecatedCode/ScaleFactorCalculator.cpp
-        Tests/ScalingFactorCalculator_test.cpp
-        MACROS.h
-)
 
 add_custom_target(copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory

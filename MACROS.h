@@ -6,6 +6,7 @@
 #define MACROS_H
 
 #define CLIENT
+#define DEBUG
 
 #define GAMERESW 640
 #define GAMERESH 360

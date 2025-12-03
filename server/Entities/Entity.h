@@ -8,11 +8,24 @@
 
 #include "../../render/Sprites/Sprite.hpp"
 
+//Defines a 2D coordinate
+struct Coordinates {
+    float x = 0;
+    float y = 0;
+};
+
+//Defines 4 hitbox corners, relative to sprite
 struct Hitbox {
-    float offsetX;
-    float offsetY;
-    float width;
-    float height;
+    Coordinates corners[4];
+    bool disableCollision = false;
+    bool colliding = false;
+};
+
+enum HitboxCorners{
+    TOP_LEFT =0,
+    TOP_RIGHT =1,
+    BOTTOM_LEFT =2,
+    BOTTOM_RIGHT =3
 };
 
 enum TaskType{
@@ -29,8 +42,7 @@ public:
     int taskId;
     TaskType type;
 
-    float targetX;
-    float targetY;
+    Coordinates targetPosition;
     int taskType;
 };
 
@@ -45,18 +57,17 @@ enum EntityType{
 
 class Entity {
 protected:
-
-    [[nodiscard]] bool checkCollision(float newX, float newY) const;
+    void checkCollision(float newX, float newY);
     float speed = 0.0f;
     int** collisionMap = nullptr;
-    Hitbox hitbox {0.0f,0.0f,32.0f,32.0f};
+    Hitbox hitbox {};
 
 public:
     virtual ~Entity() = default;
     Sprite *sprite = nullptr;
 
-    float x;
-    float y;
+    //TODO: Vyměnit float x y za Coordinates
+    Coordinates coordinates;
 
     std::string name;
     int type;
@@ -66,14 +77,19 @@ public:
 
     std::vector<Task> tasks;
 
-    virtual void Tick(float relativeX, float relativeY);
+    virtual bool Tick(float relativeX, float relativeY);
 
     //Setters
     void SetHitbox(Hitbox hitbox){ this->hitbox = hitbox;};
     void SetCollisionMap(int** map) { collisionMap = map;};
+    void disableCollision(bool Switch = true){hitbox.disableCollision = Switch;};
 
     //Getters
     [[nodiscard]] float GetSpeed() const { return speed;}
+    [[nodiscard]] Hitbox* GetHitbox() { return &hitbox;}
+    [[nodiscard]] bool collisionDisabled() const {return hitbox.disableCollision;}
+    [[nodiscard]] bool isColliding() const {return hitbox.colliding;}
+
 
     Entity(float maxHealth, float x, float y, EntityType type, float speed=0.0f, Sprite *sprite = nullptr);
 

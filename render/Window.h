@@ -40,8 +40,6 @@ struct WindowData {
     SDL_Window* Window;
     SDL_Renderer* Renderer;
     SDL_Event event;
-    //SDL_FRect* CameraPos;
-    //SDL_FRect* WaterPos;
 
     bool Running;
     bool inMainMenu;
@@ -54,14 +52,20 @@ struct WindowData {
     Uint64 last;
 };
 
+struct DebugMenu{
+    bool showDebug = false;
+};
+
 class Window {
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
     void renderWaterLayer();
 
+    void loadMarkerSurface();
+    void markOnMap(float x, float y);
     void handlePlayerInput(Player& player, float deltaTime) const;
-    void renderPlayer(SDL_Renderer* renderer, const Player& player);
+    void renderPlayer(SDL_Renderer* renderer, Player& player);
 
     void renderMainMenu();
 
@@ -70,7 +74,7 @@ class Window {
     void advanceFrame();
     void Destroy();
 
-
+    DebugMenu debugMenu;
 
 public:
 

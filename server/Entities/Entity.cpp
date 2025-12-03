@@ -3,45 +3,64 @@
 //
 
 #include "Entity.h"
+#include <cmath>
+
 #include "../../MACROS.h"
 
-bool Entity::checkCollision(float newX, float newY) const {
-    /*
+void Entity::checkCollision(float newX, float newY) {
+    hitbox.colliding = false;
     if (!collisionMap) {
-        return true; // No collision map defined
-    }
-    int tileX = static_cast<int>(std::floor(newX / 32.0f));
-    int tileY = static_cast<int>(std::floor(newY / 32.0f));
-
-    if (tileX < 0 || tileY < 0 || tileX >= MAPSIZE || tileY >= MAPSIZE) {
-        return false; // Out of bounds
+        return; // No collision map defined
     }
 
-    if (collisionMap[tileX][tileY] != 0) {
-        return false;
+    for (auto corner : hitbox.corners) {
+        float cornerX = newX + corner.x;
+        float cornerY = newY + corner.y;
+
+        int tileX = static_cast<int>(std::floor(cornerX / 32.0f));
+        int tileY = static_cast<int>(std::floor(cornerY / 32.0f));
+
+        if (tileX < 0 || tileY < 0 || tileX >= MAPSIZE || tileY >= MAPSIZE) {
+            hitbox.colliding = true;
+            return ; // Out of bounds
+        }
+
+        if (collisionMap[tileX][tileY] != 0) {
+            hitbox.colliding = true;
+            return ;
+        }
     }
-    */
-    return true;
 }
 
-void Entity::Tick(float relativeX, float relativeY) {
+bool Entity::Tick(float relativeX, float relativeY) {
 
-    float newX = x + relativeX;
-    float newY = y + relativeY;
+    float newX = coordinates.x + relativeX;
+    float newY = coordinates.y + relativeY;
+    checkCollision(newX, newY);
 
-    if (checkCollision(newX, newY)) {
-        x = newX;
-        y = newY;
-    }
+    if (hitbox.colliding && !hitbox.disableCollision) return false;
+    coordinates.x = newX;
+    coordinates.y = newY;
+
+    return true;
 }
 
 Entity::Entity(float maxHealth, float x, float y, EntityType type, float speed, Sprite *sprite) {
     this->maxHealth = maxHealth;
     this->health = maxHealth;
-    this->x = x;
-    this->y = y;
+    this->coordinates.x = x;
+    this->coordinates.y = y;
     this->type = type;
     this->speed = speed;
     this->sprite = sprite;
+
+    hitbox = Hitbox{
+            .corners = {
+                    {0.0f, 0.0f},
+                    {0.0f, 0.0f},
+                    {0.0f, 0.0f},
+                    {0.0f, 0.0f}
+            }
+    };
 }
 
