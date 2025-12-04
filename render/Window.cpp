@@ -346,6 +346,10 @@ void Window::HandleEvent(const SDL_Event *e) {
                     Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
                     break;
                 }
+                case SDL_SCANCODE_F9: {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_ERROR, "Throwing exception for testing purposes");
+                    throw std::runtime_error("Test exception thrown by F9 key");
+                }
                 case SDL_SCANCODE_F3: {
                     debugMenu.showDebug = !debugMenu.showDebug;
                     if (debugMenu.showDebug) {
@@ -536,6 +540,7 @@ void Window::initGame() {
 }
 
 void Window::init(const std::string& title, int width, int height) {
+    data.inited = true;
     data.WINDOW_TITLE = title;
     data.WINDOW_WIDTH = width;
     data.WINDOW_HEIGHT = height;
@@ -618,6 +623,7 @@ void Window::init(const std::string& title, int width, int height) {
 
 void Window::Destroy() {
     data.Running = false;
+    data.inited = false;
 
     for (const auto &val: textures | std::views::values) {
         SDL_DestroyTexture(val);
@@ -629,7 +635,6 @@ void Window::Destroy() {
     SDL_DestroyRenderer(data.Renderer);
     SDL_DestroyWindow(data.Window);
     SDL_Quit();
-    exit(0);
 }
 
 Window::~Window() {

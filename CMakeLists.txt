@@ -36,6 +36,7 @@ set_target_properties(Lua::Lua PROPERTIES
 #other libs
 CPMAddPackage("gh:nlohmann/json#55f9368")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
+CPMAddPackage("gh:C-And-Cpp-Libraries/hwinfo-machine-id#cf9fa44")
 
 
 add_subdirectory(
@@ -89,6 +90,7 @@ target_link_libraries(UltimatniHra
         nlohmann_json::nlohmann_json
         RmlUi::RmlUi
         RmlUi::Lua
+        lfreist-hwinfo::hwinfo
 )
 
 

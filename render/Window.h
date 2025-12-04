@@ -40,6 +40,7 @@ struct WindowData {
     SDL_Renderer* Renderer;
     SDL_Event event;
 
+    bool inited = false;
     bool Running;
     bool inMainMenu;
     bool inGameMenu;

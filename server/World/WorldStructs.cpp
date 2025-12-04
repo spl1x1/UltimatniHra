@@ -7,15 +7,15 @@
 
 void WorldData::dealocateMap(int** map) {
     for (int i = 0; i < MAPSIZE; ++i) {
-        delete[] map[i];
+        delete map[i];
     }
-    delete[] map;
+    delete map;
 }
 void WorldData::dealocateMap(Structure*** map) {
     for (int i = 0; i < MAPSIZE; ++i) {
-        delete[] map[i];
+        delete map[i];
     }
-    delete[] map;
+    delete map;
 }
 
 WorldData::WorldData(){
@@ -33,12 +33,12 @@ WorldData::WorldData(){
 }
 
 WorldData::~WorldData() {
+    delete waterStructure;
+    delete noStructure;
+
     dealocateMap(biomeMap);
     dealocateMap(blockVariantionMap);
     dealocateMap(entityMap);
     dealocateMap(structureMap);
-
-    delete waterStructure;
-    delete noStructure;
 }
 
