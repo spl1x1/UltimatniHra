@@ -222,7 +222,7 @@ QuitButtonListener::QuitButtonListener(Window* win) : window(win) {}
 
 void QuitButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Quit clicked!");
-    delete window;
+    window->data.inited = false;
 }
 
 // ===================================================================
@@ -284,5 +284,5 @@ QuitGameButtonListener::QuitGameButtonListener(Window* win) : window(win) {}
 
 void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Quit Game clicked!");
-    delete window;
+    window->data.inited = false;
 }
