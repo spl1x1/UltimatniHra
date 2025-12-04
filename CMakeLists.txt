@@ -103,6 +103,12 @@ if (UNIX)
     )
 endif()
 
+if (WIN32)
+    target_link_libraries(UltimatniHra
+            -ldxgi
+    )
+endif()
+
 # HWINFO nefunguje pro Windows
 
 add_custom_target(copy_assets ALL
