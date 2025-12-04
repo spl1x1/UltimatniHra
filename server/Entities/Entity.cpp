@@ -25,7 +25,7 @@ void Entity::checkCollision(float newX, float newY) {
             return ; // Out of bounds
         }
 
-        if (collisionMap[tileX][tileY] != 0) {
+        if (collisionMap[tileX][tileY]->type != Structure::NONE) {
             hitbox.colliding = true;
             return ;
         }

@@ -27,11 +27,11 @@ void Server::generateWorld() {
             //Generate structure map
             switch (worldData.biomeMap[x][y]) {
                 case 0: {
-                    worldData.structureMap[x][y] = 1; // Water, Player cant enter
+                    worldData.structureMap[x][y] = worldData.waterStructure; // Water, Player cant enter
                     break;
                 }
                 default: {
-                    worldData.structureMap[x][y] = 0; // Empty, Player can enter
+                    worldData.structureMap[x][y] = worldData.noStructure; // Empty, Player can enter
                     break;
                 }
             }

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../../render/Sprites/Sprite.hpp"
+#include "../Structures/Structure.h"
 
 //Defines a 2D coordinate
 struct Coordinates {
@@ -62,7 +63,7 @@ class Entity {
 protected:
     void checkCollision(float newX, float newY);
     float speed = 0.0f;
-    int** collisionMap = nullptr;
+    Structure*** collisionMap = nullptr;
     Hitbox hitbox {};
 
 public:
@@ -83,7 +84,7 @@ public:
 
     //Setters
     void SetHitbox(Hitbox hitbox){ this->hitbox = hitbox;};
-    void SetCollisionMap(int** map) { collisionMap = map;};
+    void SetCollisionMap(Structure*** map) { collisionMap = map;};
     void disableCollision(bool Switch = true){hitbox.disableCollision = Switch;};
     void setSpeed(float newSpeed){ speed = newSpeed;};
     void setSpriteOffsetX(float newOffsetX){ offsetX = newOffsetX;}

@@ -78,6 +78,8 @@ add_executable(UltimatniHra
         render/Menu_listeners.h
         render/World/Item.cpp
         render/World/Item.h
+        server/Structures/Structure.cpp
+        server/Structures/Structure.h
 )
 
 
