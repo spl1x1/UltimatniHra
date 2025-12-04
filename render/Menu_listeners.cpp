@@ -15,7 +15,7 @@ PlayButtonListener::PlayButtonListener(Window* win) : window(win) {}
 void PlayButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Play clicked!");
     window->menuData.documents["main_menu"]->Hide();
-    window->gameData.server.seed = 0; // TODO: get seed from user input
+    window->gameData.server->seed = 0; // TODO: get seed from user input
     window->initGame();
 }
 

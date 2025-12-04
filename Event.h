@@ -1,63 +1,58 @@
+﻿//
+// Created by USER on 04.12.2025.
 //
-// Created by Lukáš Kaplánek on 03.11.2025.
-//
 
-#ifndef SYNCEVENT_H
-#define SYNCEVENT_H
-#include <utility>
+#ifndef EVENT_H
+#define EVENT_H
+#include <functional>
+#include <mutex>
+#include <string>
 
-#include "MACROS.h"
 
-#ifdef CLIENT
-#include "render/Window.h"
-#endif
-
-#include "server/Server.h"
-
-enum EventType {
-    ServerStart,
-    EntityMoved,
-    EntityAdded,
-    EntityRemoved,
-    DataSync
+struct EventCallback {
+    std::function<void()> func;
+    std::string callbackName;
 };
 
-enum EventSrc {
-    ServerSrc,
-    ClientSrc,
-    RemoteSrc
-};
-
-struct Event {
-    EventType type;
-    EventSrc src;
-    int recipientId;
-};
-
-class EventHandler {
-    std::vector<void*> remoteClients;
-
-    std::mutex mtx;
-
-    std::queue<Event> eventQueue;
-    std::queue<Event> priorityQueue;
-
+class Event {
+    std::vector<EventCallback> registeredEvents;
+    std::mutex eventMutex;
 public:
-    explicit EventHandler(std::vector<void*> remoteClients = {}) {
-        this->remoteClients = std::move(remoteClients);
-    }
-    void pushEvent(const Event& event, bool priority = false) {
-        std::lock_guard<std::mutex> lock(mtx);
-        if (priority) {
-            priorityQueue.push(event);
-        } else {
-            eventQueue.push(event);
-        }
+
+    void registerEvent(const EventCallback& EventCallback) {
+        eventMutex.lock();
+        registeredEvents.push_back(EventCallback);
+        eventMutex.unlock();
     }
 
+    void unregisterEvent(const std::string& EventName) {
+        eventMutex.lock();
+        for (auto &event : registeredEvents) {
+            if (event.callbackName == EventName) {
+                std::erase(registeredEvents, event);
+                break;
+            }
+        }
+        eventMutex.unlock();
+    }
+
+    void triggerEvents() {
+        eventMutex.lock();
+        for (const auto& event : registeredEvents) {
+            event.func();
+        }
+        eventMutex.unlock();
+    }
+
+    void operator()() {
+        triggerEvents();
+    }
+
+    void operator +=(const EventCallback& EventCallback) {
+        registerEvent(EventCallback);
+    }
 };
 
 
 
-
-#endif //SYNCEVENT_H
+#endif //EVENT_H

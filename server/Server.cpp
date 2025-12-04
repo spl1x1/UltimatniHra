@@ -5,8 +5,29 @@
 #include "Server.h"
 #include "../MACROS.h"
 #include "World/generace_mapy.h"
+#include "Entities/Entity.h"
 
-void Server::generateWorld() {
+Coordinates Server::getPlayerEntityCoords() {
+    serverMutex.lock();
+    //List by měl obsahovat minimálně jednoho hráče
+    const Coordinates coordinates =entities.at(0).coordinates;
+
+    serverMutex.unlock();
+    return coordinates;
+;
+}
+
+
+void Server::updatePlayerEntityCopy(const Entity *playerEntity) {
+    serverMutex.lock();
+
+    if (entities.empty()) entities.push_back(*playerEntity);
+    else entities.at(0)= *playerEntity;
+
+    serverMutex.unlock();
+}
+
+void Server::generateWorld() const {
     auto *generaceMapy = new GeneraceMapy(8);
 
     std::srand(static_cast<unsigned int>(seed));
@@ -27,11 +48,11 @@ void Server::generateWorld() {
             //Generate structure map
             switch (worldData.biomeMap[x][y]) {
                 case 0: {
-                    worldData.structureMap[x][y] = worldData.waterStructure; // Water, Player cant enter
+                    worldData.collisionMap[x][y] = 1; // Water, Player cant enter
                     break;
                 }
                 default: {
-                    worldData.structureMap[x][y] = worldData.noStructure; // Empty, Player can enter
+                    worldData.collisionMap[x][y] = 0; // Empty, Player can enter
                     break;
                 }
             }

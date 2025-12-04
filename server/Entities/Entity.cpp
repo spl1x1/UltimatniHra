@@ -25,7 +25,7 @@ void Entity::checkCollision(float newX, float newY) {
             return ; // Out of bounds
         }
 
-        if (collisionMap[tileX][tileY]->type != Structure::NONE) {
+        if (collisionMap[tileX][tileY] != 0) {
             hitbox.colliding = true;
             return ;
         }
@@ -45,11 +45,10 @@ bool Entity::Tick(float relativeX, float relativeY) {
     return true;
 }
 
-Entity::Entity(float maxHealth, float x, float y, EntityType type, float speed, Sprite *sprite) {
+Entity::Entity(float maxHealth, Coordinates coordinates, EntityType type, float speed, Sprite *sprite) {
     this->maxHealth = maxHealth;
     this->health = maxHealth;
-    this->coordinates.x = x;
-    this->coordinates.y = y;
+    this->coordinates = coordinates;
     this->type = type;
     this->speed = speed;
     this->sprite = sprite;

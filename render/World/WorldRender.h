@@ -29,6 +29,7 @@ class WorldRender {
     void ReleaseResources() const;
     void GenerateWorldTexture() const;
     void GenerateWaterTextures() const;
+    void GenerateStructureTextures() const;
 
     public:
     WorldRender(Window& window) : window(window) {};

@@ -21,7 +21,7 @@ public:
     SDL_FRect *cameraWaterRect = nullptr;
 
     bool Tick(float relativeX, float relativeY) override;
-    Player(float maxHealth, float x, float y, EntityType type, float speed, Sprite *sprite);
+    Player(float maxHealth, Coordinates coordinates, EntityType type, float speed, Sprite *sprite);
 };
 
 

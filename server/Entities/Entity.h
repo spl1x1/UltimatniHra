@@ -7,13 +7,7 @@
 #include <vector>
 
 #include "../../render/Sprites/Sprite.hpp"
-#include "../Structures/Structure.h"
-
-//Defines a 2D coordinate
-struct Coordinates {
-    float x = 0;
-    float y = 0;
-};
+#include "../Server.h"
 
 //Defines 4 hitbox corners, relative to sprite
 struct Hitbox {
@@ -29,7 +23,7 @@ enum HitboxCorners{
     BOTTOM_RIGHT =3
 };
 
-enum TaskType{
+enum class TaskType{
     NOTASK,
     MOVE_TO,
     GATHER_RESOURCE,
@@ -38,21 +32,20 @@ enum TaskType{
     DIE
 };
 
-class Task{
-public:
-    int taskId;
-    TaskType type;
+struct Task{
+    int taskId{} ;
+    TaskType type = TaskType::NOTASK;
 
     Coordinates targetPosition;
-    int taskType;
+    int taskType{};
 };
 
-enum EntityType{
-    PLAYER = 1,
-    NPC = 2,
-    ANIMAL = 3,
-    MONSTER = 4,
-    TILE_ENTITY =5,
+enum class EntityType{
+    PLAYER,
+    NPC,
+    ANIMAL,
+    MONSTER,
+    TILE_ENTITY
 };
 
 
@@ -63,7 +56,7 @@ class Entity {
 protected:
     void checkCollision(float newX, float newY);
     float speed = 0.0f;
-    Structure*** collisionMap = nullptr;
+    int** collisionMap = nullptr;
     Hitbox hitbox {};
 
 public:
@@ -73,7 +66,7 @@ public:
     Coordinates coordinates;
 
     std::string name;
-    int type;
+    EntityType type;
 
     float health;
     float maxHealth;
@@ -84,7 +77,7 @@ public:
 
     //Setters
     void SetHitbox(Hitbox hitbox){ this->hitbox = hitbox;};
-    void SetCollisionMap(Structure*** map) { collisionMap = map;};
+    void SetCollisionMap(int** map) { collisionMap = map;};
     void disableCollision(bool Switch = true){hitbox.disableCollision = Switch;};
     void setSpeed(float newSpeed){ speed = newSpeed;};
     void setSpriteOffsetX(float newOffsetX){ offsetX = newOffsetX;}
@@ -98,7 +91,7 @@ public:
     //Returns sprite center
     [[nodiscard]] Coordinates getTrueCoordinates() const { return Coordinates{coordinates.x + offsetX, coordinates.y + offsetY};}
 
-    Entity(float maxHealth, float x, float y, EntityType type, float speed=0.0f, Sprite *sprite = nullptr);
+    Entity(float maxHealth, Coordinates coordinates, EntityType type, float speed=0.0f, Sprite *sprite = nullptr);
 
 };
 

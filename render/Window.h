@@ -59,7 +59,7 @@ struct DebugMenu{
 
 class GameData {
 public:
-    Server server;
+    Server *server;
     Player *player = nullptr;
 };
 

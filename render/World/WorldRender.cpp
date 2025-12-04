@@ -8,13 +8,17 @@
 
 
 void WorldRender::GenerateTextures() {
-    window.gameData.server.generateWorld();
+    window.gameData.server->generateWorld();
     window.loadSurfacesFromDirectory("assets/textures/world");
     GenerateWorldTexture();
     GenerateWaterTextures();
     ReleaseResources();
 }
 
+void WorldRender::GenerateStructureTextures() const {
+
+
+}
 
 void WorldRender::ReleaseResources() const {
     for (auto it = window.surfaces.begin(); it != window.surfaces.end(); ) {
@@ -74,8 +78,8 @@ void WorldRender::GenerateWorldTexture() const {
 
     for (int x = 0; x < MAPSIZE; x++) {
         for (int y = 0; y < MAPSIZE; y++) {
-            int tileType = window.gameData.server.worldData.biomeMap[x][y];
-            int variation = window.gameData.server.worldData.blockVariantionMap[x][y];
+            int tileType = window.gameData.server->worldData.biomeMap[x][y];
+            int variation = window.gameData.server->worldData.blockVariantionMap[x][y];
 
             SDL_Rect destRect;
             destRect.x = x * TEXTURERES;

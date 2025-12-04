@@ -73,8 +73,8 @@ void Window::handlePlayerInput() const {
         dy *= 0.7071f;
     }
 
-    float relativeX = dx * gameData.player->GetSpeed() * gameData.server.deltaTime;
-    float relativeY = dy * gameData.player->GetSpeed() * gameData.server.deltaTime;
+    float relativeX = dx * gameData.player->GetSpeed() * gameData.server->deltaTime;
+    float relativeY = dy * gameData.player->GetSpeed() * gameData.server->deltaTime;
 
     gameData.player->Tick(relativeX, relativeY);
 }
@@ -91,6 +91,7 @@ void Window::renderPlayer() {
     auto texture = gameData.player->sprite->getFrame();
 
     SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
+    gameData.server->updatePlayerEntityCopy(gameData.player);
 
     if (debugMenu.showDebug) {
         if (gameData.player->isColliding()) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
@@ -498,11 +499,11 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 void Window::tick() {
 
     Uint64 current = SDL_GetPerformanceCounter();
-    gameData.server.deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
+    gameData.server->deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
     data.last = current;
 
     for (auto &val: sprites | std::views::values) {
-        val->tick(gameData.server.deltaTime);
+        val->tick(gameData.server->deltaTime);
     }
 
     if (data.inMainMenu) {
@@ -518,8 +519,7 @@ void Window::initGame() {
     data.Running = true;
     data.last = SDL_GetPerformanceCounter();
 
-    gameData.player = new Player(100,4000,4000,PLAYER,200,new PlayerSprite());
-
+    gameData.player = new Player(100,gameData.server->spawnPoint, EntityType::PLAYER,200,new PlayerSprite());
 
     auto *water_sprite = new WaterSprite();
 
@@ -530,7 +530,8 @@ void Window::initGame() {
     sprites["player"] = gameData.player->sprite;
     WorldRender wr(*this);
     wr.GenerateTextures();
-    gameData.player->SetCollisionMap(gameData.server.worldData.structureMap);
+    gameData.player->SetCollisionMap(gameData.server->worldData.collisionMap);
+    gameData.server->updatePlayerEntityCopy(gameData.player);
     SDL_RenderClear(data.Renderer);
 
     #ifdef DEBUG

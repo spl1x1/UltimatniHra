@@ -14,7 +14,7 @@ int main() {
     cout << "Structure Map:" << endl;
     for (int x = 0; x < 512; x++) {
         for (int y = 0; y < 512; y++) {
-            printf("%d ", server.worldData.structureMap[x][y]);
+            printf("%d ", server.worldData.collisionMap[x][y]);
         }
         printf("\n");
     }

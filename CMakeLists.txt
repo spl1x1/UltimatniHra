@@ -10,6 +10,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Static libs" FORCE)
 set(RMLUI_LUA_BINDINGS ON "Build Lua bindings." FORCE)
 
 
+
 add_compile_definitions(RMLUI_SDL_VERSION_MAJOR=3)
 add_compile_definitions(SDL_VERSION_MAJOR=3)
 
@@ -36,8 +37,11 @@ set_target_properties(Lua::Lua PROPERTIES
 #other libs
 CPMAddPackage("gh:nlohmann/json#55f9368")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
-CPMAddPackage("gh:C-And-Cpp-Libraries/hwinfo-machine-id#cf9fa44")
 
+# HWINFO nefunguje pro Windows
+if (UNIX)
+CPMAddPackage("gh:C-And-Cpp-Libraries/hwinfo-machine-id#cf9fa44")
+endif()
 
 add_subdirectory(
         ${CMAKE_BINARY_DIR}/_deps/rmlui-src/Backends
@@ -69,8 +73,6 @@ add_executable(UltimatniHra
         server/Server.cpp
         render/Sprites/WaterSprite.hpp
         render/Sprites/Sprite.hpp
-        Event.cpp
-        Event.h
         render/Sprites/PlayerSprite.hpp
         render/Sprites/PlayerSprite.cpp
         render/Sprites/Sprite.cpp
@@ -81,6 +83,9 @@ add_executable(UltimatniHra
         render/World/Item.h
         server/Structures/Structure.cpp
         server/Structures/Structure.h
+        render/World/ChunkManagment.cpp
+        render/World/ChunkManagment.h
+        Event.h
 )
 
 
@@ -90,9 +95,15 @@ target_link_libraries(UltimatniHra
         nlohmann_json::nlohmann_json
         RmlUi::RmlUi
         RmlUi::Lua
-        lfreist-hwinfo::hwinfo
 )
 
+if (UNIX)
+    target_link_libraries(UltimatniHra
+            lfreist-hwinfo::hwinfo
+    )
+endif()
+
+# HWINFO nefunguje pro Windows
 
 add_custom_target(copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
