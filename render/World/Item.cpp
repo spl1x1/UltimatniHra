@@ -4,10 +4,11 @@
 
 #include "Item.h"
 #include <sstream>
+#include <utility>
 
 
-Item::Item(const std::string& name, const std::string& desc, ItemType type, int value, bool stackable, int maxStack)
-    : name(name), description(desc), type(type), value(value), stackable(stackable), stackSize(1), maxStackSize(maxStack) {}
+Item::Item(std::string  name, std::string  desc, ItemType type, int value, bool stackable, int maxStack)
+    : name(std::move(name)), description(std::move(desc)), type(type), value(value), stackable(stackable), stackSize(1), maxStackSize(maxStack) {}
 
 void Item::addToStack(int amount) {
     if (stackable) {
@@ -36,7 +37,7 @@ Weapon::Weapon(const std::string& name, WeaponType wType, MaterialType mat, int 
     : Item(name, "A weapon for combat", ItemType::WEAPON, 0, false, 1),
       weaponType(wType), material(mat), damage(dmg), attackSpeed(atkSpd), durability(dur), maxDurability(dur) {
 
-    value = (damage * 10) + (int)(attackSpeed * 50) + (durability / 2);
+    value = (damage * 10) + static_cast<int>(attackSpeed * 50) + (durability / 2);
 }
 
 void Weapon::reduceDurability(int amount) {
@@ -138,7 +139,7 @@ std::string Material::getDisplayInfo() const {
 
 namespace ItemFactory {
 
-    std::string getMaterialName(MaterialType tier) {
+    std::string getMaterialName(const MaterialType tier) {
         switch (tier) {
             case MaterialType::STONE: return "Stone";
             case MaterialType::LEATHER: return "Leather";
@@ -150,7 +151,7 @@ namespace ItemFactory {
     }
 
     std::unique_ptr<Weapon> createAxe(MaterialType material) {
-        std::string matName = getMaterialName(material);
+        const std::string matName = getMaterialName(material);
         int baseDmg = 0, dur = 0;
         float atkSpd = 1.0f;
 
@@ -165,7 +166,7 @@ namespace ItemFactory {
     }
 
     std::unique_ptr<Weapon> createPickaxe(MaterialType material) {
-        std::string matName = getMaterialName(material);
+        const std::string matName = getMaterialName(material);
         int baseDmg = 0, dur = 0;
         float atkSpd = 0.8f;
 
@@ -180,7 +181,7 @@ namespace ItemFactory {
     }
 
     std::unique_ptr<Weapon> createSword(MaterialType material) {
-        std::string matName = getMaterialName(material);
+        const std::string matName = getMaterialName(material);
         int baseDmg = 0, dur = 0;
         float atkSpd = 1.5f;
 

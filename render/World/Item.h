@@ -51,7 +51,7 @@ protected:
     int stackSize;
     int maxStackSize;
 public:
-    Item(const std::string& name, const std::string& desc, ItemType type, int value, bool stackable = false, int maxStack = 1);
+    Item(std::string  name, std::string  desc, ItemType type, int value, bool stackable = false, int maxStack = 1);
     virtual ~Item() = default;
     [[nodiscard]] std::string getName() const;
     [[nodiscard]] std::string getDesription() const;
@@ -78,17 +78,17 @@ private:
     int maxDurability;
 public:
     Weapon(const std::string& name, WeaponType wType, MaterialType mat, int dmg, float atkSpd, int dur);
-    WeaponType getWeaponType() const { return weaponType; }
-    MaterialType getMaterial() const { return material;}
-    int getDamage() const { return damage; }
-    float getAttackSpeed() const { return attackSpeed; }
-    int getDurability() const { return durability; }
-    int getMaxDurability() const { return maxDurability; }
+    [[nodiscard]] WeaponType getWeaponType() const { return weaponType; }
+    [[nodiscard]] MaterialType getMaterial() const { return material;}
+    [[nodiscard]] int getDamage() const { return damage; }
+    [[nodiscard]] float getAttackSpeed() const { return attackSpeed; }
+    [[nodiscard]] int getDurability() const { return durability; }
+    [[nodiscard]] int getMaxDurability() const { return maxDurability; }
 
     void reduceDurability(int amount);
-    bool isBroken() const { return durability <= 0; }
+    [[nodiscard]] bool isBroken() const { return durability <= 0; }
     void use(Player* player) override;
-    std::string getDisplayInfo() const override;
+    [[nodiscard]] std::string getDisplayInfo() const override;
 };
 
 class Armour : public Item {
@@ -100,15 +100,15 @@ private:
     int maxDurability;
 public:
     Armour(const std::string& name, ArmourType aType, MaterialType mat, int def, int dur);
-    ArmourType getArmourType() const { return armourType; }
-    MaterialType getMaterial() const { return material; }
-    int getDefense() const { return defense; }
-    int getDurability () const {return durability;}
-    int getMaxDurability() const {return maxDurability;}
+    [[nodiscard]] ArmourType getArmourType() const { return armourType; }
+    [[nodiscard]] MaterialType getMaterial() const { return material; }
+    [[nodiscard]] int getDefense() const { return defense; }
+    [[nodiscard]] int getDurability () const {return durability;}
+    [[nodiscard]] int getMaxDurability() const {return maxDurability;}
     void reduceDurability(int amount);
-    bool isBroken() const { return durability <= 0; }
+    [[nodiscard]] bool isBroken() const { return durability <= 0; }
     void use(Player* player) override;
-    std::string getDisplayInfo() const override;
+    [[nodiscard]] std::string getDisplayInfo() const override;
 };
 
 class Consumable : public Item {
@@ -119,12 +119,12 @@ private:
 
 public:
     Consumable(const std::string& name, ConsumableType cType, int effect, float duration = 0.0f);
-    ConsumableType getConsumableType() const { return consumableType; }
-    int getEffectValue() const { return effectValue; }
-    float getEffectDuration() const { return effectDuration; }
+    [[nodiscard]] ConsumableType getConsumableType() const { return consumableType; }
+    [[nodiscard]] int getEffectValue() const { return effectValue; }
+    [[nodiscard]] float getEffectDuration() const { return effectDuration; }
 
     void use(Player* player) override;
-    std::string getDisplayInfo() const override;
+    [[nodiscard]] std::string getDisplayInfo() const override;
 };
 
 class Material : public Item {
@@ -132,9 +132,9 @@ private:
     MaterialType materialType;
 public:
     Material(const std::string& name, MaterialType tier);
-    MaterialType getMaterialType() const { return materialType; }
+    [[nodiscard]] MaterialType getMaterialType() const { return materialType; }
     void use(Player* player) override;
-    std::string getDisplayInfo() const override;
+    [[nodiscard]] std::string getDisplayInfo() const override;
 };
 namespace ItemFactory {
     // Weapons
