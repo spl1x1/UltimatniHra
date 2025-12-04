@@ -11,7 +11,6 @@
 #include <SDL3_image/SDL_image.h>
 #include <RmlUi/Lua.h>
 
-#include "../server/World/generace_mapy.h"
 #include "Sprites/WaterSprite.hpp"
 #include "Menu_listeners.h"
 #include "Sprites/PlayerSprite.hpp"
@@ -50,19 +49,22 @@ void Window::markOnMap(float x, float y) {
     textures["marker"] = SDL_CreateTextureFromSurface(data.Renderer, markerSurface);
 }
 
-void Window::handlePlayerInput(Player& player, float deltaTime) const {
+void Window::handlePlayerInput() const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
     float dx = 0.0f;
     float dy = 0.0f;
 
-    if (keystates[SDL_SCANCODE_W] || keystates[SDL_SCANCODE_UP])    {dy -= 1.0f;player.sprite->changeAnimation(RUNNING,UP,8);}
-    if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])  {dy += 1.0f;player.sprite->changeAnimation(RUNNING,DOWN,8);}
-    if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  {dx -= 1.0f;player.sprite->changeAnimation(RUNNING,LEFT,8);}
-    if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) {dx += 1.0f;player.sprite->changeAnimation(RUNNING,RIGHT,8);}
+    if (keystates[SDL_SCANCODE_W] || keystates[SDL_SCANCODE_UP])    {dy -= 1.0f;gameData.player->sprite->changeAnimation(RUNNING,UP,8);}
+    if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])  {dy += 1.0f;gameData.player->sprite->changeAnimation(RUNNING,DOWN,8);}
+    if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  {dx -= 1.0f;gameData.player->sprite->changeAnimation(RUNNING,LEFT,8);}
+    if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) {dx += 1.0f;gameData.player->sprite->changeAnimation(RUNNING,RIGHT,8);}
+   /* if (keystates[SDL_SCANCODE_RSHIFT]) {gameData.player->setSpeed(gameData.player->GetSpeed() * 1.5f);}
+    else {gameData.player->setSpeed(gameData.player->GetDefaultSpeed());} */
+
 
     if (dx == 0 && dy == 0) {
-        player.sprite->changeAnimation(IDLE,player.sprite->direction,8);
+        gameData.player->sprite->changeAnimation(IDLE,gameData.player->sprite->direction,8);
         return; // No movement
     }
     // Normalize diagonal movement
@@ -71,14 +73,14 @@ void Window::handlePlayerInput(Player& player, float deltaTime) const {
         dy *= 0.7071f;
     }
 
-    float relativeX = dx * player.GetSpeed() * deltaTime;
-    float relativeY = dy * player.GetSpeed() * deltaTime;
+    float relativeX = dx * gameData.player->GetSpeed() * gameData.server.deltaTime;
+    float relativeY = dy * gameData.player->GetSpeed() * gameData.server.deltaTime;
 
-    player.Tick(relativeX, relativeY);
+    gameData.player->Tick(relativeX, relativeY);
 }
 
 
-void Window::renderPlayer(SDL_Renderer* renderer, Player& player) {
+void Window::renderPlayer() {
 
     SDL_FRect rect;
     rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
@@ -86,18 +88,30 @@ void Window::renderPlayer(SDL_Renderer* renderer, Player& player) {
     rect.w = PLAYER_WIDTH;
     rect.h = PLAYER_HEIGHT;
 
-    auto texture = player.sprite->getFrame();
+    auto texture = gameData.player->sprite->getFrame();
 
-    SDL_RenderTexture(renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
+    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
 
     if (debugMenu.showDebug) {
-        if (player.isColliding()) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        else{
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        if (gameData.player->isColliding()) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
+        else if (gameData.player->collisionDisabled())
+            SDL_SetRenderDrawColor(data.Renderer, 0, 0, 255, 255);
+        else
+            SDL_SetRenderDrawColor(data.Renderer, 0, 255, 0, 255);
 
-        }
+        SDL_RenderLine(data.Renderer,
+                  rect.x -1,
+                  rect.y,
+                  rect.x + 1,
+                   rect.y);
 
-        Hitbox *hitbox = player.GetHitbox();
+        SDL_RenderLine(data.Renderer,
+          rect.x,
+          rect.y -1,
+          rect.x,
+           rect.y + 1);
+
+        Hitbox *hitbox = gameData.player->GetHitbox();
 
          for (auto& corner : hitbox->corners) {
             Coordinates *end= &hitbox ->corners[0];
@@ -105,14 +119,15 @@ void Window::renderPlayer(SDL_Renderer* renderer, Player& player) {
                 end= &corner + 1;
             }
 
-            SDL_RenderLine(renderer,
+            SDL_RenderLine(data.Renderer,
                               rect.x + corner.x,
                               rect.y + corner.y,
                               rect.x + end->x,
                                rect.y + end->y);
+
         }
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(data.Renderer, 0, 0, 0, 255);
 
     }
 }
@@ -145,6 +160,28 @@ void Window::parseToRenderer(const std::string& sprite, const SDL_FRect *destRec
             SDL_RenderTexture(data.Renderer, textures["sprite"], srcRect, destRect);
         }
 }
+void Window::initDebugMenu() {
+
+    Rml::DataModelConstructor constructor = menuData.RmlContext->CreateDataModel("debugMenu");
+    if (!constructor)
+        return;
+
+    constructor.Bind("playerX", &gameData.player->coordinates.x);
+    constructor.Bind("playerY", &gameData.player->coordinates.y);
+
+    debugMenu.dataModel = constructor.GetModelHandle();
+
+    menuData.documents["debug_menu"] = menuData.RmlContext->LoadDocument("assets/ui/debug_menu.rml");
+    if (!menuData.documents["debug_menu"]) {
+        SDL_Log("Failed to load debug_menu.rml");
+        return;
+    }
+
+    SDL_Log("Debug menu initialized");
+}
+
+
+
 void Window::initPauseMenu() {
     menuData.documents["pause_menu"] = menuData.RmlContext->LoadDocument("assets/ui/pause_menu.rml");
 
@@ -154,26 +191,22 @@ void Window::initPauseMenu() {
     }
 
     // Resume button
-    Rml::Element* resumeButton = menuData.documents["pause_menu"]->GetElementById("resume_button");
-    if (resumeButton) {
+    if (Rml::Element* resumeButton = menuData.documents["pause_menu"]->GetElementById("resume_button")) {
         resumeButton->AddEventListener(Rml::EventId::Click, new ResumeButtonListener(this));
     }
 
     // Settings button
-    Rml::Element* settingsButton = menuData.documents["pause_menu"]->GetElementById("settings_button");
-    if (settingsButton) {
+    if (Rml::Element* settingsButton = menuData.documents["pause_menu"]->GetElementById("settings_button")) {
         settingsButton->AddEventListener(Rml::EventId::Click, new PauseSettingsButtonListener(this));
     }
 
     // Main Menu button
-    Rml::Element* mainMenuButton = menuData.documents["pause_menu"]->GetElementById("main_menu_button");
-    if (mainMenuButton) {
+    if (Rml::Element* mainMenuButton = menuData.documents["pause_menu"]->GetElementById("main_menu_button")) {
         mainMenuButton->AddEventListener(Rml::EventId::Click, new MainMenuButtonListener(this));
     }
 
     // Quit Game button
-    Rml::Element* quitGameButton = menuData.documents["pause_menu"]->GetElementById("quit_game_button");
-    if (quitGameButton) {
+    if (Rml::Element* quitGameButton = menuData.documents["pause_menu"]->GetElementById("quit_game_button")) {
         quitGameButton->AddEventListener(Rml::EventId::Click, new QuitGameButtonListener(this));
     }
 
@@ -316,24 +349,27 @@ void Window::HandleEvent(const SDL_Event *e) {
                 case SDL_SCANCODE_F3: {
                     debugMenu.showDebug = !debugMenu.showDebug;
                     if (debugMenu.showDebug) {
+                        menuData.documents["debug_menu"]->Show();
                         SDL_Log("Debug info enabled");
+
                     } else {
+                        menuData.documents["debug_menu"]->Hide();
                         SDL_Log("Debug info disabled");
                     }
 
                     //TODO: Vytvořit debug overlay
-                    SDL_Log("Player at (%.2f, %.2f)", player->coordinates.x, player->coordinates.y);
-                    SDL_Log("data.CameraPos at (%.2f, %.2f)", player->cameraRect->x, player->cameraRect->y);
-                    SDL_Log("Rendering player at (%.2f, %.2f)",player->coordinates.x, player->coordinates.y);
+                    SDL_Log("Player at (%.2f, %.2f)", gameData.player->coordinates.x, gameData.player->coordinates.y);
+                    SDL_Log("data.CameraPos at (%.2f, %.2f)", gameData.player->cameraRect->x, gameData.player->cameraRect->y);
+                    SDL_Log("Rendering player at (%.2f, %.2f)",gameData.player->coordinates.x, gameData.player->coordinates.y);
                     break;
                 }
                 case SDL_SCANCODE_F4: {
-                    markOnMap(player->coordinates.x, player->coordinates.y);
+                    markOnMap(gameData.player->coordinates.x, gameData.player->coordinates.y);
                     break;
                 }
                 case SDL_SCANCODE_F5: {
-                    player->disableCollision(!player->collisionDisabled());
-                    SDL_Log("Player collision disabled: %s", player->collisionDisabled() ? "true" : "false");
+                    gameData.player->disableCollision(!gameData.player->collisionDisabled());
+                    SDL_Log("Player collision disabled: %s", gameData.player->collisionDisabled() ? "true" : "false");
                     break;
                 }
 #endif
@@ -366,7 +402,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 
 void Window::renderWaterLayer() {
     const auto texture = std::get<0>(sprites["water"]->getFrame());
-    SDL_RenderTexture(data.Renderer, textures[texture], player->cameraWaterRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures[texture], gameData.player->cameraWaterRect, nullptr);
 }
 
 
@@ -374,18 +410,25 @@ void Window::renderWaterLayer() {
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
 
-    handlePlayerInput(*player, server.deltaTime);
+    handlePlayerInput();
     renderWaterLayer();
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], player->cameraRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], gameData.player->cameraRect, nullptr);
 
 #ifdef DEBUG
-    SDL_RenderTexture(data.Renderer, textures["marker"], player->cameraRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["marker"], gameData.player->cameraRect, nullptr);
+    debugMenu.dataModel.DirtyVariable("playerX");
+    debugMenu.dataModel.DirtyVariable("playerY");
 #endif
 
-    renderPlayer(data.Renderer,*player);
+
+    //Render structures within screen range
+
+
+    renderPlayer();
 
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
+
 
     SDL_RenderPresent(data.Renderer);
     SDL_Event e;
@@ -451,11 +494,11 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 void Window::tick() {
 
     Uint64 current = SDL_GetPerformanceCounter();
-    server.deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
+    gameData.server.deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
     data.last = current;
 
-    for (auto& sprite : sprites) {
-        sprite.second->tick(server.deltaTime);
+    for (auto &val: sprites | std::views::values) {
+        val->tick(gameData.server.deltaTime);
     }
 
     if (data.inMainMenu) {
@@ -471,7 +514,7 @@ void Window::initGame() {
     data.Running = true;
     data.last = SDL_GetPerformanceCounter();
 
-    player = new Player(100,4000,4000,PLAYER,200,new PlayerSprite());
+    gameData.player = new Player(100,4000,4000,PLAYER,200,new PlayerSprite());
 
 
     auto *water_sprite = new WaterSprite();
@@ -480,15 +523,15 @@ void Window::initGame() {
 
 
     sprites["water"] = water_sprite;
-    sprites["player"] = player->sprite;
+    sprites["player"] = gameData.player->sprite;
     WorldRender wr(*this);
     wr.GenerateTextures();
-    player->SetCollisionMap(server.worldData.structureMap);
+    gameData.player->SetCollisionMap(gameData.server.worldData.structureMap);
     SDL_RenderClear(data.Renderer);
-    menuData.documents["temp"] = menuData.RmlContext->LoadDocument("assets/ui/temp.rml");
 
     #ifdef DEBUG
     loadMarkerSurface();
+    initDebugMenu();
     #endif
 }
 

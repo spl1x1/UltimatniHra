@@ -27,7 +27,9 @@ Player::Player(float maxHealth, float x, float y, EntityType type, float speed, 
             {32,65} // BOTTOM_LEFT
         }
     };
-        SetHitbox(playerHitbox) ;
+        SetHitbox(playerHitbox);
+    setSpriteOffsetX(47);
+    setSpriteOffsetY(47);
 };
 
 

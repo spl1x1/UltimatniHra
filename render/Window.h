@@ -11,7 +11,6 @@
 #include <RmlUi/Core.h>
 
 #include "../server/Server.h"
-#include "../server/World/WorldStructs.h"
 #include "Menu/RmlUi_Renderer_SDL.h"
 #include "Menu/RmlUi_Platform_SDL.h"
 #include "../MACROS.h"
@@ -54,6 +53,13 @@ struct WindowData {
 
 struct DebugMenu{
     bool showDebug = false;
+    Rml::DataModelHandle dataModel;
+};
+
+class GameData {
+public:
+    Server server;
+    Player *player = nullptr;
 };
 
 class Window {
@@ -64,8 +70,8 @@ class Window {
 
     void loadMarkerSurface();
     void markOnMap(float x, float y);
-    void handlePlayerInput(Player& player, float deltaTime) const;
-    void renderPlayer(SDL_Renderer* renderer, Player& player);
+    void handlePlayerInput() const;
+    void renderPlayer();
 
     void renderMainMenu();
 
@@ -78,10 +84,7 @@ class Window {
 
 public:
 
-    Server server;
-    Player *player;
-
-    WorldData worldDataStruct;
+    GameData gameData = {};
     WindowData data;
     MenuData menuData;
 
@@ -90,6 +93,7 @@ public:
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
 
+    //parseToRenderer() momentalne nepouzivane
     void parseToRenderer(const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
     bool LoadSurface(const std::string& Path);
     bool LoadSurface(const std::string& Path, const std::string& SaveAs);
@@ -99,6 +103,7 @@ public:
     void loadSurfacesFromDirectory(const std::string& directoryPath);
     void loadTexturesFromDirectory(const std::string& directoryPath);
     void initPauseMenu();
+    void initDebugMenu();
 
     void tick();
     void initGame();

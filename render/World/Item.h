@@ -53,19 +53,19 @@ protected:
 public:
     Item(const std::string& name, const std::string& desc, ItemType type, int value, bool stackable = false, int maxStack = 1);
     virtual ~Item() = default;
-    std::string getName() const;
-    std::string getDesription() const;
-    ItemType getType() const {return type;};
-    int getValue() const { return value; }
-    bool isStackable() const { return stackable; }
-    int getStackSize() const { return stackSize; }
-    int getMaxStackSize() const { return maxStackSize; }
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] std::string getDesription() const;
+    [[nodiscard]] ItemType getType() const {return type;};
+    [[nodiscard]] int getValue() const { return value; }
+    [[nodiscard]] bool isStackable() const { return stackable; }
+    [[nodiscard]] int getStackSize() const { return stackSize; }
+    [[nodiscard]] int getMaxStackSize() const { return maxStackSize; }
 
     void addToStack(int amount);
     bool removeFromStack(int amount);
 
     virtual void use(Player* player) = 0;
-    virtual std::string getDisplayInfo() const =0;
+    [[nodiscard]] virtual std::string getDisplayInfo() const =0;
 };
 
 class Weapon : public Item{

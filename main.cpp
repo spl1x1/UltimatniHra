@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 #ifdef CLIENT
     Server server = {};
     auto c = new Window();
-    c->server = server;
+    c->gameData.server = server;
     c->init("Game window");
     while (true) {
         c->tick();

@@ -56,6 +56,9 @@ enum EntityType{
 
 
 class Entity {
+    float offsetX= 0.0f;
+    float offsetY= 0.0f;
+
 protected:
     void checkCollision(float newX, float newY);
     float speed = 0.0f;
@@ -66,7 +69,6 @@ public:
     virtual ~Entity() = default;
     Sprite *sprite = nullptr;
 
-    //TODO: Vyměnit float x y za Coordinates
     Coordinates coordinates;
 
     std::string name;
@@ -83,13 +85,17 @@ public:
     void SetHitbox(Hitbox hitbox){ this->hitbox = hitbox;};
     void SetCollisionMap(int** map) { collisionMap = map;};
     void disableCollision(bool Switch = true){hitbox.disableCollision = Switch;};
+    void setSpeed(float newSpeed){ speed = newSpeed;};
+    void setSpriteOffsetX(float newOffsetX){ offsetX = newOffsetX;}
+    void setSpriteOffsetY(float newOffsetY){ offsetY = newOffsetY;}
 
     //Getters
     [[nodiscard]] float GetSpeed() const { return speed;}
     [[nodiscard]] Hitbox* GetHitbox() { return &hitbox;}
     [[nodiscard]] bool collisionDisabled() const {return hitbox.disableCollision;}
     [[nodiscard]] bool isColliding() const {return hitbox.colliding;}
-
+    //Returns sprite center
+    [[nodiscard]] Coordinates getTrueCoordinates() const { return Coordinates{coordinates.x + offsetX, coordinates.y + offsetY};}
 
     Entity(float maxHealth, float x, float y, EntityType type, float speed=0.0f, Sprite *sprite = nullptr);
 

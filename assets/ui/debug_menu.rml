@@ -1,0 +1,21 @@
+<rml>
+    <head>
+        <title>Debug Menu</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: "Poppins";
+            }
+            h1, h2 {
+                display: block;
+                wmargin: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div data-model="debugMenu">
+	        <h1>Player X: {{playerX}}</h1>
+	        <h2>Player Y: {{playerY}}</h2>
+        </div>
+    </body>
+</rml>
