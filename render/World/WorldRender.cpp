@@ -8,7 +8,7 @@
 
 
 void WorldRender::GenerateTextures() {
-    window.gameData.server->generateWorld();
+    window.server->generateWorld();
     window.loadSurfacesFromDirectory("assets/textures/world");
     GenerateWorldTexture();
     GenerateWaterTextures();
@@ -38,7 +38,7 @@ void WorldRender::GenerateWaterTextures() const {
     std::string textureName = "water.bmp";
 
     for (int frame = 1; frame <= spriteCount; frame++) {
-        auto* rect = new SDL_Rect();
+        auto* rect = new SDL_Rect(); //Cleaned later
         rect->x = (frame - 1) * TEXTURERES;
         rect->y = 0;
         rect->w = TEXTURERES;
@@ -63,6 +63,12 @@ void WorldRender::GenerateWaterTextures() const {
                 SDL_BlitSurface(srcSurface,waterFrames.at(frame).rect, targetSurface, &destRect);
             }
         }
+
+        // Ja vedel ze je nekde bude memory leak :D
+        for (const auto& frame : waterFrames) {
+            delete frame.rect;
+            delete frame.surface;
+        }
     }
 
     for (const auto& waterFrame : waterFrames) {
@@ -78,8 +84,8 @@ void WorldRender::GenerateWorldTexture() const {
 
     for (int x = 0; x < MAPSIZE; x++) {
         for (int y = 0; y < MAPSIZE; y++) {
-            int tileType = window.gameData.server->worldData.biomeMap[x][y];
-            int variation = window.gameData.server->worldData.blockVariantionMap[x][y];
+            int tileType = window.server->getCollisionMapValue(x,y, WorldData::BIOME_MAP);
+            int variation = window.server->getCollisionMapValue(x,y, WorldData::BLOCK_VARIATION_MAP);
 
             SDL_Rect destRect;
             destRect.x = x * TEXTURERES;

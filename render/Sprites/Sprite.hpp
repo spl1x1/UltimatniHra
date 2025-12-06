@@ -51,6 +51,8 @@ class Sprite {
     virtual ~Sprite() = default;
 
     void changeAnimation(AnimationType newAnimation, Direction newDirection, int newFrameCount, float newFrameDuration = 0.1, bool resetFrame = false);
+    void setDirection(Direction newDirection) {direction = newDirection;}
+    void setAnimation(AnimationType newAnimation) {activeAnimation = newAnimation;}
     void tick(float deltaTime);
 
     virtual std::tuple<std::string,SDL_FRect*> getFrame();

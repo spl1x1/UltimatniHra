@@ -20,28 +20,28 @@ class Event {
 public:
 
     void registerEvent(const EventCallback& EventCallback) {
-        eventMutex.lock();
+        std::lock_guard lock(eventMutex);
         registeredEvents.push_back(EventCallback);
-        eventMutex.unlock();
     }
 
     void unregisterEvent(const std::string& EventName) {
-        eventMutex.lock();
-        for (auto &event : registeredEvents) {
-            if (event.callbackName == EventName) {
-                std::erase(registeredEvents, event);
+        std::lock_guard lock(eventMutex);
+        if (registeredEvents.empty()) {
+            return;
+        }
+        for (int i = 0; i < registeredEvents.size(); ++i) {
+            if (registeredEvents.at(i).callbackName == EventName) {
+                registeredEvents.erase(registeredEvents.begin() + i);
                 break;
             }
         }
-        eventMutex.unlock();
     }
 
     void triggerEvents() {
-        eventMutex.lock();
+        std::lock_guard lock(eventMutex);
         for (const auto& event : registeredEvents) {
             event.func();
         }
-        eventMutex.unlock();
     }
 
     void operator()() {

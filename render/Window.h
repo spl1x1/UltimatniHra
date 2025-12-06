@@ -15,8 +15,7 @@
 #include "Menu/RmlUi_Platform_SDL.h"
 #include "../MACROS.h"
 #include "Sprites/Sprite.hpp"
-#include "../server/Entities/Player.hpp"
-
+#include "Sprites/WaterSprite.hpp"
 
 
 struct MenuData {
@@ -36,6 +35,12 @@ struct MenuData {
 };
 
 struct WindowData {
+    SDL_FRect *cameraRect = nullptr;
+    SDL_FRect *cameraWaterRect = nullptr;
+
+    float cameraOffsetX = (static_cast<float>(GAMERESW)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
+    float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
+
     SDL_Window* Window;
     SDL_Renderer* Renderer;
     SDL_Event event;
@@ -57,13 +62,9 @@ struct DebugMenu{
     Rml::DataModelHandle dataModel;
 };
 
-class GameData {
-public:
-    Server *server;
-    Player *player = nullptr;
-};
-
 class Window {
+    WaterSprite *waterSprite;
+
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
@@ -72,7 +73,7 @@ class Window {
     void loadMarkerSurface();
     void markOnMap(float x, float y);
     void handlePlayerInput() const;
-    void renderPlayer();
+    void renderPlayer(Sprite &playerSprite);
 
     void renderMainMenu();
 
@@ -84,12 +85,10 @@ class Window {
     DebugMenu debugMenu;
 
 public:
+    Server *server = nullptr;
 
-    GameData gameData = {};
     WindowData data;
     MenuData menuData;
-
-    std::unordered_map<std::string, Sprite*> sprites;
 
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;

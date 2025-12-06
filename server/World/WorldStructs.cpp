@@ -4,29 +4,45 @@
 #include "WorldStructs.h"
 #include "../../MACROS.h"
 
-
-void WorldData::dealocateMap(int** map) {
-    for (int i = 0; i < MAPSIZE; ++i) {
-        delete map[i];
+void WorldData::updateMapValue(int x, int y, MapType mapType, int newValue) const {
+    int step = x*MAPSIZE;
+    switch (mapType) {
+        case BIOME_MAP:
+            biomeMap[step + y]= newValue;
+            break;
+        case BLOCK_VARIATION_MAP:
+            blockVariantionMap[step + y] = newValue;
+            break;
+        case COLLISION_MAP:
+            collisionMap[step + y] = newValue;
+            break;
     }
-    delete map;
+}
+
+int WorldData::getMapValue(int x, int y, MapType mapType) const {
+    int step = x*MAPSIZE;
+    switch (mapType) {
+        case BIOME_MAP:
+            return biomeMap[step + y];
+        case BLOCK_VARIATION_MAP:
+            return blockVariantionMap[step + y];
+        case COLLISION_MAP:
+            return collisionMap[step + y];
+        default:
+            return -1; // Invalid map type
+    }
 }
 
 WorldData::WorldData(){
-    // Allocate memory for 2D arrays
-    biomeMap = new int*[MAPSIZE];
-    blockVariantionMap = new int*[MAPSIZE];
-    collisionMap = new int*[MAPSIZE];
-    for (int i = 0; i < MAPSIZE; ++i) {
-        biomeMap[i] = new int[MAPSIZE];
-        blockVariantionMap[i] = new int[MAPSIZE];
-        collisionMap[i] = new int[MAPSIZE];
-    }
+    // Allocate memory for arrays
+    biomeMap = new int[MAPSIZE*MAPSIZE];
+    blockVariantionMap = new int[MAPSIZE*MAPSIZE];
+    collisionMap = new int[MAPSIZE*MAPSIZE];
 }
 
 WorldData::~WorldData() {
-    dealocateMap(biomeMap);
-    dealocateMap(blockVariantionMap);
-    dealocateMap(collisionMap);
+    delete biomeMap;
+    delete blockVariantionMap;
+    delete collisionMap;
 }
 

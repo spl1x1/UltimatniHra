@@ -10,7 +10,6 @@
 #endif
 
 #include "../Window.h"
-#include <filesystem>
 #include <SDL3/SDL.h>
 #include <string>
 
@@ -20,7 +19,7 @@ struct WaterSurface {
     int id;
     std::string textureName;
     SDL_Surface* surface;
-    const SDL_Rect *rect;
+    SDL_Rect *rect;
 };
 
 class WorldRender {
@@ -32,7 +31,7 @@ class WorldRender {
     void GenerateStructureTextures() const;
 
     public:
-    WorldRender(Window& window) : window(window) {};
+    explicit WorldRender(Window& window) : window(window) {};
     void GenerateTextures();
 
 };

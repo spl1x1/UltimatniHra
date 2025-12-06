@@ -52,15 +52,17 @@ enum class EntityType{
 class Entity {
     float offsetX= 0.0f;
     float offsetY= 0.0f;
+    double angle = 0.0f;
+    Server *server;
 
 protected:
     void checkCollision(float newX, float newY);
     float speed = 0.0f;
-    int** collisionMap = nullptr;
     Hitbox hitbox {};
 
 public:
-    virtual ~Entity() = default;
+    int id;
+    virtual ~Entity();
     Sprite *sprite = nullptr;
 
     Coordinates coordinates;
@@ -73,15 +75,14 @@ public:
 
     std::vector<Task> tasks;
 
-    virtual bool Tick(float relativeX, float relativeY);
+    virtual bool Move(float dX, float dY);
 
     //Setters
-    void SetHitbox(Hitbox hitbox){ this->hitbox = hitbox;};
-    void SetCollisionMap(int** map) { collisionMap = map;};
-    void disableCollision(bool Switch = true){hitbox.disableCollision = Switch;};
+    void SetHitbox(const Hitbox &Hitbox){ this->hitbox = Hitbox;};
+    void disableCollision(const bool Switch = true){hitbox.disableCollision = Switch;};
     void setSpeed(float newSpeed){ speed = newSpeed;};
-    void setSpriteOffsetX(float newOffsetX){ offsetX = newOffsetX;}
-    void setSpriteOffsetY(float newOffsetY){ offsetY = newOffsetY;}
+    void setSpriteOffsetX(const float newOffsetX){ offsetX = newOffsetX;}
+    void setSpriteOffsetY(const float newOffsetY){ offsetY = newOffsetY;}
 
     //Getters
     [[nodiscard]] float GetSpeed() const { return speed;}
@@ -91,7 +92,9 @@ public:
     //Returns sprite center
     [[nodiscard]] Coordinates getTrueCoordinates() const { return Coordinates{coordinates.x + offsetX, coordinates.y + offsetY};}
 
-    Entity(float maxHealth, Coordinates coordinates, EntityType type, float speed=0.0f, Sprite *sprite = nullptr);
+    // Base Entity class, all entities inherit from this
+    Entity(int id, float maxHealth, Coordinates coordinates, EntityType type, Server *server, float speed=0.0f, Sprite *sprite = nullptr);
+    Entity(int id, Coordinates coordinates, EntityType type);// Not implemented yet
 
 };
 

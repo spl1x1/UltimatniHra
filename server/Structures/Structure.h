@@ -5,15 +5,17 @@
 #ifndef ULTIMATNIHRA_STRUCTURE_H
 #define ULTIMATNIHRA_STRUCTURE_H
 
+enum class structureType{
+    HOUSE,
+    FARM,
+    BARRACKS,
+    TOWER
+};
 
 class Structure {
     public:
-    enum Type {
-        NONE = 0,
-        DEPLOYABLE,
-        WATER
-    };
-    Type type;
+    int id;
+    structureType type;
 };
 
 

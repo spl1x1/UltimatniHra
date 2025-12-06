@@ -4,21 +4,25 @@
 
 #include "Player.hpp"
 
+#include "../../render/Sprites/PlayerSprite.hpp"
 
-Player::Player(float maxHealth, Coordinates coordinates, EntityType type, float speed, Sprite *sprite): Entity(maxHealth,coordinates, type, speed, sprite) {
-    cameraRect = new SDL_FRect{
-        coordinates.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
-        coordinates.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
-        GAMERESW,
-        GAMERESH
-    };
+void Player::handleEvent(PlayerEvent e) {
+    switch (e.type) {
+        case PlayerEvents::MOVE:
+            Move(e.data1, e.data2);
+            break;
+        default:
+            break;
+    }
+}
 
-    cameraWaterRect = new SDL_FRect{
-        64,64,
-        static_cast<float>(GAMERESW),
-        static_cast<float>(GAMERESH)
-    };
+Player::~Player() {
+    delete sprite;
+    delete cameraRect;
+    delete cameraWaterRect;
+}
 
+Player::Player(int id, float maxHealth, Coordinates coordinates ,Server *server ,float speed, Sprite *sprite): Entity(id ,maxHealth,coordinates, EntityType::PLAYER, server ,speed, sprite) {
     Hitbox playerHitbox = {
         {
             {32, 32}, // TOP_LEFT
@@ -33,19 +37,16 @@ Player::Player(float maxHealth, Coordinates coordinates, EntityType type, float 
 };
 
 
-bool Player::Tick(float relativeX, float relativeY)
+bool Player::Move(float dX, float dY)
  {
-    if (!Entity::Tick(relativeX, relativeY)) return false;
+    float oldX = coordinates.x;
+    float oldY = coordinates.y;
 
-    cameraRect->x = coordinates.x - cameraOffsetX;
-    cameraRect->y = coordinates.y - cameraOffsetY;
-
-    cameraWaterRect->x += relativeX;
-    cameraWaterRect->y += relativeY;
-
-    if (cameraWaterRect->x > 96) cameraWaterRect->x -= 32;
-    if (cameraWaterRect->x < 32) cameraWaterRect->x += 32;
-    if (cameraWaterRect->y > 96) cameraWaterRect->y -= 32;
-    if (cameraWaterRect->y < 32) cameraWaterRect->y += 32;
+    if (!Entity::Move(dX, dY)) return false;
     return true;
+}
+
+void Player::ClientInit(Server *server) {
+    auto *player = new Player(0,100,server->getSpawnPoint(),server,200,new PlayerSprite());
+    server->addEntity(player);
 }

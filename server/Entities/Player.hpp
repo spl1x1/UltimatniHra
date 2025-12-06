@@ -6,22 +6,40 @@
 #define PLAYER_HPP
 #include "Entity.h"
 #include <SDL3/SDL.h>
-#include "../../MACROS.h"
 
+enum class PlayerEvents{
+    MOVE,
+    ATTACK,
+    PLACE,
+    INTERACT,
+    INVENTORY
+};
 
+struct PlayerEvent {
+    PlayerEvents type;
+    float data1;
+    float data2;
+};
 
 class Player final : public Entity {
-    float cameraOffsetX = (static_cast<float>(GAMERESW)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
-    float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
+    bool Move(float dX, float dY) override;
 
-
+    Player(int id, float maxHealth, Coordinates coordinates, Server *server ,float speed, Sprite *sprite);
 
 public:
     SDL_FRect *cameraRect = nullptr;
     SDL_FRect *cameraWaterRect = nullptr;
 
-    bool Tick(float relativeX, float relativeY) override;
-    Player(float maxHealth, Coordinates coordinates, EntityType type, float speed, Sprite *sprite);
+    void handleEvent(PlayerEvent e); //TODO: implement
+
+    ~Player() override;
+
+    // Constructors
+
+    // Initializes the player character for client, should be called only once
+    static void ClientInit(Server *server);
+    static Player* ClientInitLoaded(Server *server); //TODO: implement loading from save
+
 };
 
 
