@@ -38,7 +38,7 @@ class Server {
     int _nextEntityId = 0; // 0 je vyhradeno pro playera
     int _nextStructureId = 0; // 0 zatim neni vyhrazeno
 
-    int getNextEntityId(); //Thread safe
+    int getNextEntityId(); //Vraci dalsi volne ID entity, neni thread safe, vola se jen v addEntity
 
 public:
 
