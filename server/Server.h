@@ -52,12 +52,15 @@ public:
     [[nodiscard]] float getDeltaTime(); //Musi byt thread safe protoze se vola kazdy frame, a k datum muze pristupovat vice threadu
     [[nodiscard]] Coordinates getSpawnPoint() const {return _spawnPoint;} //Nemusi byt thread safe, spawn point se nemeni po spusteni serveru
     [[nodiscard]] int getSeed() const {return _seed;} //Nemusi byt thread safe, seed se nemeni
-    [[nodiscard]] int getCollisionMapValue(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP); //Musi byt thread safe, vraci hodnotu collision mapy na danych souradnicich
+
+     /*Musi byt thread safe, vraci hodnotu collision mapy na danych souradnicich
+     isCallNested - neresi mutex lock
+     */
+    [[nodiscard]] int getMapValue(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP, bool isCallNested = false);
     [[nodiscard]] Coordinates getEntityPos(int entityId); //Musi byt thread safe, vraci pozici entity podle id
     [[nodiscard]] Entity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] bool isEntityColliding(int entityId);
     [[nodiscard]] std::map<int,std::shared_ptr<class Entity>> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
-    [[nodiscard]] int nestedGetCollisionMapValue(int x, int y);//Docasne unlockne mutex kdyz je potreba pristup z vnorene metody
 
 
     //Methods

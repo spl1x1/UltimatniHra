@@ -12,16 +12,6 @@
 void Entity::checkCollision(float newX, float newY, bool isNesetedCall) {
     hitbox.colliding = false;
 
-    std::function collisionFunction = [this](int tileX, int tileY) {
-        return server->getCollisionMapValue(tileX, tileY) != 0;
-    };
-
-    if (isNesetedCall) {
-        collisionFunction = [this](int tileX, int tileY) {
-            return server->nestedGetCollisionMapValue(tileX, tileY) != 0;
-        };
-    }
-
     for (auto corner : hitbox.corners) {
         float cornerX = newX + corner.x;
         float cornerY = newY + corner.y;
@@ -33,7 +23,7 @@ void Entity::checkCollision(float newX, float newY, bool isNesetedCall) {
             hitbox.colliding = true;
             return ; // Out of bounds
         }
-        if (collisionFunction(tileX, tileY)) {
+        if (server->getMapValue(tileX, tileY, WorldData::COLLISION_MAP,isNesetedCall) != 0) {
             hitbox.colliding = true;
             return;
         }
