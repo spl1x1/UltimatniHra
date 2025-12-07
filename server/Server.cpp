@@ -47,7 +47,15 @@ int Server::getCollisionMapValue(int x, int y, WorldData::MapType mapType) {
     return _worldData.getMapValue(x,y, mapType);
 }
 
-void Server::addEntity(Entity *entity) {
+int Server::nestedGetCollisionMapValue(int x, int y) {
+    serverMutex.unlock();
+    auto val =_worldData.getMapValue(x,y, WorldData::COLLISION_MAP);
+    serverMutex.lock();
+    return val;
+}
+
+
+void Server::addEntity(const std::shared_ptr<Entity>& entity) {
     std::lock_guard lock(serverMutex);
     int newId = getNextEntityId();
     entity->id = newId;
@@ -61,7 +69,7 @@ int Server::getNextEntityId() {
 void Server::playerUpdate(PlayerEvent e) {
     std::lock_guard lock(serverMutex);
     e.deltaTime = _deltaTime;
-    Player* player = dynamic_cast<Player*>(_entities[0]);
+    Player* player = dynamic_cast<Player*>(_entities[0].get());
     if (player) {
         player->handleEvent(e);
     }
@@ -75,7 +83,7 @@ void Server::Tick() {
     }
 }
 
-const std::map<int, class Entity*>& Server::getEntities() {
+std::map<int,std::shared_ptr<class Entity>> Server::getEntities() {
     std::shared_lock lock(serverMutex);
     return _entities;
 }
@@ -91,10 +99,12 @@ Coordinates Server::getEntityPos(int entityId) {
 Entity* Server::getEntity(int entityId) {
     std::shared_lock lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
-        return _entities[entityId];
+        return _entities[entityId].get();
     }
     return nullptr; // Return nullptr if entity not found
 }
+
+
 
 
 void Server::generateWorld(){

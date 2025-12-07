@@ -7,6 +7,7 @@
 #include "Entity.h"
 #include <SDL3/SDL.h>
 
+
 enum class PlayerEvents{
     MOVE,
     ATTACK,
@@ -24,8 +25,6 @@ struct PlayerEvent {
 
 class Player final : public Entity {
     using Entity::Move;
-    Player(int id, float maxHealth, Coordinates coordinates, Server *server ,float speed, Sprite *sprite);
-
 public:
     SDL_FRect *cameraRect = nullptr;
     SDL_FRect *cameraWaterRect = nullptr;
@@ -35,10 +34,11 @@ public:
     ~Player() override;
 
     // Constructors
+    Player(int id, float maxHealth, Coordinates coordinates, Server *server ,float speed);
 
     // Initializes the player character for client, should be called only once
     static void ClientInit(Server *server);
-    static Player* ClientInitLoaded(Server *server); //TODO: implement loading from save
+    static void ClientInitLoaded(Server *server); //TODO: implement loading from save
 
 };
 

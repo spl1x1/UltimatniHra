@@ -18,8 +18,8 @@
 struct WaterSurface {
     int id;
     std::string textureName;
-    SDL_Surface* surface;
-    SDL_Rect *rect;
+    SDL_Surface *surface;
+    std::unique_ptr<SDL_Rect> rect;
 };
 
 class WorldRender {

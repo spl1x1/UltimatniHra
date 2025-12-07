@@ -5,6 +5,7 @@
 #include "Player.hpp"
 
 #include "../../render/Sprites/PlayerSprite.hpp"
+#include <memory>
 
 void Player::handleEvent(PlayerEvent e) {
     switch (e.type) {
@@ -17,12 +18,11 @@ void Player::handleEvent(PlayerEvent e) {
 }
 
 Player::~Player() {
-    delete sprite;
     delete cameraRect;
     delete cameraWaterRect;
 }
 
-Player::Player(int id, float maxHealth, Coordinates coordinates ,Server *server ,float speed, Sprite *sprite): Entity(id ,maxHealth,coordinates, EntityType::PLAYER, server ,speed, sprite) {
+Player::Player(int id, float maxHealth, Coordinates coordinates ,Server *server ,float speed): Entity(id ,maxHealth,coordinates, EntityType::PLAYER, server ,speed, std::make_unique<PlayerSprite>()) {
     Hitbox playerHitbox = {
         {
             {32, 32}, // TOP_LEFT
@@ -37,6 +37,6 @@ Player::Player(int id, float maxHealth, Coordinates coordinates ,Server *server 
 };
 
 void Player::ClientInit(Server *server) {
-    auto *player = new Player(0,100,server->getSpawnPoint(),server,200,new PlayerSprite());
+    auto player = std::make_shared<Player>(0, 100.0f, server->getSpawnPoint(), server, 200.0f);
     server->addEntity(player);
 }

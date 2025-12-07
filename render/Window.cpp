@@ -83,7 +83,7 @@ void Window::renderPlayer(Sprite &playerSprite) {
 
     auto texture = playerSprite.getFrame();
 
-    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
+    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture).get(), &rect);
 
     if (debugMenu.showDebug) {
         if (server->isEntityColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);

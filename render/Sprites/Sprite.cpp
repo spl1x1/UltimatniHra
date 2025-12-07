@@ -71,13 +71,16 @@ void Sprite::tick(float deltaTime) {
     }
 }
 
-std::tuple<std::string, SDL_FRect *> Sprite::getFrame() {
+std::tuple<std::string, std::shared_ptr<SDL_FRect>> Sprite::getFrame() {
     float x = 0;
     if (currentFrame != 1) {
         x = static_cast<float>((currentFrame - 1) * SpriteWidth + FrameSpacing);
     }
-    delete frameRect;
-    frameRect = new SDL_FRect{x,yOffset,static_cast<float>(SpriteWidth),static_cast<float>(SpriteHeight)};
+    std::shared_ptr<SDL_FRect> frameRect = std::make_shared<SDL_FRect>();
+    frameRect->x =x;
+    frameRect->y = yOffset;
+    frameRect->w = static_cast<float>(SpriteWidth);
+    frameRect->h = static_cast<float>(SpriteHeight);
 
     return {activeTexture, frameRect};
 }

@@ -4,7 +4,6 @@
 
 #ifndef SERVERSTRUCS_H
 #define SERVERSTRUCS_H
-#include <list>
 #include <map>
 #include <shared_mutex>
 
@@ -31,14 +30,14 @@ class Server {
     Coordinates _spawnPoint = {4000.0f, 4000.0f};
 
     //mozna by vector byl lepsi, ale toto by melo setrit pamet
-    std::map<int,class Entity*> _entities{};
+    std::map<int,std::shared_ptr<class Entity>> _entities{};
     std::map<int,class Structure*> _structures{};
 
     //ID counters, k limitu se nikdy nedostaneme reclaim neni nutny
     int _nextEntityId = 0; // 0 je vyhradeno pro playera
     int _nextStructureId = 0; // 0 zatim neni vyhrazeno
 
-    int getNextEntityId(); //Thread safe
+    int getNextEntityId(); //Vraci dalsi volne ID entity, neni thread safe, vola se jen v addEntity
 
 public:
 
@@ -57,9 +56,8 @@ public:
     [[nodiscard]] Coordinates getEntityPos(int entityId); //Musi byt thread safe, vraci pozici entity podle id
     [[nodiscard]] Entity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] bool isEntityColliding(int entityId);
-    [[nodiscard]] std::map<int,class Entity*> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
-    [[nodiscard]] std::list<Structure> getCopiesOfStructures(); //Musi byt thread safe, vraci kopii struktury mapy
-    [[nodiscard]] std::shared_mutex* getMutex() { return &serverMutex;} //Vraci mutex serveru pro externi lockovani
+    [[nodiscard]] std::map<int,std::shared_ptr<class Entity>> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] int nestedGetCollisionMapValue(int x, int y);//Docasne unlockne mutex kdyz je potreba pristup z vnorene metody
 
 
     //Methods
@@ -68,7 +66,7 @@ public:
     void playerUpdate(PlayerEvent e); //Tick pro hrace TODO: implementovat, nezapomenout na thread safety
 
     void addEntity(Coordinates coordinates, EntityType type); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
-    void addEntity(Entity* entity); //Prida na server entitu
+    void addEntity(const std::shared_ptr<Entity>& entity); //Prida na server entitu
     void addStructure(Coordinates coordinates,  structureType type); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
     void addStructure(Structure* structure); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 

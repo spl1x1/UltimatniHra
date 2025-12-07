@@ -20,8 +20,8 @@ public:
     };
 
 
-    void updateMapValue(int x, int y, MapType mapType, int newValue);
-    [[nodiscard]] int getMapValue(int x, int y, MapType mapType);
+    void updateMapValue(int x, int y, MapType mapType, int newValue) const;
+    [[nodiscard]] int getMapValue(int x, int y, MapType mapType) const;
 
     WorldData();
     ~WorldData();

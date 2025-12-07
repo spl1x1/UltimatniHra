@@ -8,12 +8,19 @@
 
 #include "../../MACROS.h"
 
-Entity::~Entity() {
-    delete sprite;
-};
 
-void Entity::checkCollision(float newX, float newY) {
+void Entity::checkCollision(float newX, float newY, bool isNesetedCall) {
     hitbox.colliding = false;
+
+    std::function collisionFunction = [this](int tileX, int tileY) {
+        return server->getCollisionMapValue(tileX, tileY) != 0;
+    };
+
+    if (isNesetedCall) {
+        collisionFunction = [this](int tileX, int tileY) {
+            return server->nestedGetCollisionMapValue(tileX, tileY) != 0;
+        };
+    }
 
     for (auto corner : hitbox.corners) {
         float cornerX = newX + corner.x;
@@ -26,12 +33,10 @@ void Entity::checkCollision(float newX, float newY) {
             hitbox.colliding = true;
             return ; // Out of bounds
         }
-
-        server->getMutex()->unlock();
-        if (server->getCollisionMapValue(tileX,tileY)!= 0) {
+        if (collisionFunction(tileX, tileY)) {
             hitbox.colliding = true;
+            return;
         }
-        server->getMutex()->lock();
     }
 }
 
@@ -47,7 +52,7 @@ bool Entity::Move(float dX, float dY, float dt) {
 
     float newX = coordinates.x + relativeX;
     float newY = coordinates.y + relativeY;
-    checkCollision(newX, newY);
+    checkCollision(newX, newY, true);
 
     if (hitbox.colliding && !hitbox.disableCollision) return false;
     coordinates.x = newX;
@@ -71,14 +76,14 @@ bool Entity::Move(float dX, float dY, float dt) {
     return true;
 }
 
-Entity::Entity(int id,float maxHealth, Coordinates coordinates, EntityType type,Server *server, float speed, Sprite *sprite) {
+Entity::Entity(int id,float maxHealth, Coordinates coordinates, EntityType type,Server *server, float speed, std::unique_ptr<Sprite> sprite) {
     this->id = id;
     this->maxHealth = maxHealth;
     this->health = maxHealth;
     this->coordinates = coordinates;
     this->type = type;
     this->speed = speed;
-    this->sprite = sprite;
+    this->sprite = std::move(sprite);
     this->server = server;
 
     hitbox = Hitbox{

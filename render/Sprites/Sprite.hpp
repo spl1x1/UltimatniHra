@@ -36,8 +36,6 @@ class Sprite {
     int SpriteHeight = 32;
     int FrameSpacing = 0;
 
-    SDL_FRect* frameRect = nullptr;
-
     std::string activeTexture;
     std::string textureName;
 
@@ -49,7 +47,7 @@ class Sprite {
     AnimationType activeAnimation = NONE;
     Direction direction = OMNI;
 
-    virtual ~Sprite() {delete frameRect;};
+    virtual ~Sprite() = default;
 
     void changeAnimation(AnimationType newAnimation, Direction newDirection, int newFrameCount, float newFrameDuration = 0.1, bool resetFrame = false);
     void changeAnimation(AnimationType newAnimation, Direction newDirection, bool resetFrame = false) ;
@@ -61,7 +59,7 @@ class Sprite {
     [[nodiscard]] Direction getDirection() const {return direction;}
     [[nodiscard]] AnimationType getActiveAnimation() const {return activeAnimation;}
 
-    virtual std::tuple<std::string,SDL_FRect*> getFrame();
+    virtual std::tuple<std::string,std::shared_ptr<SDL_FRect>> getFrame();
 };
 
 
