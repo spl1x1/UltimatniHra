@@ -75,7 +75,7 @@ void Server::Tick() {
     }
 }
 
-std::map<int,class Entity*> Server::getEntities() {
+const std::map<int, class Entity*>& Server::getEntities() {
     std::shared_lock lock(serverMutex);
     return _entities;
 }
