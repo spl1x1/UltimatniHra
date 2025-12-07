@@ -4,6 +4,7 @@
 
 #include "Window.h"
 
+#include <filesystem>
 #include <ranges>
 
 #include "World/WorldRender.h"
@@ -14,6 +15,7 @@
 #include "Sprites/WaterSprite.hpp"
 #include "Menu_listeners.h"
 #include "Sprites/PlayerSprite.hpp"
+#include "../server/Entities/Player.hpp"
 
 void Window::renderMainMenu() {
 
@@ -55,32 +57,23 @@ void Window::handlePlayerInput() const {
     float dx = 0.0f;
     float dy = 0.0f;
 
-    if (keystates[SDL_SCANCODE_W] || keystates[SDL_SCANCODE_UP])    {dy -= 1.0f;gameData.player->sprite->changeAnimation(RUNNING,UP,8);}
-    if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])  {dy += 1.0f;gameData.player->sprite->changeAnimation(RUNNING,DOWN,8);}
-    if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  {dx -= 1.0f;gameData.player->sprite->changeAnimation(RUNNING,LEFT,8);}
-    if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) {dx += 1.0f;gameData.player->sprite->changeAnimation(RUNNING,RIGHT,8);}
-   /* if (keystates[SDL_SCANCODE_RSHIFT]) {gameData.player->setSpeed(gameData.player->GetSpeed() * 1.5f);}
-    else {gameData.player->setSpeed(gameData.player->GetDefaultSpeed());} */
+    if (keystates[SDL_SCANCODE_W] || keystates[SDL_SCANCODE_UP])    {dy -= 1.0f;}
+    if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])  {dy += 1.0f;}
+    if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  {dx -= 1.0f;}
+    if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) {dx += 1.0f;}
 
 
-    if (dx == 0 && dy == 0) {
-        gameData.player->sprite->changeAnimation(IDLE,gameData.player->sprite->direction,8);
-        return; // No movement
-    }
     // Normalize diagonal movement
     if (dx != 0 && dy != 0) {
         dx *= 0.7071f;
         dy *= 0.7071f;
     }
-
-    float relativeX = dx * gameData.player->GetSpeed() * gameData.server->deltaTime;
-    float relativeY = dy * gameData.player->GetSpeed() * gameData.server->deltaTime;
-
-    gameData.player->Tick(relativeX, relativeY);
+    auto event = PlayerEvent{PlayerEvents::MOVE, dx, dy};
+    server->playerUpdate(event);
 }
 
 
-void Window::renderPlayer() {
+void Window::renderPlayer(Sprite &playerSprite) {
 
     SDL_FRect rect;
     rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
@@ -88,14 +81,13 @@ void Window::renderPlayer() {
     rect.w = PLAYER_WIDTH;
     rect.h = PLAYER_HEIGHT;
 
-    auto texture = gameData.player->sprite->getFrame();
+    auto texture = playerSprite.getFrame();
 
-    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
-    gameData.server->updatePlayerEntityCopy(gameData.player);
+    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture).get(), &rect);
 
     if (debugMenu.showDebug) {
-        if (gameData.player->isColliding()) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
-        else if (gameData.player->collisionDisabled())
+        if (server->isEntityColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
+        else if (server->getEntity(0)->collisionDisabled())
             SDL_SetRenderDrawColor(data.Renderer, 0, 0, 255, 255);
         else
             SDL_SetRenderDrawColor(data.Renderer, 0, 255, 0, 255);
@@ -112,7 +104,7 @@ void Window::renderPlayer() {
           rect.x,
            rect.y + 1);
 
-        Hitbox *hitbox = gameData.player->GetHitbox();
+        Hitbox *hitbox = server->getEntity(0)->GetHitbox();
 
          for (auto& corner : hitbox->corners) {
             Coordinates *end= &hitbox ->corners[0];
@@ -167,8 +159,9 @@ void Window::initDebugMenu() {
     if (!constructor)
         return;
 
-    constructor.Bind("playerX", &gameData.player->coordinates.x);
-    constructor.Bind("playerY", &gameData.player->coordinates.y);
+    constructor.Bind("playerX", &data.cameraRect->x);
+    constructor.Bind("playerY", &data.cameraRect->y);
+    constructor.Bind("playerAngle", &data.playerAngle);
 
     debugMenu.dataModel = constructor.GetModelHandle();
 
@@ -363,18 +356,17 @@ void Window::HandleEvent(const SDL_Event *e) {
                     }
 
                     //TODO: Vytvořit debug overlay
-                    SDL_Log("Player at (%.2f, %.2f)", gameData.player->coordinates.x, gameData.player->coordinates.y);
-                    SDL_Log("data.CameraPos at (%.2f, %.2f)", gameData.player->cameraRect->x, gameData.player->cameraRect->y);
-                    SDL_Log("Rendering player at (%.2f, %.2f)",gameData.player->coordinates.x, gameData.player->coordinates.y);
+                    SDL_Log("Player at (%.2f, %.2f)", data.cameraRect->x + data.cameraOffsetX, data.cameraRect->y + data.cameraOffsetY);
+                    SDL_Log("data.CameraPos at (%.2f, %.2f)", data.cameraRect->x , data.cameraRect->y);
                     break;
                 }
                 case SDL_SCANCODE_F4: {
-                    markOnMap(gameData.player->coordinates.x, gameData.player->coordinates.y);
+                    markOnMap(data.cameraRect->x + data.cameraOffsetX, data.cameraRect->y + data.cameraOffsetY);
                     break;
                 }
                 case SDL_SCANCODE_F5: {
-                    gameData.player->disableCollision(!gameData.player->collisionDisabled());
-                    SDL_Log("Player collision disabled: %s", gameData.player->collisionDisabled() ? "true" : "false");
+                    server->setEntityCollision(0, !server->getEntity(0)->collisionDisabled());
+                    SDL_Log("Player collision disabled: %s", server->getEntity(0)->collisionDisabled() ? "true" : "false");
                     break;
                 }
 #endif
@@ -406,8 +398,8 @@ void Window::HandleEvent(const SDL_Event *e) {
 };
 
 void Window::renderWaterLayer() {
-    const auto texture = std::get<0>(sprites["water"]->getFrame());
-    SDL_RenderTexture(data.Renderer, textures[texture], gameData.player->cameraWaterRect, nullptr);
+    const auto texture = std::get<0>(waterSprite->getFrame());
+    SDL_RenderTexture(data.Renderer, textures[texture], data.cameraWaterRect, nullptr);
 }
 
 
@@ -417,19 +409,36 @@ void Window::advanceFrame() {
 
     handlePlayerInput();
     renderWaterLayer();
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], gameData.player->cameraRect, nullptr);
+
+    Coordinates coords = server->getEntityPos(0);
+
+    data.cameraWaterRect->x += coords.x - (data.cameraRect->x + data.cameraOffsetX);
+    data.cameraWaterRect->y += coords.y - (data.cameraRect->y + data.cameraOffsetY);
+
+    data.cameraRect->x = coords.x - data.cameraOffsetX;
+    data.cameraRect->y = coords.y - data.cameraOffsetY;
+
+
+    if (data.cameraWaterRect->x > 96) data.cameraWaterRect->x -= 32;
+    if (data.cameraWaterRect->x < 32) data.cameraWaterRect->x += 32;
+    if (data.cameraWaterRect->y > 96) data.cameraWaterRect->y -= 32;
+    if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
+
+
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect, nullptr);
 
 #ifdef DEBUG
-    SDL_RenderTexture(data.Renderer, textures["marker"], gameData.player->cameraRect, nullptr);
+    data.playerAngle = server->getEntity(0)->getAngle();
+
+    SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect, nullptr);
     debugMenu.dataModel.DirtyVariable("playerX");
     debugMenu.dataModel.DirtyVariable("playerY");
+    debugMenu.dataModel.DirtyVariable("playerAngle");
 #endif
 
 
-    //Render structures within screen range
-
-
-    renderPlayer();
+    //Render structures within screen range;
+    renderPlayer(*server->getEntity(0)->sprite);
 
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
@@ -499,39 +508,48 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 void Window::tick() {
 
     Uint64 current = SDL_GetPerformanceCounter();
-    gameData.server->deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
+    float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
+    server->setDeltaTime(deltaTime);
+    server->Tick();
     data.last = current;
-
-    for (auto &val: sprites | std::views::values) {
-        val->tick(gameData.server->deltaTime);
-    }
 
     if (data.inMainMenu) {
         renderMainMenu();
     }
     else if (data.Running) {
+        waterSprite->tick(deltaTime);
         advanceFrame();
     }
 }
 
 void Window::initGame() {
+
     data.inMainMenu = false;
     data.Running = true;
     data.last = SDL_GetPerformanceCounter();
 
-    gameData.player = new Player(100,gameData.server->spawnPoint, EntityType::PLAYER,200,new PlayerSprite());
+    Player::ClientInit(server);
+    waterSprite = new WaterSprite();
+    Coordinates coord = server->getEntityPos(0);
 
-    auto *water_sprite = new WaterSprite();
+    data.cameraRect = new SDL_FRect{
+        coord.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
+        coord.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
+        GAMERESW,
+        GAMERESH
+    };
+
+    data.cameraWaterRect = new SDL_FRect{
+        64,64,
+        static_cast<float>(GAMERESW),
+        static_cast<float>(GAMERESH)
+    };
 
     loadTexturesFromDirectory("assets/textures/entities/player");
 
 
-    sprites["water"] = water_sprite;
-    sprites["player"] = gameData.player->sprite;
     WorldRender wr(*this);
     wr.GenerateTextures();
-    gameData.player->SetCollisionMap(gameData.server->worldData.collisionMap);
-    gameData.server->updatePlayerEntityCopy(gameData.player);
     SDL_RenderClear(data.Renderer);
 
     #ifdef DEBUG
@@ -625,6 +643,7 @@ void Window::init(const std::string& title, int width, int height) {
 void Window::Destroy() {
     data.Running = false;
     data.inited = false;
+    delete waterSprite;
 
     for (const auto &val: textures | std::views::values) {
         SDL_DestroyTexture(val);

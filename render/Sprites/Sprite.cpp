@@ -43,6 +43,20 @@ void Sprite::changeAnimation(AnimationType newAnimation, Direction newDirection,
     if (direction != OMNI) activeTexture += "_" + directionTypeToString(direction);
 }
 
+void Sprite::changeAnimation(AnimationType newAnimation, Direction newDirection, bool resetFrame) {
+    activeAnimation = newAnimation;
+    direction = newDirection;
+
+    if (resetFrame) {
+        currentFrame = 1;
+        frameTime = 0;
+    }
+
+    activeTexture = textureName;
+    if (activeAnimation != NONE) activeTexture += "_" +animationTypeToString(activeAnimation);
+    if (direction != OMNI) activeTexture += "_" + directionTypeToString(direction);
+}
+
 void Sprite::tick(float deltaTime) {
     if (frameCount == 0) {
         return;
@@ -57,10 +71,16 @@ void Sprite::tick(float deltaTime) {
     }
 }
 
-std::tuple<std::string, SDL_FRect *> Sprite::getFrame() {
+std::tuple<std::string, std::shared_ptr<SDL_FRect>> Sprite::getFrame() {
     float x = 0;
     if (currentFrame != 1) {
         x = static_cast<float>((currentFrame - 1) * SpriteWidth + FrameSpacing);
     }
-    return {activeTexture, new SDL_FRect{x,yOffset,static_cast<float>(SpriteWidth),static_cast<float>(SpriteHeight)} };
+    std::shared_ptr<SDL_FRect> frameRect = std::make_shared<SDL_FRect>();
+    frameRect->x =x;
+    frameRect->y = yOffset;
+    frameRect->w = static_cast<float>(SpriteWidth);
+    frameRect->h = static_cast<float>(SpriteHeight);
+
+    return {activeTexture, frameRect};
 }

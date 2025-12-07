@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 
     Server server = {};
     auto c = new Window();
-    c->gameData.server = &server;
+    c->server = &server;
     c->init("Game window");
 
     try {

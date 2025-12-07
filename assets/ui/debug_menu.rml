@@ -15,7 +15,8 @@
     <body>
         <div data-model="debugMenu">
 	        <h1>Player X: {{playerX}}</h1>
-	        <h2>Player Y: {{playerY}}</h2>
+	        <h1>Player Y: {{playerY}}</h1>
+	        <h1>Player Angle: {{playerAngle}}</h1>
         </div>
     </body>
 </rml>
