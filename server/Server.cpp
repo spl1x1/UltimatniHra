@@ -42,17 +42,11 @@ float Server::getDeltaTime(){
     return _deltaTime;
 }
 
-int Server::getCollisionMapValue(int x, int y, WorldData::MapType mapType) {
-    std::shared_lock lock(serverMutex);
+int Server::getMapValue(int x, int y, WorldData::MapType mapType, bool isCallNeseted) {
+    if (!isCallNeseted) std::shared_lock lock(serverMutex);
     return _worldData.getMapValue(x,y, mapType);
 }
 
-int Server::nestedGetCollisionMapValue(int x, int y) {
-    serverMutex.unlock();
-    auto val =_worldData.getMapValue(x,y, WorldData::COLLISION_MAP);
-    serverMutex.lock();
-    return val;
-}
 
 
 void Server::addEntity(const std::shared_ptr<Entity>& entity) {
