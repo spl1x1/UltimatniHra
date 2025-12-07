@@ -61,7 +61,10 @@ int Server::getNextEntityId() {
 void Server::playerUpdate(PlayerEvent e) {
     std::lock_guard lock(serverMutex);
     e.deltaTime = _deltaTime;
-    reinterpret_cast<Player*>(_entities[0])->handleEvent(e);
+    Player* player = dynamic_cast<Player*>(_entities[0]);
+    if (player) {
+        player->handleEvent(e);
+    }
 }
 
 void Server::Tick() {
