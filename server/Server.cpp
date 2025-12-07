@@ -70,7 +70,7 @@ void Server::playerUpdate(PlayerEvent e) {
 void Server::Tick() {
     std::lock_guard lock(serverMutex);
     for (auto& [id, entity] : _entities) {
-        if (entity == nullptr) continue;
+        if (entity == nullptr || entity->sprite == nullptr) continue;
         entity->sprite->tick(_deltaTime);
     }
 }
