@@ -70,7 +70,7 @@ public:
     void addEntity(Coordinates coordinates, EntityType type); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
     void addEntity(Entity* entity); //Prida na server entitu
     void addStructure(Coordinates coordinates,  structureType type); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
-    void addStructure(Entity* entity); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
+    void addStructure(Structure* structure); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 
     void removeEntity(int entityId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety
     void removeStructure(int structureId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety
