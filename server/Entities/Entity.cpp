@@ -4,6 +4,7 @@
 
 #include "Entity.h"
 #include <cmath>
+#include <SDL3/SDL_log.h>
 
 #include "../../MACROS.h"
 
@@ -26,22 +27,23 @@ void Entity::checkCollision(float newX, float newY) {
             return ; // Out of bounds
         }
 
+        server->getMutex()->unlock();
         if (server->getCollisionMapValue(tileX,tileY)!= 0) {
             hitbox.colliding = true;
-            return ;
         }
+        server->getMutex()->lock();
     }
 }
 
-bool Entity::Move(float dX, float dY) {
+bool Entity::Move(float dX, float dY, float dt) {
 
     if (dX == 0.0f && dY == 0.0f) {
         sprite->setAnimation(IDLE);
         return true;
     };
 
-    float relativeX = dX * speed * server->getDeltaTime();
-    float relativeY = dY * speed * server->getDeltaTime();
+    float relativeX = dX * speed * dt;
+    float relativeY = dY * speed * dt;
 
     float newX = coordinates.x + relativeX;
     float newY = coordinates.y + relativeY;
@@ -54,15 +56,16 @@ bool Entity::Move(float dX, float dY) {
     angle = std::atan2(dX, dY) * 180.0f / M_PI;
     if (angle < 0) angle += 360.0f;
 
-    if (angle >= 45.0f && angle < 135.0f) {
-        sprite->setDirection(RIGHT);
-    } else if (angle >= 135.0f && angle < 225.0f) {
-        sprite->setDirection(UP);
-    } else if (angle >= 225.0f && angle < 315.0f) {
-        sprite->setDirection(LEFT);
-    } else {
+    if ((angle >= 0 && angle <= 44) || (angle >= 316 && angle <= 360)) {
         sprite->setDirection(DOWN);
+    } else if (angle >= 136 && angle <= 224) {
+        sprite->setDirection(UP);
+    } else if (angle >= 45 && angle <= 135) {
+        sprite->setDirection(RIGHT);
+    } else if (angle >= 225 && angle <= 315) {
+        sprite->setDirection(LEFT);
     }
+
     sprite->setAnimation(RUNNING);
 
     return true;

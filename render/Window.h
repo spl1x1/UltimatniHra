@@ -38,6 +38,8 @@ struct WindowData {
     SDL_FRect *cameraRect = nullptr;
     SDL_FRect *cameraWaterRect = nullptr;
 
+    float playerAngle = 0.0f;
+
     float cameraOffsetX = (static_cast<float>(GAMERESW)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
     float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
 

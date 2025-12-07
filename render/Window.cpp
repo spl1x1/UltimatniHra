@@ -161,6 +161,7 @@ void Window::initDebugMenu() {
 
     constructor.Bind("playerX", &data.cameraRect->x);
     constructor.Bind("playerY", &data.cameraRect->y);
+    constructor.Bind("playerAngle", &data.playerAngle);
 
     debugMenu.dataModel = constructor.GetModelHandle();
 
@@ -364,7 +365,7 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
                 case SDL_SCANCODE_F5: {
-                    server->setEntityCollision(0, server->getEntity(0)->collisionDisabled());
+                    server->setEntityCollision(0, !server->getEntity(0)->collisionDisabled());
                     SDL_Log("Player collision disabled: %s", server->getEntity(0)->collisionDisabled() ? "true" : "false");
                     break;
                 }
@@ -411,8 +412,8 @@ void Window::advanceFrame() {
 
     Coordinates coords = server->getEntityPos(0);
 
-    data.cameraWaterRect->x += data.cameraRect->x - coords.x;
-    data.cameraWaterRect->y += data.cameraRect->y - coords.y;
+    data.cameraWaterRect->x += coords.x - (data.cameraRect->x + data.cameraOffsetX);
+    data.cameraWaterRect->y += coords.y - (data.cameraRect->y + data.cameraOffsetY);
 
     data.cameraRect->x = coords.x - data.cameraOffsetX;
     data.cameraRect->y = coords.y - data.cameraOffsetY;
@@ -427,16 +428,17 @@ void Window::advanceFrame() {
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect, nullptr);
 
 #ifdef DEBUG
+    data.playerAngle = server->getEntity(0)->getAngle();
+
     SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect, nullptr);
     debugMenu.dataModel.DirtyVariable("playerX");
     debugMenu.dataModel.DirtyVariable("playerY");
+    debugMenu.dataModel.DirtyVariable("playerAngle");
 #endif
 
 
-    //Render structures within screen range
-
-    auto entitySprites = server->getEntitySprites();
-    renderPlayer(entitySprites.front());
+    //Render structures within screen range;
+    renderPlayer(*server->getEntity(0)->sprite);
 
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
@@ -508,6 +510,7 @@ void Window::tick() {
     Uint64 current = SDL_GetPerformanceCounter();
     float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
     server->setDeltaTime(deltaTime);
+    server->Tick();
     data.last = current;
 
     if (data.inMainMenu) {

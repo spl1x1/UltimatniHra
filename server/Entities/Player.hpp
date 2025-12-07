@@ -19,11 +19,11 @@ struct PlayerEvent {
     PlayerEvents type;
     float data1;
     float data2;
+    float deltaTime;
 };
 
 class Player final : public Entity {
-    bool Move(float dX, float dY) override;
-
+    using Entity::Move;
     Player(int id, float maxHealth, Coordinates coordinates, Server *server ,float speed, Sprite *sprite);
 
 public:

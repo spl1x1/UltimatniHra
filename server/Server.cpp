@@ -55,12 +55,12 @@ void Server::addEntity(Entity *entity) {
 }
 
 int Server::getNextEntityId() {
-    std::lock_guard lock(serverMutex);
     return _nextEntityId++;
 }
 
-void Server::playerUpdate(const PlayerEvent e) {
+void Server::playerUpdate(PlayerEvent e) {
     std::lock_guard lock(serverMutex);
+    e.deltaTime = _deltaTime;
     reinterpret_cast<Player*>(_entities[0])->handleEvent(e);
 }
 
@@ -72,18 +72,13 @@ void Server::Tick() {
     }
 }
 
-std::list<Sprite> Server::getEntitySprites() {
+std::map<int,class Entity*> Server::getEntities() {
     std::shared_lock lock(serverMutex);
-    std::list<Sprite> entityList;
-    for (auto pair: _entities) {
-        if (pair.second == nullptr) continue;
-        entityList.push_back(*pair.second->sprite);
-    }
-    return entityList;
+    return _entities;
 }
 
 Coordinates Server::getEntityPos(int entityId) {
-    std::shared_lock lock(serverMutex);
+   std::shared_lock lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
         return _entities[entityId]->coordinates;
     }

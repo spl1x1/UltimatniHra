@@ -57,8 +57,9 @@ public:
     [[nodiscard]] Coordinates getEntityPos(int entityId); //Musi byt thread safe, vraci pozici entity podle id
     [[nodiscard]] Entity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] bool isEntityColliding(int entityId);
-    [[nodiscard]] std::list<Sprite> getEntitySprites(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] std::map<int,class Entity*> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
     [[nodiscard]] std::list<Structure> getCopiesOfStructures(); //Musi byt thread safe, vraci kopii struktury mapy
+    [[nodiscard]] std::shared_mutex* getMutex() { return &serverMutex;} //Vraci mutex serveru pro externi lockovani
 
 
     //Methods

@@ -43,6 +43,20 @@ void Sprite::changeAnimation(AnimationType newAnimation, Direction newDirection,
     if (direction != OMNI) activeTexture += "_" + directionTypeToString(direction);
 }
 
+void Sprite::changeAnimation(AnimationType newAnimation, Direction newDirection, bool resetFrame) {
+    activeAnimation = newAnimation;
+    direction = newDirection;
+
+    if (resetFrame) {
+        currentFrame = 1;
+        frameTime = 0;
+    }
+
+    activeTexture = textureName;
+    if (activeAnimation != NONE) activeTexture += "_" +animationTypeToString(activeAnimation);
+    if (direction != OMNI) activeTexture += "_" + directionTypeToString(direction);
+}
+
 void Sprite::tick(float deltaTime) {
     if (frameCount == 0) {
         return;
@@ -62,5 +76,8 @@ std::tuple<std::string, SDL_FRect *> Sprite::getFrame() {
     if (currentFrame != 1) {
         x = static_cast<float>((currentFrame - 1) * SpriteWidth + FrameSpacing);
     }
-    return {activeTexture, new SDL_FRect{x,yOffset,static_cast<float>(SpriteWidth),static_cast<float>(SpriteHeight)} };
+    delete frameRect;
+    frameRect = new SDL_FRect{x,yOffset,static_cast<float>(SpriteWidth),static_cast<float>(SpriteHeight)};
+
+    return {activeTexture, frameRect};
 }

@@ -75,7 +75,7 @@ public:
 
     std::vector<Task> tasks;
 
-    virtual bool Move(float dX, float dY);
+    virtual bool Move(float dX, float dY, float dt);
 
     //Setters
     void SetHitbox(const Hitbox &Hitbox){ this->hitbox = Hitbox;};
@@ -85,6 +85,7 @@ public:
     void setSpriteOffsetY(const float newOffsetY){ offsetY = newOffsetY;}
 
     //Getters
+    [[nodiscard]] float getAngle() const { return angle;}
     [[nodiscard]] float GetSpeed() const { return speed;}
     [[nodiscard]] Hitbox* GetHitbox() { return &hitbox;}
     [[nodiscard]] bool collisionDisabled() const {return hitbox.disableCollision;}

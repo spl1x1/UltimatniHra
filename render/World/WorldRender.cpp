@@ -63,12 +63,6 @@ void WorldRender::GenerateWaterTextures() const {
                 SDL_BlitSurface(srcSurface,waterFrames.at(frame).rect, targetSurface, &destRect);
             }
         }
-
-        // Ja vedel ze je nekde bude memory leak :D
-        for (const auto& frame : waterFrames) {
-            delete frame.rect;
-            delete frame.surface;
-        }
     }
 
     for (const auto& waterFrame : waterFrames) {

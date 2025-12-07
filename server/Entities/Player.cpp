@@ -9,7 +9,7 @@
 void Player::handleEvent(PlayerEvent e) {
     switch (e.type) {
         case PlayerEvents::MOVE:
-            Move(e.data1, e.data2);
+            Move(e.data1, e.data2, e.deltaTime);
             break;
         default:
             break;
@@ -35,16 +35,6 @@ Player::Player(int id, float maxHealth, Coordinates coordinates ,Server *server 
     setSpriteOffsetX(47);
     setSpriteOffsetY(47);
 };
-
-
-bool Player::Move(float dX, float dY)
- {
-    float oldX = coordinates.x;
-    float oldY = coordinates.y;
-
-    if (!Entity::Move(dX, dY)) return false;
-    return true;
-}
 
 void Player::ClientInit(Server *server) {
     auto *player = new Player(0,100,server->getSpawnPoint(),server,200,new PlayerSprite());
