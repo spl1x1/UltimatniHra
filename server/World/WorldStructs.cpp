@@ -41,8 +41,8 @@ WorldData::WorldData(){
 }
 
 WorldData::~WorldData() {
-    delete biomeMap;
-    delete blockVariantionMap;
-    delete collisionMap;
+    delete[] biomeMap;
+    delete[] blockVariantionMap;
+    delete[] collisionMap;
 }
 
