@@ -87,7 +87,7 @@ void Window::renderPlayer(Sprite &playerSprite) {
 
     if (debugMenu.showDebug) {
         if (server->isEntityColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
-        else if (server->getEntity(0)->collisionDisabled())
+        else if (server->getPlayer(0)->collisionDisabled())
             SDL_SetRenderDrawColor(data.Renderer, 0, 0, 255, 255);
         else
             SDL_SetRenderDrawColor(data.Renderer, 0, 255, 0, 255);
@@ -104,7 +104,7 @@ void Window::renderPlayer(Sprite &playerSprite) {
           rect.x,
            rect.y + 1);
 
-        Hitbox *hitbox = server->getEntity(0)->GetHitbox();
+        Hitbox *hitbox = server->getPlayer(0)->GetHitbox();
 
          for (auto& corner : hitbox->corners) {
             Coordinates *end= &hitbox ->corners[0];
@@ -365,8 +365,8 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
                 case SDL_SCANCODE_F5: {
-                    server->setEntityCollision(0, !server->getEntity(0)->collisionDisabled());
-                    SDL_Log("Player collision disabled: %s", server->getEntity(0)->collisionDisabled() ? "true" : "false");
+                    server->setEntityCollision(0, !server->getPlayer(0)->collisionDisabled());
+                    SDL_Log("Player collision disabled: %s", server->getPlayer(0)->collisionDisabled() ? "true" : "false");
                     break;
                 }
 #endif
@@ -410,7 +410,7 @@ void Window::advanceFrame() {
     handlePlayerInput();
     renderWaterLayer();
 
-    Coordinates coords = server->getEntityPos(0);
+    Coordinates coords = server->getPlayerPos(0);
 
     data.cameraWaterRect->x += coords.x - (data.cameraRect->x + data.cameraOffsetX);
     data.cameraWaterRect->y += coords.y - (data.cameraRect->y + data.cameraOffsetY);
@@ -428,7 +428,7 @@ void Window::advanceFrame() {
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect, nullptr);
 
 #ifdef DEBUG
-    data.playerAngle = server->getEntity(0)->getAngle();
+    data.playerAngle = server->getPlayer(0)->getAngle();
 
     SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect, nullptr);
     debugMenu.dataModel.DirtyVariable("playerX");
@@ -438,7 +438,7 @@ void Window::advanceFrame() {
 
 
     //Render structures within screen range;
-    renderPlayer(*server->getEntity(0)->sprite);
+    renderPlayer(*server->getPlayer(0)->sprite);
 
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();

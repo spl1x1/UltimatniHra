@@ -34,11 +34,11 @@ public:
     ~Player() override;
 
     // Constructors
-    Player(int id, float maxHealth, Coordinates coordinates, Server *server ,float speed);
+    Player(int id, float maxHealth, Coordinates coordinates, const std::shared_ptr<Server>& server ,float speed);
 
     // Initializes the player character for client, should be called only once
-    static void ClientInit(Server *server);
-    static void ClientInitLoaded(Server *server); //TODO: implement loading from save
+    static void ClientInit(const std::shared_ptr<Server>& server);
+    static void ClientInitLoaded(const std::shared_ptr<Server>& server); //TODO: implement loading from save
 
 };
 

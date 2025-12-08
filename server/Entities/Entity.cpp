@@ -9,7 +9,7 @@
 #include "../../MACROS.h"
 
 
-void Entity::checkCollision(float newX, float newY, bool isNesetedCall) {
+void Entity::checkCollision(float newX, float newY) {
     hitbox.colliding = false;
 
     for (auto corner : hitbox.corners) {
@@ -23,7 +23,7 @@ void Entity::checkCollision(float newX, float newY, bool isNesetedCall) {
             hitbox.colliding = true;
             return ; // Out of bounds
         }
-        if (server->getMapValue(tileX, tileY, WorldData::COLLISION_MAP,isNesetedCall) != 0) {
+        if (server->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
             hitbox.colliding = true;
             return;
         }
@@ -42,7 +42,7 @@ bool Entity::Move(float dX, float dY, float dt) {
 
     float newX = coordinates.x + relativeX;
     float newY = coordinates.y + relativeY;
-    checkCollision(newX, newY, true);
+    checkCollision(newX, newY);
 
     if (hitbox.colliding && !hitbox.disableCollision) return false;
     coordinates.x = newX;
@@ -66,7 +66,7 @@ bool Entity::Move(float dX, float dY, float dt) {
     return true;
 }
 
-Entity::Entity(int id,float maxHealth, Coordinates coordinates, EntityType type,Server *server, float speed, std::unique_ptr<Sprite> sprite) {
+Entity::Entity(int id,float maxHealth, Coordinates coordinates, EntityType type, const std::shared_ptr<Server> &server, float speed, std::unique_ptr<Sprite> sprite) {
     this->id = id;
     this->maxHealth = maxHealth;
     this->health = maxHealth;

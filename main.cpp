@@ -15,14 +15,14 @@
 int main(int argc, char *argv[]) {
 #ifdef CLIENT
 
-    Server server = {};
-    auto c = new Window();
-    c->server = &server;
-    c->init("Game window");
+    auto server = std::make_shared<Server>();
+    auto gameWindow =  std::make_shared<Window>();
+    gameWindow->server = std::move(server);
+    gameWindow->init("Game window");
 
     try {
-        while (c->data.inited) {
-            c->tick();
+        while (gameWindow->data.inited) {
+            gameWindow->tick();
         }
     }
     catch (...) {
@@ -80,6 +80,5 @@ int main(int argc, char *argv[]) {
         std::cerr << "Multi GPU setup recommended!" << std::endl;
     }
 #endif
-    delete c;
-    exit(0);
+    return 0;
 }

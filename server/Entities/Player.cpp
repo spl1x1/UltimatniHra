@@ -22,7 +22,7 @@ Player::~Player() {
     delete cameraWaterRect;
 }
 
-Player::Player(int id, float maxHealth, Coordinates coordinates ,Server *server ,float speed): Entity(id ,maxHealth,coordinates, EntityType::PLAYER, server ,speed, std::make_unique<PlayerSprite>()) {
+Player::Player(int id, float maxHealth, Coordinates coordinates ,const std::shared_ptr<Server>& server ,float speed): Entity(id ,maxHealth,coordinates, EntityType::PLAYER, server ,speed, std::make_unique<PlayerSprite>()) {
     Hitbox playerHitbox = {
         {
             {32, 32}, // TOP_LEFT
@@ -36,7 +36,7 @@ Player::Player(int id, float maxHealth, Coordinates coordinates ,Server *server 
     setSpriteOffsetY(47);
 };
 
-void Player::ClientInit(Server *server) {
+void Player::ClientInit(const std::shared_ptr<Server>& server) {
     auto player = std::make_shared<Player>(0, 100.0f, server->getSpawnPoint(), server, 200.0f);
-    server->addEntity(player);
+    server->addPlayer(player);
 }

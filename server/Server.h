@@ -31,13 +31,17 @@ class Server {
 
     //mozna by vector byl lepsi, ale toto by melo setrit pamet
     std::map<int,std::shared_ptr<class Entity>> _entities{};
+    std::map<int,std::shared_ptr<Entity>> _players{};
     std::map<int,class Structure*> _structures{};
 
     //ID counters, k limitu se nikdy nedostaneme reclaim neni nutny
-    int _nextEntityId = 0; // 0 je vyhradeno pro playera
+    int _nextEntityId = 0;
+    int _nextPlayerId = 0; // 0 je vyhradeno pro lokalniho hrace
     int _nextStructureId = 0; // 0 zatim neni vyhrazeno
 
-    int getNextEntityId(); //Vraci dalsi volne ID entity, neni thread safe, vola se jen v addEntity
+    int getNextEntityId() {return _nextEntityId++;}; //Vraci dalsi volne ID entity, neni thread safe, vola se jen v addEntity
+    int getNextPlayerId() {return _nextPlayerId++;};
+    int getNextStructureId() {return _nextStructureId++;};
 
 public:
 
@@ -52,15 +56,16 @@ public:
     [[nodiscard]] float getDeltaTime(); //Musi byt thread safe protoze se vola kazdy frame, a k datum muze pristupovat vice threadu
     [[nodiscard]] Coordinates getSpawnPoint() const {return _spawnPoint;} //Nemusi byt thread safe, spawn point se nemeni po spusteni serveru
     [[nodiscard]] int getSeed() const {return _seed;} //Nemusi byt thread safe, seed se nemeni
-
-     /*Musi byt thread safe, vraci hodnotu collision mapy na danych souradnicich
-     isCallNested - neresi mutex lock
-     */
-    [[nodiscard]] int getMapValue(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP, bool isCallNested = false);
+    [[nodiscard]] int getMapValue(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP); //Musi byt thread safe, vraci hodnotu collision mapy na danych souradnicich
+    [[nodiscard]] int getMapValue_unprotected(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP) const {return _worldData.getMapValue(x,y, mapType);}; //Verze bez locku, pro vnitrni pouziti
     [[nodiscard]] Coordinates getEntityPos(int entityId); //Musi byt thread safe, vraci pozici entity podle id
     [[nodiscard]] Entity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] bool isEntityColliding(int entityId);
     [[nodiscard]] std::map<int,std::shared_ptr<class Entity>> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] Entity*  getPlayer(int playerId); //Metoda je thread safe, ale operace s pointerem na entitu ne
+    [[nodiscard]] std::map<int,std::shared_ptr<class Entity>> getPlayers(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] Coordinates getPlayerPos(int playerId); //Musi byt thread safe, vraci pozici hrace podle id
+
 
 
     //Methods
@@ -70,6 +75,9 @@ public:
 
     void addEntity(Coordinates coordinates, EntityType type); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
     void addEntity(const std::shared_ptr<Entity>& entity); //Prida na server entitu
+    void addPlayer(Coordinates coordinates); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
+    void addPlayer(const std::shared_ptr<Entity>& player); //Prida na server entitu
+
     void addStructure(Coordinates coordinates,  structureType type); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
     void addStructure(Structure* structure); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 

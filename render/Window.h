@@ -87,7 +87,7 @@ class Window {
     DebugMenu debugMenu;
 
 public:
-    Server *server = nullptr;
+    std::shared_ptr<Server> server = nullptr;
 
     WindowData data;
     MenuData menuData;

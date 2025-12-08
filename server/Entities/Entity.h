@@ -53,10 +53,10 @@ class Entity {
     float offsetX= 0.0f;
     float offsetY= 0.0f;
     double angle = 0.0f;
-    Server *server;
+    std::shared_ptr<Server> server;
 
 protected:
-    void checkCollision(float newX, float newY, bool isNesetedCall = false);
+    void checkCollision(float newX, float newY);
     float speed = 0.0f;
     Hitbox hitbox {};
 
@@ -94,9 +94,7 @@ public:
     [[nodiscard]] Coordinates getTrueCoordinates() const { return Coordinates{coordinates.x + offsetX, coordinates.y + offsetY};}
 
     // Base Entity class, all entities inherit from this
-    Entity(int id, float maxHealth, Coordinates coordinates, EntityType type, Server *server, float speed=0.0f, std::unique_ptr<Sprite> sprite = nullptr);
-    Entity(int id, Coordinates coordinates, EntityType type);// Not implemented yet
-
+    Entity(int id, float maxHealth, Coordinates coordinates, EntityType type, const std::shared_ptr<Server> &server, float speed=0.0f, std::unique_ptr<Sprite> sprite = nullptr);
 };
 
 
