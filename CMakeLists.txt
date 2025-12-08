@@ -1,120 +1,16 @@
 ﻿cmake_minimum_required(VERSION 3.31)
 project(UltimatniHra)
-
 set(CMAKE_CXX_STANDARD 20)
 
-include(cmake/CPM.cmake)
 
-set(RMLUI_STATIC_LIB ON CACHE BOOL "RmlUi - static library" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Static libs" FORCE)
-set(RMLUI_LUA_BINDINGS ON "Build Lua bindings." FORCE)
-
-
-
-add_compile_definitions(RMLUI_SDL_VERSION_MAJOR=3)
-add_compile_definitions(SDL_VERSION_MAJOR=3)
-
-#sdl
-CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
-CPMAddPackage("gh:libsdl-org/SDL_image#11154af")
-CPMAddPackage("https://download.savannah.gnu.org/releases/freetype/ft2141.zip")
-#lua
-CPMAddPackage("gh:lubgr/lua-cmake#master")
-
-add_library(Freetype::Freetype ALIAS freetype)
-add_library(SDL::SDL ALIAS SDL3-static )
-add_library(SDL_image::SDL_image ALIAS SDL3_image-static)
-
-add_library(Lua::Lua INTERFACE IMPORTED
-        server/World/Biomes/Structure.h
-        server/Server.cpp
-        server/Server.h.h)
-
-set_target_properties(Lua::Lua PROPERTIES
-        INTERFACE_LINK_LIBRARIES "lua::lib"
-)
-
-#other libs
-CPMAddPackage("gh:nlohmann/json#55f9368")
-CPMAddPackage("gh:mikke89/RmlUi#58c7515")
-
-# HWINFO nefunguje pro Windows
-if (UNIX)
-CPMAddPackage("gh:C-And-Cpp-Libraries/hwinfo-machine-id#cf9fa44")
-endif()
-
-add_subdirectory(
-        ${CMAKE_BINARY_DIR}/_deps/rmlui-src/Backends
-)
-
-add_executable(UltimatniHra
-        main.cpp
-        MACROS.h
-        render/Window.cpp
-        render/Window.h
-        DeprecatedCode/Event.h
-        render/World/WorldRender.cpp
-        render/World/WorldRender.h
-        server/World/generace_mapy.h
-        server/World/generace_mapy.cpp
-        render/Menu/RmlUi_Renderer_SDL.cpp
-        render/Menu/RmlUi_Renderer_SDL.h
-        render/Menu/RmlUi_Platform_SDL.cpp
-        render/Menu/RmlUi_Platform_SDL.h
-        DeprecatedCode/ScaleFactorCalculator.h
-        DeprecatedCode/ScaleFactorCalculator.cpp
-        server/World/WorldStructs.h
-        server/World/WorldStructs.cpp
-        server/Entities/Entity.h
-        server/Entities/Entity.cpp
-        server/Entities/Player.hpp
-        server/Entities/Player.cpp
-        server/Server.h
-        server/Server.cpp
-        render/Sprites/WaterSprite.hpp
-        render/Sprites/Sprite.hpp
-        render/Sprites/PlayerSprite.hpp
-        render/Sprites/PlayerSprite.cpp
-        render/Sprites/Sprite.cpp
-        render/Sprites/WaterSprite.cpp
-        render/Menu_listeners.cpp
-        render/Menu_listeners.h
-        render/World/Item.cpp
-        render/World/Item.h
-        server/Structures/Structure.cpp
-        server/Structures/Structure.h
-        render/World/ChunkManagment.cpp
-        render/World/ChunkManagment.h
-        Event.h
-)
-
-
-target_link_libraries(UltimatniHra
-        SDL3::SDL3
-        SDL3_image::SDL3_image
-        nlohmann_json::nlohmann_json
-        RmlUi::RmlUi
-        RmlUi::Lua
-)
-
-if (UNIX)
-    target_link_libraries(UltimatniHra
-            lfreist-hwinfo::hwinfo
-    )
-endif()
-
-if (WIN32)
-    target_link_libraries(UltimatniHra
-            -ldxgi
-    )
-endif()
-
-# HWINFO nefunguje pro Windows
+include(cmake/FetchDependecies.cmake)
 
 add_custom_target(copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-        "${CMAKE_BINARY_DIR}/assets"
+        "../assets"
+        "${CMAKE_BINARY_DIR}/src/assets"
         COMMENT "Copying assets directory")
 
+add_subdirectory(src)
+target_link_libraries(UltimatniHra LibsBundle)
 add_dependencies(UltimatniHra copy_assets)
