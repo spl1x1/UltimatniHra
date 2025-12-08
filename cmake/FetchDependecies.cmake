@@ -33,8 +33,8 @@ CPMAddPackage("gh:mikke89/RmlUi#58c7515")
 if (UNIX)
     CPMAddPackage("gh:C-And-Cpp-Libraries/hwinfo-machine-id#cf9fa44")
     target_link_libraries(LibsBundle INTERFACE lfreist-hwinfo::hwinfo)
-elseif (WIN32)
-    target_link_libraries(LibsBundle INTERFACE -ldxgi)
+else(WIN32)
+    target_link_libraries(LibsBundle INTERFACE dxgi)
 endif()
 
 target_link_libraries(LibsBundle INTERFACE

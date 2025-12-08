@@ -1,7 +1,11 @@
-﻿cmake_minimum_required(VERSION 3.31)
-project(UltimatniHra)
+﻿cmake_minimum_required(VERSION 3.31...4.1)
+project(
+        UltimatniHra
+        VERSION 1.0
+        DESCRIPTION "Semestralni projekt"
+        LANGUAGES CXX
+)
 set(CMAKE_CXX_STANDARD 20)
-
 
 include(cmake/FetchDependecies.cmake)
 
@@ -12,5 +16,3 @@ add_custom_target(copy_assets ALL
         COMMENT "Copying assets directory")
 
 add_subdirectory(src)
-target_link_libraries(UltimatniHra LibsBundle)
-add_dependencies(UltimatniHra copy_assets)
