@@ -40,22 +40,53 @@ void BackButtonListener::ProcessEvent(Rml::Event&) {
 }
 
 // ===================================================================
+// Settings BackButtonListener
+// ===================================================================
+SettingsBackButtonListener::SettingsBackButtonListener(Window* win) : window(win) {}
+
+void SettingsBackButtonListener::ProcessEvent(Rml::Event&) {
+    SDL_Log("Back clicked!");
+
+    if (window->menuData.documents["settings_menu"]) {
+        window->menuData.documents["settings_menu"]->Hide();
+        window->menuData.documents["settings_menu"]->Close();
+        window->menuData.documents.erase("settings_menu");
+    }
+
+    if (window->menuData.documents["pause_menu"]) {
+        window->menuData.documents["pause_menu"]->Show();
+    }
+}
+
+// ===================================================================
 // ToggleDropdownListener
 // ===================================================================
 
-ToggleDropdownListener::ToggleDropdownListener(Window* win) : window(win) {}
 
-void ToggleDropdownListener::ProcessEvent(Rml::Event&) {
-    Rml::Element* dropdown = window->menuData.documents["options_menu"]->GetElementById("resolutionDropdown");
+ToggleDropdownListener::ToggleDropdownListener(Window* win, const std::string& id)
+    : window(win), dropdownId(id) {}
+
+void ToggleDropdownListener::ProcessEvent(Rml::Event& event) {
+    // Get the document from the event's target element
+    Rml::Element* target = event.GetTargetElement();
+    if (!target) {
+        SDL_Log("ERROR: No target element for dropdown toggle");
+        return;
+    }
+
+    Rml::ElementDocument* document = target->GetOwnerDocument();
+    if (!document) {
+        SDL_Log("ERROR: No owner document found");
+        return;
+    }
+
+    Rml::Element* dropdown = document->GetElementById(dropdownId);
     if (dropdown) {
-        // Check if it has the 'show' class
-        if (dropdown->IsClassSet("show")) {
-            // Remove the 'show' class
-            dropdown->SetClass("show", false);
-        } else {
-            // Add the 'show' class
-            dropdown->SetClass("show", true);
-        }
+        bool isShown = dropdown->IsClassSet("show");
+        dropdown->SetClass("show", !isShown);
+        SDL_Log("Toggled dropdown: %s", dropdownId.c_str());
+    } else {
+        SDL_Log("ERROR: Could not find dropdown with id: %s", dropdownId.c_str());
     }
 }
 
@@ -66,26 +97,78 @@ void ToggleDropdownListener::ProcessEvent(Rml::Event&) {
 SetResolutionListener::SetResolutionListener(Window* win, int w, int h)
     : window(win), width(w), height(h) {}
 
-void SetResolutionListener::ProcessEvent(Rml::Event&) {
+void SetResolutionListener::ProcessEvent(Rml::Event& event) {
     window->menuData.resolutionWidth = width;
     window->menuData.resolutionHeight = height;
 
-    // Update button text
-    Rml::Element* button = window->menuData.documents["options_menu"]->GetElementById("resolutionButton");
-    if (button) {
-        button->SetInnerRML(std::to_string(width) + " x " + std::to_string(height));
+    // Get the current document from the event
+    Rml::Element* target = event.GetTargetElement();
+    Rml::ElementDocument* document = target ? target->GetOwnerDocument() : nullptr;
+
+    // Update button text in the current document
+    if (document) {
+        if (Rml::Element* button = document->GetElementById("resolutionButton")) {
+            button->SetInnerRML(std::to_string(width) + " x " + std::to_string(height));
+        }
     }
 
     SDL_Log("Setting resolution to: %dx%d", width, height);
+    window->applyResolution(width, height);
 
-    // TODO: change resolution aj v game
-    // SDL_SetWindowSize(window->sdlWindow, width, height);
+    // Close dropdown in the current document
+    if (document) {
+        if (Rml::Element* dropdown = document->GetElementById("resolutionDropdown")) {
+            dropdown->SetClass("dropdown-content", true);
+            dropdown->SetClass("show", false);
+        }
+    }
+}
 
-    // Close dropdown
-    Rml::Element* dropdown = window->menuData.documents["options_menu"]->GetElementById("resolutionDropdown");
-    if (dropdown) {
-        dropdown->SetClass("dropdown-content", true);
-        dropdown->SetClass("show", false);
+// ===================================================================
+// SetDisplayModeListener
+// ===================================================================
+SetDisplayModeListener::SetDisplayModeListener(Window* win, MenuData::DisplayMode m)
+    : window(win), mode(m) {}
+
+void SetDisplayModeListener::ProcessEvent(Rml::Event& event) {
+    SDL_Log("Display mode change triggered");
+
+    window->menuData.currentDisplayMode = mode;
+
+    // Get the current document from the event
+    Rml::Element* target = event.GetTargetElement();
+    Rml::ElementDocument* document = target ? target->GetOwnerDocument() : nullptr;
+
+    // Update button text in the current document
+    if (document) {
+        Rml::Element* button = document->GetElementById("displayModeButton");
+        if (button) {
+            const char* modeText = "";
+            switch(mode) {
+                case MenuData::DisplayMode::WINDOWED:
+                    modeText = "Windowed";
+                    break;
+                case MenuData::DisplayMode::BORDERLESS_FULLSCREEN:
+                    modeText = "Borderless Fullscreen";
+                    break;
+                case MenuData::DisplayMode::FULLSCREEN:
+                    modeText = "Fullscreen";
+                    break;
+            }
+            button->SetInnerRML(modeText);
+        }
+    }
+
+    // Apply the display mode
+    window->applyDisplayMode(mode);
+
+    // Close dropdown in the current document
+    if (document) {
+        Rml::Element* dropdown = document->GetElementById("displayModeDropdown");
+        if (dropdown) {
+            dropdown->SetClass("dropdown-content", true);
+            dropdown->SetClass("show", false);
+        }
     }
 }
 
@@ -96,15 +179,19 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
 MasterVolumeListener::MasterVolumeListener(Window* win) : window(win) {}
 
 void MasterVolumeListener::ProcessEvent(Rml::Event& event) {
-    Rml::Element* slider = event.GetCurrentElement();
-    if (slider) {
+    if (Rml::Element* slider = event.GetCurrentElement()) {
         float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
         window->menuData.masterVolume = static_cast<int>(value);
 
-        // Update label
-        Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("masterLabel");
-        if (label) {
-            label->SetInnerRML("Master Volume: " + std::to_string(static_cast<int>(value)) + "%");
+        // Get the current document from the event
+        Rml::Element* target = event.GetTargetElement();
+        Rml::ElementDocument* document = target ? target->GetOwnerDocument() : nullptr;
+
+        // Update label in the current document
+        if (document) {
+            if (Rml::Element* label = document->GetElementById("masterLabel")) {
+                label->SetInnerRML("Master Volume: " + std::to_string(static_cast<int>(value)) + "%");
+            }
         }
 
         SDL_Log("Master volume: %d%%", static_cast<int>(value));
@@ -119,15 +206,19 @@ void MasterVolumeListener::ProcessEvent(Rml::Event& event) {
 MusicVolumeListener::MusicVolumeListener(Window* win) : window(win) {}
 
 void MusicVolumeListener::ProcessEvent(Rml::Event& event) {
-    Rml::Element* slider = event.GetCurrentElement();
-    if (slider) {
+    if (Rml::Element* slider = event.GetCurrentElement()) {
         float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
         window->menuData.musicVolume = static_cast<int>(value);
 
-        // Update label
-        Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("musicLabel");
-        if (label) {
-            label->SetInnerRML("Music Volume: " + std::to_string(static_cast<int>(value)) + "%");
+        // Get the current document from the event
+        Rml::Element* target = event.GetTargetElement();
+        Rml::ElementDocument* document = target ? target->GetOwnerDocument() : nullptr;
+
+        // Update label in the current document
+        if (document) {
+            if (Rml::Element* label = document->GetElementById("musicLabel")) {
+                label->SetInnerRML("Music Volume: " + std::to_string(static_cast<int>(value)) + "%");
+            }
         }
 
         SDL_Log("Music volume: %d%%", static_cast<int>(value));
@@ -142,15 +233,19 @@ void MusicVolumeListener::ProcessEvent(Rml::Event& event) {
 SFXVolumeListener::SFXVolumeListener(Window* win) : window(win) {}
 
 void SFXVolumeListener::ProcessEvent(Rml::Event& event) {
-    Rml::Element* slider = event.GetCurrentElement();
-    if (slider) {
+    if (Rml::Element* slider = event.GetCurrentElement()) {
         float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
         window->menuData.sfxVolume = static_cast<int>(value);
 
-        // Update label
-        Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("sfxLabel");
-        if (label) {
-            label->SetInnerRML("SFX Volume: " + std::to_string(static_cast<int>(value)) + "%");
+        // Get the current document from the event
+        Rml::Element* target = event.GetTargetElement();
+        Rml::ElementDocument* document = target ? target->GetOwnerDocument() : nullptr;
+
+        // Update label in the current document
+        if (document) {
+            if (Rml::Element* label = document->GetElementById("sfxLabel")) {
+                label->SetInnerRML("SFX Volume: " + std::to_string(static_cast<int>(value)) + "%");
+            }
         }
 
         SDL_Log("SFX volume: %d%%", static_cast<int>(value));
@@ -172,47 +267,70 @@ void OptionsButtonListener::ProcessEvent(Rml::Event&) {
         SDL_Log("Failed to load options_menu.rml");
         return;
     }
+    window->updateOptionsMenuScale();
 
-    Rml::Element* backButton = window->menuData.documents["options_menu"]->GetElementById("backButton");
-    if (backButton) {
+    if (Rml::Element* backButton = window->menuData.documents["options_menu"]->GetElementById("backButton")) {
         backButton->AddEventListener(Rml::EventId::Click, new BackButtonListener(window));
     }
 
-    Rml::Element* resButton = window->menuData.documents["options_menu"]->GetElementById("resolutionButton");
-    if (resButton) {
-        resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window));
+    if (Rml::Element* resButton = window->menuData.documents["options_menu"]->GetElementById("resolutionButton")) {
+        resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window, "resolutionDropdown"));
     }
 
     // Resolution options
-    Rml::Element* res640 = window->menuData.documents["options_menu"]->GetElementById("res640x360");
-    if (res640) {
+    if (Rml::Element* res640 = window->menuData.documents["options_menu"]->GetElementById("res640x360")) {
         res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 640, 360));
     }
 
-    Rml::Element* res1280 = window->menuData.documents["options_menu"]->GetElementById("res1280x720");
-    if (res1280) {
+    if (Rml::Element* res1280 = window->menuData.documents["options_menu"]->GetElementById("res1280x720")) {
         res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1280, 720));
     }
 
+    if (Rml::Element* res1920 = window->menuData.documents["options_menu"]->GetElementById("res1920x1080")) {
+        res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1920, 1080));
+    }
+
+
+    if (Rml::Element* windowed = window->menuData.documents["options_menu"]->GetElementById("modeWindowed")) {
+        windowed->AddEventListener(Rml::EventId::Click,
+            new SetDisplayModeListener(window, MenuData::DisplayMode::WINDOWED));
+        SDL_Log("Windowed mode listener registered");
+    }
+
+    if (Rml::Element* borderless = window->menuData.documents["options_menu"]->GetElementById("modeBorderless")) {
+        borderless->AddEventListener(Rml::EventId::Click,
+            new SetDisplayModeListener(window, MenuData::DisplayMode::BORDERLESS_FULLSCREEN));
+        SDL_Log("Borderless fullscreen listener registered");
+    }
+
+    if (Rml::Element* fullscreen = window->menuData.documents["options_menu"]->GetElementById("modeFullscreen")) {
+        fullscreen->AddEventListener(Rml::EventId::Click,
+            new SetDisplayModeListener(window, MenuData::DisplayMode::FULLSCREEN));
+        SDL_Log("Fullscreen listener registered");
+    }
+
+    if (Rml::Element* button = window->menuData.documents["options_menu"]->GetElementById("displayModeButton")) {
+        button->AddEventListener(Rml::EventId::Click,
+            new ToggleDropdownListener(window, "displayModeDropdown"));
+    }
+
     // Volume sliders
-    Rml::Element* masterSlider = window->menuData.documents["options_menu"]->GetElementById("masterSlider");
-    if (masterSlider) {
+    if (Rml::Element* masterSlider = window->menuData.documents["options_menu"]->GetElementById("masterSlider")) {
         masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window));
     }
 
-    Rml::Element* musicSlider = window->menuData.documents["options_menu"]->GetElementById("musicSlider");
-    if (musicSlider) {
+    if (Rml::Element* musicSlider = window->menuData.documents["options_menu"]->GetElementById("musicSlider")) {
         musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window));
     }
 
-    Rml::Element* sfxSlider = window->menuData.documents["options_menu"]->GetElementById("sfxSlider");
-    if (sfxSlider) {
+    if (Rml::Element* sfxSlider = window->menuData.documents["options_menu"]->GetElementById("sfxSlider")) {
         sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window));
     }
 
     window->menuData.documents["main_menu"]->Hide();
     window->menuData.documents["options_menu"]->Show();
 }
+
 
 // ===================================================================
 // QuitButtonListener
@@ -245,7 +363,74 @@ PauseSettingsButtonListener::PauseSettingsButtonListener(Window* win) : window(w
 
 void PauseSettingsButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Pause Settings clicked!");
-    // TODO: Implementovat nastavení v pause menu
+    window->menuData.documents["settings_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/settings_menu.rml");
+
+    if (!window->menuData.documents["settings_menu"]) {
+        SDL_Log("Failed to load settings_menu.rml");
+        return;
+    }
+    window->updateOptionsMenuScale();
+
+    if (Rml::Element* backButton = window->menuData.documents["settings_menu"]->GetElementById("backButton_settings")) {
+        backButton->AddEventListener(Rml::EventId::Click, new SettingsBackButtonListener(window));
+    }
+
+    if (Rml::Element* resButton = window->menuData.documents["settings_menu"]->GetElementById("resolutionButton")) {
+        resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window, "resolutionDropdown"));
+    }
+
+    // Resolution options
+    if (Rml::Element* res640 = window->menuData.documents["settings_menu"]->GetElementById("res640x360")) {
+        res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 640, 360));
+    }
+
+    if (Rml::Element* res1280 = window->menuData.documents["settings_menu"]->GetElementById("res1280x720")) {
+        res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1280, 720));
+    }
+
+    if (Rml::Element* res1920 = window->menuData.documents["settings_menu"]->GetElementById("res1920x1080")) {
+        res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1920, 1080));
+    }
+
+
+    if (Rml::Element* windowed = window->menuData.documents["settings_menu"]->GetElementById("modeWindowed")) {
+        windowed->AddEventListener(Rml::EventId::Click,
+            new SetDisplayModeListener(window, MenuData::DisplayMode::WINDOWED));
+        SDL_Log("Windowed mode listener registered");
+    }
+
+    if (Rml::Element* borderless = window->menuData.documents["settings_menu"]->GetElementById("modeBorderless")) {
+        borderless->AddEventListener(Rml::EventId::Click,
+            new SetDisplayModeListener(window, MenuData::DisplayMode::BORDERLESS_FULLSCREEN));
+        SDL_Log("Borderless fullscreen listener registered");
+    }
+
+    if (Rml::Element* fullscreen = window->menuData.documents["settings_menu"]->GetElementById("modeFullscreen")) {
+        fullscreen->AddEventListener(Rml::EventId::Click,
+            new SetDisplayModeListener(window, MenuData::DisplayMode::FULLSCREEN));
+        SDL_Log("Fullscreen listener registered");
+    }
+
+    if (Rml::Element* button = window->menuData.documents["settings_menu"]->GetElementById("displayModeButton")) {
+        button->AddEventListener(Rml::EventId::Click,
+            new ToggleDropdownListener(window, "displayModeDropdown"));
+    }
+
+    // Volume sliders
+    if (Rml::Element* masterSlider = window->menuData.documents["settings_menu"]->GetElementById("masterSlider")) {
+        masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window));
+    }
+
+    if (Rml::Element* musicSlider = window->menuData.documents["settings_menu"]->GetElementById("musicSlider")) {
+        musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window));
+    }
+
+    if (Rml::Element* sfxSlider = window->menuData.documents["settings_menu"]->GetElementById("sfxSlider")) {
+        sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window));
+    }
+
+    window->menuData.documents["pause_menu"]->Hide();
+    window->menuData.documents["settings_menu"]->Show();
 }
 
 // MainMenuButtonListener

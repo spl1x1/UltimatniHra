@@ -265,3 +265,43 @@ sliderarrowinc {
 .back-button:hover {
     background-color: #c0392b;
 }
+
+/* Compact mode for small resolutions */
+body.compact .options-container {
+    padding: 10dp;
+}
+
+body.compact .content-wrapper {
+    width: 600dp;
+}
+
+body.compact h1 {
+    font-size: 32dp;
+    margin-bottom: 10dp;
+    padding-top: 2dp;
+}
+
+body.compact .section {
+    padding: 8dp;
+    gap: 10dp;
+}
+
+body.compact .section-title {
+    font-size: 16dp;
+    min-width: 100dp;
+}
+
+body.compact .dropbtn {
+    padding: 10dp 15dp;
+    font-size: 14dp;
+}
+
+body.compact .dropdown-content p {
+    padding: 10dp 15dp;
+    font-size: 14dp;
+}
+
+body.compact .back-button {
+    padding: 10dp 30dp;
+    font-size: 16dp;
+}

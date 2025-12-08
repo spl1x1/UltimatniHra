@@ -6,9 +6,9 @@
 #define ULTIMATNIHRA_MENU_LISTENERS_H
 
 #include <RmlUi/Core.h>
-
-// Forward declaration
+#include "../Window/Window.h"
 class Window;
+struct MenuData;
 
 /**
  * @brief Event listener pro tlačítko Play v hlavním menu
@@ -29,14 +29,21 @@ public:
     explicit BackButtonListener(Window* win);
     void ProcessEvent(Rml::Event& event) override;
 };
+class SettingsBackButtonListener : public Rml::EventListener {
+public:
+    Window* window;
+    explicit SettingsBackButtonListener(Window* win);
+    void ProcessEvent(Rml::Event& event) override;
+};
 
 /**
  * @brief Event listener pro toggle dropdown menu s rozlišeními
  */
 class ToggleDropdownListener : public Rml::EventListener {
-public:
     Window* window;
-    explicit ToggleDropdownListener(Window* win);
+    std::string dropdownId;
+public:
+    ToggleDropdownListener(Window* win, const std::string& id);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -49,6 +56,13 @@ public:
     int width;
     int height;
     SetResolutionListener(Window* win, int w, int h);
+    void ProcessEvent(Rml::Event& event) override;
+};
+class SetDisplayModeListener : public Rml::EventListener {
+    Window* window;
+    MenuData::DisplayMode mode;
+public:
+    SetDisplayModeListener(Window* win, MenuData::DisplayMode m);
     void ProcessEvent(Rml::Event& event) override;
 };
 

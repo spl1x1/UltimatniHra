@@ -1,6 +1,6 @@
 ﻿<rml>
     <head>
-        <title>Options Menu</title>
+        <title>Settings Menu</title>
         <link type="text/rcss" href="style.rcss" />
     </head>
 
@@ -58,7 +58,7 @@
 <!--        <div class="section">-->
             <!-- Back Button -->
             <div class="button-container">
-                <button id="backButton" class="back-button">Back</button>
+                <button id="backButton_settings" class="back-button">Back</button>
             </div>
         </div>
 <!--    </div>-->

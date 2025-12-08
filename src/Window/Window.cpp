@@ -522,6 +522,175 @@ void Window::tick() {
         advanceFrame();
     }
 }
+void Window::updateOptionsMenuScale() {
+    // List of menus to update
+    const std::vector<std::string> menusToUpdate = {"options_menu", "settings_menu"};
+
+    for (const auto& menuName : menusToUpdate) {
+        if (menuData.documents[menuName]) {
+            if (Rml::Element* body = menuData.documents[menuName]) {
+                if (data.WINDOW_WIDTH == 640 && data.WINDOW_HEIGHT == 360) {
+                    body->SetClass("compact", true);
+                    SDL_Log("Applied compact class to %s for 640x360", menuName.c_str());
+                } else {
+                    body->SetClass("compact", false);
+                    SDL_Log("Removed compact class from %s for larger resolution", menuName.c_str());
+                }
+            }
+        }
+    }
+}
+void Window::applyResolution(int width, int height) {
+    // Update stored dimensions
+    data.WINDOW_WIDTH = width;
+    data.WINDOW_HEIGHT = height;
+
+    // Update camera offsets based on new resolution
+    data.cameraOffsetX = (static_cast<float>(width) / 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
+    data.cameraOffsetY = (static_cast<float>(height) / 2.0f - static_cast<float>(PLAYER_HEIGHT) / 2.0f);
+
+    // Update SDL window size
+    SDL_SetWindowSize(data.Window, width, height);
+
+    // Update logical presentation for proper scaling
+    SDL_SetRenderLogicalPresentation(data.Renderer, width, height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+    // Update RmlUi context dimensions
+    if (menuData.RmlContext) {
+        menuData.RmlContext->SetDimensions(Rml::Vector2i(width, height));
+    }
+
+    // Update camera rect if game is running
+    if (data.cameraRect) {
+        data.cameraRect->w = static_cast<float>(width);
+        data.cameraRect->h = static_cast<float>(height);
+
+        // Recenter camera on player
+        if (server && server->getPlayer(0)) {
+            Coordinates coord = server->getEntityPos(0);
+            data.cameraRect->x = coord.x - data.cameraOffsetX;
+            data.cameraRect->y = coord.y - data.cameraOffsetY;
+        }
+    }
+
+    // Update water rect if it exists
+    if (data.cameraWaterRect) {
+        data.cameraWaterRect->w = static_cast<float>(width);
+        data.cameraWaterRect->h = static_cast<float>(height);
+    }
+
+    // Update options menu scale
+    updateOptionsMenuScale();
+
+    SDL_Log("Resolution applied: %dx%d", width, height);
+}
+void Window::applyDisplayMode(MenuData::DisplayMode mode) {
+    SDL_Log("Applying display mode: %d", static_cast<int>(mode));
+
+    switch(mode) {
+        case MenuData::DisplayMode::WINDOWED: {
+            SDL_SetWindowBordered(data.Window, true);
+
+            // Switch to windowed mode
+            SDL_SetWindowFullscreen(data.Window, false);
+
+            // Restore to saved window resolution
+            SDL_SetWindowSize(data.Window,
+                            menuData.resolutionWidth,
+                            menuData.resolutionHeight);
+
+            // Center the window
+            SDL_SetWindowPosition(data.Window,
+                                SDL_WINDOWPOS_CENTERED,
+                                SDL_WINDOWPOS_CENTERED);
+
+            data.WINDOW_WIDTH = menuData.resolutionWidth;
+            data.WINDOW_HEIGHT = menuData.resolutionHeight;
+
+            SDL_Log("Switched to Windowed mode: %dx%d",
+                   data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
+            break;
+        }
+
+        case MenuData::DisplayMode::BORDERLESS_FULLSCREEN: {
+            // Get the display bounds
+            SDL_DisplayID displayID = SDL_GetDisplayForWindow(data.Window);
+            SDL_Rect displayBounds;
+            SDL_GetDisplayUsableBounds(displayID, &displayBounds);
+
+            // Switch to windowed first, then remove borders
+            SDL_SetWindowFullscreen(data.Window, false);
+            SDL_SetWindowBordered(data.Window, false);
+            SDL_SetWindowPosition(data.Window, displayBounds.x, displayBounds.y);
+            SDL_SetWindowSize(data.Window, displayBounds.w, displayBounds.h);
+
+            data.WINDOW_WIDTH = displayBounds.w;
+            data.WINDOW_HEIGHT = displayBounds.h;
+
+            SDL_Log("Switched to Borderless Fullscreen: %dx%d",
+                   displayBounds.w, displayBounds.h);
+            break;
+        }
+
+        case MenuData::DisplayMode::FULLSCREEN: {
+            // Get the current display mode
+            SDL_DisplayID displayID = SDL_GetDisplayForWindow(data.Window);
+
+            if (const SDL_DisplayMode* displayMode = SDL_GetCurrentDisplayMode(displayID)) {
+                // Make sure borders are enabled before going fullscreen
+                SDL_SetWindowBordered(data.Window, true);
+
+                // Switch to exclusive fullscreen
+                SDL_SetWindowFullscreen(data.Window, true);
+
+                data.WINDOW_WIDTH = displayMode->w;
+                data.WINDOW_HEIGHT = displayMode->h;
+
+                SDL_Log("Switched to Fullscreen: %dx%d",
+                       displayMode->w, displayMode->h);
+            } else {
+                SDL_Log("ERROR: Could not get display mode for fullscreen");
+            }
+            break;
+        }
+    }
+    updateOptionsMenuScale();
+
+    // Update camera offsets based on new resolution
+    data.cameraOffsetX = (static_cast<float>(data.WINDOW_WIDTH) / 2.0f -
+                         static_cast<float>(PLAYER_WIDTH) / 2.0f);
+    data.cameraOffsetY = (static_cast<float>(data.WINDOW_HEIGHT) / 2.0f -
+                         static_cast<float>(PLAYER_HEIGHT) / 2.0f);
+
+    // Update logical presentation
+    SDL_SetRenderLogicalPresentation(data.Renderer,
+                                     data.WINDOW_WIDTH,
+                                     data.WINDOW_HEIGHT,
+                                     SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+    // Update RmlUi context
+    if (menuData.RmlContext) {
+        menuData.RmlContext->SetDimensions(Rml::Vector2i(data.WINDOW_WIDTH, data.WINDOW_HEIGHT));
+    }
+
+    // Update camera rect if game is running
+    if (data.cameraRect) {
+        data.cameraRect->w = static_cast<float>(data.WINDOW_WIDTH);
+        data.cameraRect->h = static_cast<float>(data.WINDOW_HEIGHT);
+
+        if (server && server->getPlayer(0)) {
+            Coordinates coord = server->getEntityPos(0);
+            data.cameraRect->x = coord.x - data.cameraOffsetX;
+            data.cameraRect->y = coord.y - data.cameraOffsetY;
+        }
+    }
+
+    // Update water rect
+    if (data.cameraWaterRect) {
+        data.cameraWaterRect->w = static_cast<float>(data.WINDOW_WIDTH);
+        data.cameraWaterRect->h = static_cast<float>(data.WINDOW_HEIGHT);
+    }
+}
 
 void Window::initGame() {
 

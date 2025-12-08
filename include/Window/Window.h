@@ -31,6 +31,13 @@ struct MenuData {
 
     bool inGameMenu = false;
 
+    enum class DisplayMode {
+        WINDOWED,
+        BORDERLESS_FULLSCREEN,
+        FULLSCREEN
+    };
+    DisplayMode currentDisplayMode = DisplayMode::WINDOWED;
+
 
 };
 
@@ -78,7 +85,6 @@ class Window {
     void renderPlayer(Sprite &playerSprite);
 
     void renderMainMenu();
-
     void HandleMainMenuEvent(const SDL_Event* e);
     void HandleEvent(const SDL_Event* e);
     void advanceFrame();
@@ -94,6 +100,9 @@ public:
 
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
+    void applyResolution(int width, int height);
+    void applyDisplayMode(MenuData::DisplayMode mode);
+    void updateOptionsMenuScale();
 
     //parseToRenderer() momentalne nepouzivane
     void parseToRenderer(const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
