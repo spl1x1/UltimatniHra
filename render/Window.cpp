@@ -86,7 +86,7 @@ void Window::renderPlayer(Sprite &playerSprite) {
     SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture).get(), &rect);
 
     if (debugMenu.showDebug) {
-        if (server->isEntityColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
+        if (server->isPlayerColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
         else if (server->getPlayer(0)->collisionDisabled())
             SDL_SetRenderDrawColor(data.Renderer, 0, 0, 255, 255);
         else
@@ -365,7 +365,7 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
                 case SDL_SCANCODE_F5: {
-                    server->setEntityCollision(0, !server->getPlayer(0)->collisionDisabled());
+                    server->setPlayerCollision(0, !server->getPlayer(0)->collisionDisabled());
                     SDL_Log("Player collision disabled: %s", server->getPlayer(0)->collisionDisabled() ? "true" : "false");
                     break;
                 }

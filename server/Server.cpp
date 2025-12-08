@@ -19,16 +19,39 @@ void Server::setEntityPos(int entityId, Coordinates newCoordinates) {
     }
 }
 
+void Server::setPlayerPos(int playerId, Coordinates newCoordinates) {
+    std::lock_guard lock(serverMutex);
+    if (_players.find(playerId) != _players.end()) {
+        _players[playerId]->coordinates = newCoordinates;
+    }
+}
+
 void Server::setEntityCollision(int entityId, bool disable) {
     std::lock_guard lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
         _entities[entityId]->disableCollision(disable);
     }
 }
+
+void Server::setPlayerCollision(int playerId, bool disable) {
+    std::lock_guard lock(serverMutex);
+    if (_players.find(playerId) != _players.end()) {
+        _players[playerId]->disableCollision(disable);
+    }
+}
+
 bool Server::isEntityColliding(int entityId) {
     std::shared_lock lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
         return _entities[entityId]->isColliding();
+    }
+    return false; // Return false if entity not found
+}
+
+bool Server::isPlayerColliding(int playerId) {
+    std::shared_lock lock(serverMutex);
+    if (_players.find(playerId) != _players.end()) {
+        return _players[playerId]->isColliding();
     }
     return false; // Return false if entity not found
 }
@@ -46,6 +69,15 @@ float Server::getDeltaTime(){
 int Server::getMapValue(int x, int y, WorldData::MapType mapType) {
     std::shared_lock lock(serverMutex);
     return _worldData.getMapValue(x,y, mapType);
+}
+
+void Server::setMapValue(int x, int y, WorldData::MapType mapType, int value) {
+    std::lock_guard lock(serverMutex);
+    _worldData.updateMapValue(x,y, mapType, value);
+}
+
+void Server::setMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) {
+    _worldData.updateMapValue(x,y, mapType, value);
 }
 
 void Server::addPlayer(const std::shared_ptr<Entity>& player) {

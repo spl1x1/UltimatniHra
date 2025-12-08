@@ -7,9 +7,9 @@
 #include <map>
 #include <shared_mutex>
 
-#include "Structures/Structure.h"
 #include "World/WorldStructs.h"
 
+enum class structureType;
 class Sprite;
 struct PlayerEvent;
 enum class EntityType;
@@ -50,7 +50,10 @@ public:
     void setDeltaTime(float dt); //Musi byt thread safe protoze se vola kazdy frame, a k datum muze pristupovat vice threadu
     void setEntityPos(int entityId, Coordinates newCoordinates); //Musi byt thread safe, nastavuje pozici entity podle id
     void setEntityCollision(int entityId, bool disable); //Musi byt thread safe, nastavuje zda ma entity kolidovat
-
+    void setPlayerPos(int playerId, Coordinates newCoordinates); //Musi byt thread safe, nastavuje pozici entity podle id
+    void setPlayerCollision(int playerId, bool disable); //Musi byt thread safe, nastavuje zda ma entity kolidovat
+    void setMapValue(int x, int y, WorldData::MapType mapType, int value); //Musi byt thread safe, nastavuje hodnotu collision mapy na danych souradnicich
+    void setMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value); //Unprotected verze setMapValue , nastavuje hodnotu collision mapy na danych souradnicich
 
     //Getters
     [[nodiscard]] float getDeltaTime(); //Musi byt thread safe protoze se vola kazdy frame, a k datum muze pristupovat vice threadu
@@ -61,6 +64,7 @@ public:
     [[nodiscard]] Coordinates getEntityPos(int entityId); //Musi byt thread safe, vraci pozici entity podle id
     [[nodiscard]] Entity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] bool isEntityColliding(int entityId);
+    [[nodiscard]] bool isPlayerColliding(int playerId);
     [[nodiscard]] std::map<int,std::shared_ptr<class Entity>> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
     [[nodiscard]] Entity*  getPlayer(int playerId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] std::map<int,std::shared_ptr<class Entity>> getPlayers(); //Musi byt thread safe, vraci kopii entity mapy
