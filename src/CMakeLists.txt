@@ -1,10 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.31)
-project(UltimatniHra)
-
-set(CMAKE_CXX_STANDARD 20)
-
-
-file(GLOB HEADERS
+﻿file(GLOB HEADERS
         "../include/*.h"
         "../include/**/*.h"
 )
@@ -18,3 +12,6 @@ add_executable(UltimatniHra
         ${HEADERS}
         ${SOURCES}
 )
+
+target_link_libraries(UltimatniHra LibsBundle)
+add_dependencies(UltimatniHra copy_assets)
