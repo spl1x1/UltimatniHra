@@ -1,5 +1,6 @@
-﻿#include "render/Window.h"
-#include "MACROS.h"
+﻿#include "../include/Window/Window.h"
+#include "../include/MACROS.h"
+#include "../include/Server/Server.h"
 
 #ifdef UNIX
 #include <hwinfo/hwinfo.h>

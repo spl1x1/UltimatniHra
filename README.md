@@ -1,7 +1,7 @@
 # <img width="32" height="32" alt="Icon39" style="vertical-align: -0.25em"  src="https://github.com/user-attachments/assets/d969f139-2afd-4670-8904-5e050f4bb833" /> 2D Hra - Semestrální projekt 
 
 
-![Game Screenshot](src/assets/screenshot.png)
+![Game Screenshot](assets/screenshot.png)
 
 ## 📖 Dokumentace
 [Plán projektu](https://github.com/user-attachments/files/23143561/Projekt.pdf)
