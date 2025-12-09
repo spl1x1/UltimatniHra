@@ -2,7 +2,7 @@
 // Created by Lukáš Kaplánek on 24.10.2025.
 //
 #include "../../include/Window/WorldStructs.h"
-#include "../../include/MACROS.h"
+#include "../../include/Application/MACROS.h"
 
 
 void WorldData::updateMapValue(int x, int y, MapType mapType, int newValue) const {

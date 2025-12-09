@@ -15,6 +15,7 @@ void WorldRender::GenerateTextures() {
     GenerateWorldTexture();
     GenerateWaterTextures();
     ReleaseResources();
+    window.loadTexturesFromDirectory("assets/textures/structures");
 }
 
 void WorldRender::GenerateStructureTextures() const {

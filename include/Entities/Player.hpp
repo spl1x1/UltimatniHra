@@ -27,12 +27,7 @@ struct PlayerEvent {
 class Player final : public Entity {
     using Entity::Move;
 public:
-    SDL_FRect *cameraRect = nullptr;
-    SDL_FRect *cameraWaterRect = nullptr;
-
     void handleEvent(PlayerEvent e); //TODO: implement
-
-    ~Player() override;
 
     // Constructors
     Player(int id, float maxHealth, Coordinates coordinates, const std::shared_ptr<Server>& server ,float speed);

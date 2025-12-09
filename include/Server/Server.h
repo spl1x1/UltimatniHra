@@ -7,7 +7,7 @@
 #include <map>
 #include <memory>
 #include <shared_mutex>
-#include "../dataStructures.h"
+#include "../Application/dataStructures.h"
 #include "../Window/WorldStructs.h"
 
 enum class structureType;
@@ -15,9 +15,10 @@ class Sprite;
 class WorldData;
 struct PlayerEvent;
 enum class EntityType;
+class IStructure;
 
 
-class Server {
+class Server : public std::enable_shared_from_this<Server> {
     std::shared_mutex serverMutex;
 
     int _seed = 0;
@@ -29,7 +30,7 @@ class Server {
     //mozna by vector byl lepsi, ale toto by melo setrit pamet
     std::map<int,std::shared_ptr<class Entity>> _entities{};
     std::map<int,std::shared_ptr<Entity>> _players{};
-    std::map<int,class Structure*> _structures{};
+    std::map<int,std::shared_ptr<IStructure>> _structures{};
 
     //ID counters, k limitu se nikdy nedostaneme reclaim neni nutny
     int _nextEntityId = 0;
@@ -60,13 +61,15 @@ public:
     [[nodiscard]] int getMapValue_unprotected(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP) const {return _worldData.getMapValue(x,y, mapType);}; //Verze bez locku, pro vnitrni pouziti
     [[nodiscard]] Coordinates getEntityPos(int entityId); //Musi byt thread safe, vraci pozici entity podle id
     [[nodiscard]] Entity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
+    [[nodiscard]] IStructure* getStructure(int structureId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] bool isEntityColliding(int entityId);
     [[nodiscard]] bool isPlayerColliding(int playerId);
-    [[nodiscard]] std::map<int,std::shared_ptr<class Entity>> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] std::map<int,std::shared_ptr<Entity>> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] std::map<int,std::shared_ptr<IStructure>> getStructures(); //Musi byt thread safe, vraci kopii strukturu mapy
     [[nodiscard]] Entity*  getPlayer(int playerId); //Metoda je thread safe, ale operace s pointerem na entitu ne
-    [[nodiscard]] std::map<int,std::shared_ptr<class Entity>> getPlayers(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] std::map<int,std::shared_ptr<Entity>> getPlayers(); //Musi byt thread safe, vraci kopii entity mapy
     [[nodiscard]] Coordinates getPlayerPos(int playerId); //Musi byt thread safe, vraci pozici hrace podle id
-
+    [[nodiscard]] std::shared_ptr<Server> getSharedPtr();
 
 
     //Methods
@@ -80,7 +83,7 @@ public:
     void addPlayer(const std::shared_ptr<Entity>& player); //Prida na server entitu
 
     void addStructure(Coordinates coordinates,  structureType type); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
-    void addStructure(Structure* structure); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
+    void addStructure(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 
     void removeEntity(int entityId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety
     void removeStructure(int structureId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety

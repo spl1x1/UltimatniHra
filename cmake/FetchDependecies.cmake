@@ -30,10 +30,10 @@ CPMAddPackage("gh:nlohmann/json#55f9368")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
 
 # HWINFO nefunguje pro Windows
-if (UNIX)
+if (NOT WIN32)
     CPMAddPackage("gh:C-And-Cpp-Libraries/hwinfo-machine-id#cf9fa44")
     target_link_libraries(LibsBundle INTERFACE lfreist-hwinfo::hwinfo)
-else(WIN32)
+else()
     target_link_libraries(LibsBundle INTERFACE dxgi)
 endif()
 

@@ -11,7 +11,7 @@ class WaterSprite : public Sprite {
 
 public:
     WaterSprite();
-    std::tuple<std::string,std::shared_ptr<SDL_FRect>> getFrame() override;
+    std::tuple<std::string,SDL_FRect*> getFrame() override;
 };
 
 

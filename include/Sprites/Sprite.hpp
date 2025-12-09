@@ -26,6 +26,7 @@ enum Direction {
 };
 
 class Sprite {
+    std::unique_ptr<SDL_FRect> frameRect = std::make_unique<SDL_FRect>();
     protected:
     float frameTime = 0;
     float frameDuration = 0.1; // 10 FPS
@@ -39,28 +40,33 @@ class Sprite {
 
     std::string activeTexture;
     std::string textureName;
-
-    public:
-
-    static std::string animationTypeToString(AnimationType type);
-    static std::string directionTypeToString(Direction type);
-
     AnimationType activeAnimation = NONE;
     Direction direction = OMNI;
 
-    virtual ~Sprite() = default;
+    public:
 
+    //Methods
+    static std::string animationTypeToString(AnimationType type);
+    static std::string directionTypeToString(Direction type);
     void changeAnimation(AnimationType newAnimation, Direction newDirection, int newFrameCount, float newFrameDuration = 0.1, bool resetFrame = false);
     void changeAnimation(AnimationType newAnimation, Direction newDirection, bool resetFrame = false) ;
+    void tick(float deltaTime);
+
+    //Setters
     void setDirection(Direction newDirection) {changeAnimation(activeAnimation, newDirection);}
     void setAnimation(AnimationType newAnimation) {changeAnimation(newAnimation, direction);}
-    void tick(float deltaTime);
+
+    //Getters
+    [[nodiscard]] int getWidth() const;
+    [[nodiscard]] int getHeight() const;
+    virtual std::tuple<std::string,SDL_FRect*> getFrame();
 
     //Debug
     [[nodiscard]] Direction getDirection() const {return direction;}
     [[nodiscard]] AnimationType getActiveAnimation() const {return activeAnimation;}
 
-    virtual std::tuple<std::string,std::shared_ptr<SDL_FRect>> getFrame();
+    //Constructors and Destructors
+    virtual ~Sprite() = default;
 };
 
 

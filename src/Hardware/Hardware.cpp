@@ -3,7 +3,8 @@
 //
 
 #include "../../include/Hardware/Hardware.h"
-#ifdef UNIX
+
+#if defined(__APPLE__) || defined(__linux__)
 #include <hwinfo/hwinfo.h>
 
 std::string Hardware::getCpu() {

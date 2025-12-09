@@ -15,6 +15,6 @@ WaterSprite::WaterSprite() {
     SpriteHeight = 32;
 }
 
-std::tuple<std::string, std::shared_ptr<SDL_FRect>> WaterSprite::getFrame() {
-    return  std::tuple<std::string,std::shared_ptr<SDL_FRect>>{textureName + "_" + std::to_string(currentFrame), nullptr};
+std::tuple<std::string, SDL_FRect*> WaterSprite::getFrame() {
+    return  std::tuple<std::string,SDL_FRect*>{textureName + "_" + std::to_string(currentFrame), nullptr};
 }
