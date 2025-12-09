@@ -540,7 +540,7 @@ void Window::initGame() {
     data.last = SDL_GetPerformanceCounter();
 
     Player::ClientInit(server);
-    server->addStructure({300,300},structureType::TREE);
+    server->addStructure({5000,5000},structureType::TREE);
     waterSprite = new WaterSprite();
     Coordinates coord = server->getEntityPos(0);
 

@@ -14,6 +14,8 @@
 #include "../../include/Sprites/Sprite.hpp"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Structures/Tree.h"
+#include "../../include/Window/WorldStructs.h"
+
 
 
 void Server::setEntityPos(int entityId, Coordinates newCoordinates) {

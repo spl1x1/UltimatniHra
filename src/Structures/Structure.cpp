@@ -10,8 +10,8 @@
 //StructureRenderingComponent methods
 
 StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<Sprite> sprite, Coordinates topLeft) : sprite(std::move(sprite)){
-    auto width = static_cast<float>(sprite->getWidth());
-    auto height = static_cast<float>(sprite->getHeight());
+    auto width = static_cast<float>(this->sprite->getWidth());
+    auto height = static_cast<float>(this->sprite->getHeight());
     this->fourCorners[0] = topLeft; //Top-left
     this->fourCorners[1] = {topLeft.x + width, topLeft.y}; //Top-right
     this->fourCorners[2] = {topLeft.x, topLeft.y + height}; //Bottom-left
