@@ -73,6 +73,14 @@ void Sprite::tick(float deltaTime) {
     }
 }
 
+int Sprite::getWidth() const {
+    return  SpriteWidth;
+}
+
+int Sprite::getHeight() const {
+    return  SpriteHeight;
+}
+
 std::tuple<std::string, std::shared_ptr<SDL_FRect>> Sprite::getFrame() {
     float x = 0;
     if (currentFrame != 1) {

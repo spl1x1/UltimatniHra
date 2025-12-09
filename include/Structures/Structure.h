@@ -6,7 +6,10 @@
 #define ULTIMATNIHRA_STRUCTURE_H
 #include <list>
 #include <memory>
+#include <SDL3/SDL_rect.h>
+
 #include "../dataStructures.h"
+#include "../Menu/RmlUi_Renderer_SDL.h"
 #include "../Server/Server.h"
 
 
@@ -26,12 +29,15 @@ public:
 
 class StructureRenderingComponent {
     Coordinates fourCorners[4];
-    std::unique_ptr<class Sprite> sprite;
+    std::unique_ptr<Sprite> sprite;
+    std::unique_ptr<SDL_FRect> Rect;
     public:
-    //Getters
 
+    //Methods
+    void renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& windowRectangle) const;
 
     explicit StructureRenderingComponent(std::unique_ptr<Sprite> sprite= nullptr);
+
 };
 
 class StructureHitbox {

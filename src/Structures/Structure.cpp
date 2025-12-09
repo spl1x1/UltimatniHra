@@ -11,6 +11,17 @@ StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<Sprite>
     this->sprite = std::move(sprite);
 }
 
+void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& windowRectangle) const{
+    auto renderingContex = sprite->getFrame();
+    std::unique_ptr<SDL_FRect> spritePosition = std::make_unique<SDL_FRect>();
+    spritePosition->w = sprite->getWidth();
+    spritePosition->h = sprite->getHeight();
+
+
+
+    //TODO:Dodelat
+}
+
 //StructueHitbox methods
 StructureHitbox::StructureHitbox(const std::shared_ptr<Server> &server, Coordinates topLeftCorner) {
     this->topLeftCorner = topLeftCorner;
