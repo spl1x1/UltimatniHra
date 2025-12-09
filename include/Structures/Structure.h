@@ -17,7 +17,8 @@ enum class structureType{
     HOUSE,
     FARM,
     BARRACKS,
-    TOWER
+    TOWER,
+    TREE
 };
 
 class IStructure {
@@ -25,18 +26,22 @@ public:
     virtual ~IStructure() = default;
     [[nodiscard]] virtual structureType getType() const = 0;
     [[nodiscard]] virtual int getId() const = 0;
+    virtual void render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, const std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
 };
 
 class StructureRenderingComponent {
     Coordinates fourCorners[4];
     std::unique_ptr<Sprite> sprite;
     std::unique_ptr<SDL_FRect> Rect;
+
+
+    bool dismisCorners(SDL_FRect& windowRectangle) const;
     public:
 
     //Methods
-    void renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& windowRectangle) const;
+    void renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, const std::unordered_map<std::string, SDL_Texture*>& textures) const;
 
-    explicit StructureRenderingComponent(std::unique_ptr<Sprite> sprite= nullptr);
+    explicit StructureRenderingComponent(std::unique_ptr<Sprite> sprite, Coordinates topLeft);
 
 };
 
@@ -78,24 +83,11 @@ public:
     /*
      * Finalizuje hitbox struktury a zapise ho do collision mapy
      */
-    void finalize();
+    void finalize() const;
 
     //Constructor and Destructor
     explicit StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);
     ~StructureHitbox();
-};
-
-class Structure{
-    int id;
-    structureType type;
-
-    public:
-    //Getters
-    [[nodiscard]] int getId() const { return id; }
-    [[nodiscard]] structureType getType() const { return type; }
-
-    //Constructors
-    Structure(int id, structureType type);
 };
 
 

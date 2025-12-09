@@ -16,6 +16,7 @@
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Server/Server.h"
+#include "../../include/Structures/Structure.h"
 
 
 void Window::renderMainMenu() {
@@ -441,6 +442,10 @@ void Window::advanceFrame() {
     //Render structures within screen range;
     renderPlayer(*server->getPlayer(0)->sprite);
 
+    for (const auto& structure : server->getStructures()) {
+        structure.second->render(*data.Renderer, *data.cameraRect, textures);
+    }
+
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
 
@@ -535,6 +540,7 @@ void Window::initGame() {
     data.last = SDL_GetPerformanceCounter();
 
     Player::ClientInit(server);
+    server->addStructure({300,300},structureType::TREE);
     waterSprite = new WaterSprite();
     Coordinates coord = server->getEntityPos(0);
 
