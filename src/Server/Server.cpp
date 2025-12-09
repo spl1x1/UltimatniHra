@@ -7,7 +7,7 @@
 #include <ranges>
 #include <shared_mutex>
 
-#include "../../include/MACROS.h"
+#include "../../include/Application/MACROS.h"
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"

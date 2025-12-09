@@ -7,7 +7,7 @@
 #include <map>
 #include <memory>
 #include <shared_mutex>
-#include "../dataStructures.h"
+#include "../Application/dataStructures.h"
 #include "../Window/WorldStructs.h"
 
 enum class structureType;

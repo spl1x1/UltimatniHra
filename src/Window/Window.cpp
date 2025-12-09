@@ -401,7 +401,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 
 void Window::renderWaterLayer() {
     const auto texture = std::get<0>(waterSprite->getFrame());
-    SDL_RenderTexture(data.Renderer, textures[texture], data.cameraWaterRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures[texture], data.cameraWaterRect.get(), nullptr);
 }
 
 
@@ -427,12 +427,12 @@ void Window::advanceFrame() {
     if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
 
 
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect.get(), nullptr);
 
 #ifdef DEBUG
     data.playerAngle = server->getPlayer(0)->getAngle();
 
-    SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect.get(), nullptr);
     debugMenu.dataModel.DirtyVariable("playerX");
     debugMenu.dataModel.DirtyVariable("playerY");
     debugMenu.dataModel.DirtyVariable("playerAngle");
@@ -544,18 +544,18 @@ void Window::initGame() {
     waterSprite = new WaterSprite();
     Coordinates coord = server->getEntityPos(0);
 
-    data.cameraRect = new SDL_FRect{
+    data.cameraRect = std::make_unique<SDL_FRect>(
         coord.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
         coord.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
         GAMERESW,
         GAMERESH
-    };
+    );
 
-    data.cameraWaterRect = new SDL_FRect{
+    data.cameraWaterRect = std::make_unique<SDL_FRect>(
         64,64,
         static_cast<float>(GAMERESW),
         static_cast<float>(GAMERESH)
-    };
+    );
 
     loadTexturesFromDirectory("assets/textures/entities/player");
 

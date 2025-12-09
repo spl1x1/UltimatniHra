@@ -4,7 +4,7 @@
 
 #include "../../include/Structures/Structure.h"
 
-#include "../../include/MACROS.h"
+#include "../../include/Application/MACROS.h"
 #include "../../include/Sprites/Sprite.hpp"
 
 //StructureRenderingComponent methods

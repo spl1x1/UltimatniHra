@@ -12,7 +12,7 @@
 
 #include "../Menu/RmlUi_Platform_SDL.h"
 #include "../Menu/RmlUi_Renderer_SDL.h"
-#include "../MACROS.h"
+#include "../Application/MACROS.h"
 #include "../Sprites/Sprite.hpp"
 #include "../Sprites/WaterSprite.hpp"
 #include "../Server/Server.h"
@@ -35,8 +35,9 @@ struct MenuData {
 };
 
 struct WindowData {
-    SDL_FRect *cameraRect = nullptr;
-    SDL_FRect *cameraWaterRect = nullptr;
+
+    std::unique_ptr<SDL_FRect> cameraRect = nullptr;
+    std::unique_ptr<SDL_FRect> cameraWaterRect = nullptr;
 
     float playerAngle = 0.0f;
 

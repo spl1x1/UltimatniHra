@@ -8,9 +8,10 @@
 #include <memory>
 #include <SDL3/SDL_rect.h>
 
-#include "../dataStructures.h"
+#include "../Application/dataStructures.h"
 #include "../Menu/RmlUi_Renderer_SDL.h"
 #include "../Server/Server.h"
+
 
 
 enum class structureType{
