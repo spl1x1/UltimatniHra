@@ -26,6 +26,7 @@ enum Direction {
 };
 
 class Sprite {
+    std::unique_ptr<SDL_FRect> frameRect = std::make_unique<SDL_FRect>();
     protected:
     float frameTime = 0;
     float frameDuration = 0.1; // 10 FPS
@@ -58,7 +59,7 @@ class Sprite {
     //Getters
     [[nodiscard]] int getWidth() const;
     [[nodiscard]] int getHeight() const;
-    virtual std::tuple<std::string,std::shared_ptr<SDL_FRect>> getFrame();
+    virtual std::tuple<std::string,SDL_FRect*> getFrame();
 
     //Debug
     [[nodiscard]] Direction getDirection() const {return direction;}

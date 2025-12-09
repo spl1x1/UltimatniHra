@@ -16,9 +16,9 @@ class Application {
     static void handleException();
 public:
     void init() const;
-    void run();
+    void run() const;
 
-    Application(std::string appName = "Ultimatni hra");
+    explicit Application(std::string appName = "Ultimatni hra");
 };
 
 

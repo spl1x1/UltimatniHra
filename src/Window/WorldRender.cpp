@@ -12,10 +12,10 @@
 void WorldRender::GenerateTextures() {
     window.server->generateWorld();
     window.loadSurfacesFromDirectory("assets/textures/world");
-    window.loadSurfacesFromDirectory("assets/textures/structures");
     GenerateWorldTexture();
     GenerateWaterTextures();
     ReleaseResources();
+    window.loadTexturesFromDirectory("assets/textures/structures");
 }
 
 void WorldRender::GenerateStructureTextures() const {

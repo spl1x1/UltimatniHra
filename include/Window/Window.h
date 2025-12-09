@@ -66,7 +66,7 @@ struct DebugMenu{
 };
 
 class Window {
-    WaterSprite *waterSprite;
+    std::unique_ptr<WaterSprite> waterSprite;
 
     float offsetX = 0.0f;
     float offsetY = 0.0f;

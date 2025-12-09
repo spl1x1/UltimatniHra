@@ -12,6 +12,6 @@ TreeSprite::TreeSprite() {
     SpriteHeight = 64;
 }
 
-std::tuple<std::string, std::shared_ptr<SDL_FRect>> TreeSprite::getFrame() {
-    return  std::tuple<std::string,std::shared_ptr<SDL_FRect>>{textureName + "_" + std::to_string(currentFrame), nullptr};
+std::tuple<std::string, SDL_FRect*> TreeSprite::getFrame() {
+    return  {textureName, std::get<1>(Sprite::getFrame())};
 }

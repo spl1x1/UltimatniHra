@@ -16,7 +16,8 @@ public:
     //Interface implementation
     [[nodiscard]] structureType getType() const override;
     [[nodiscard]] int getId() const override;
-    void render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, const std::unordered_map<std::string, SDL_Texture*>& textures) const override;
+    void Tick(float deltaTime) override;
+    void render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const override;
 
     //Constructor
     Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server);

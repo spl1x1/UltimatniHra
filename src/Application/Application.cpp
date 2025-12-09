@@ -22,13 +22,14 @@ void Application::init() const{
     gameWindow->init(name);
 }
 
-void Application::run() {
+void Application::run() const {
     try {
         while (gameWindow->data.inited) {
             gameWindow->tick();
         }
     }
-    catch (...) {
+    catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
         handleException();
     }
 }

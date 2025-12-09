@@ -4,18 +4,21 @@
 
 #include "../../include/Structures/Structure.h"
 
+#include <cmath>
+
 #include "../../include/Application/MACROS.h"
 #include "../../include/Sprites/Sprite.hpp"
 
 //StructureRenderingComponent methods
 
 StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<Sprite> sprite, Coordinates topLeft) : sprite(std::move(sprite)){
+    Coordinates topLeftCorner = {(std::floor(topLeft.x/32))*32, (std::floor(topLeft.y/32))*32};
     auto width = static_cast<float>(this->sprite->getWidth());
     auto height = static_cast<float>(this->sprite->getHeight());
-    this->fourCorners[0] = topLeft; //Top-left
-    this->fourCorners[1] = {topLeft.x + width, topLeft.y}; //Top-right
-    this->fourCorners[2] = {topLeft.x, topLeft.y + height}; //Bottom-left
-    this->fourCorners[3] = {topLeft.x + width, topLeft.y + height}; //Bottom-right
+    this->fourCorners[0] = topLeftCorner; //Top-left
+    this->fourCorners[1] = {topLeftCorner.x + width, topLeftCorner.y}; //Top-right
+    this->fourCorners[2] = {topLeftCorner.x, topLeftCorner.y + height}; //Bottom-left
+    this->fourCorners[3] = {topLeftCorner.x + width, topLeftCorner.y + height}; //Bottom-right
 }
 
 bool StructureRenderingComponent::dismisCorners(SDL_FRect& cameraRectangle) const {
@@ -29,7 +32,12 @@ bool StructureRenderingComponent::dismisCorners(SDL_FRect& cameraRectangle) cons
     return true;
 }
 
-void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, const std::unordered_map<std::string, SDL_Texture*>& textures) const {
+void StructureRenderingComponent::Tick(float deltaTime) const {
+    if (!sprite) return;
+    sprite->tick(deltaTime);
+}
+
+void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const {
     if (dismisCorners(cameraRectangle)) return;
 
     auto renderingContex = sprite->getFrame();
@@ -40,12 +48,15 @@ void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL
     spritePosition->w = static_cast<float>(sprite->getWidth());
     spritePosition->h = static_cast<float>(sprite->getHeight());
 
-    SDL_RenderTexture(&windowRenderer, textures.at(std::get<0>(renderingContex)),std::get<1>(renderingContex).get(), spritePosition.get());
+    std::string textureName = std::get<0>(renderingContex);
+    SDL_FRect* srcRect = std::get<1>(renderingContex);
+    SDL_RenderTexture(&windowRenderer, textures[textureName],srcRect, spritePosition.get());
 }
 
 //StructueHitbox methods
-StructureHitbox::StructureHitbox(const std::shared_ptr<Server> &server, Coordinates topLeftCorner) {
-    this->topLeftCorner = topLeftCorner;
+StructureHitbox::StructureHitbox(const std::shared_ptr<Server> &server, Coordinates topLeftCorner) : server(server) {
+    const Coordinates topLeft = {(std::floor(topLeftCorner.x/32))*32, (std::floor(topLeftCorner.y/32))*32};
+    this->topLeftCorner = topLeft;
     this->server = server;
 }
 

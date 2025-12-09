@@ -27,7 +27,8 @@ public:
     virtual ~IStructure() = default;
     [[nodiscard]] virtual structureType getType() const = 0;
     [[nodiscard]] virtual int getId() const = 0;
-    virtual void render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, const std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
+    virtual void Tick(float deltaTime) = 0;
+    virtual void render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
 };
 
 class StructureRenderingComponent {
@@ -40,7 +41,8 @@ class StructureRenderingComponent {
     public:
 
     //Methods
-    void renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, const std::unordered_map<std::string, SDL_Texture*>& textures) const;
+    void renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const;
+    void Tick(float deltaTime) const;
 
     explicit StructureRenderingComponent(std::unique_ptr<Sprite> sprite, Coordinates topLeft);
 
@@ -77,7 +79,7 @@ public:
     void addColumnOfPoints(int posX, int posY,int length);
     /*
      * Prida bod do hitboxu struktury
-     * @param posX - X relativni pozice oproti startovniho bodu
+     * @param posX - X relativni pozice oproti startovniho boduf
      * @param posY - Y relativni pozice oproti startovniho bodu
      */
     void addPoint(int posX, int posY);

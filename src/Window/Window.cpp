@@ -85,7 +85,7 @@ void Window::renderPlayer(Sprite &playerSprite) {
 
     auto texture = playerSprite.getFrame();
 
-    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture).get(), &rect);
+    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
 
     if (debugMenu.showDebug) {
         if (server->isPlayerColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
@@ -444,6 +444,7 @@ void Window::advanceFrame() {
 
     for (const auto& structure : server->getStructures()) {
         structure.second->render(*data.Renderer, *data.cameraRect, textures);
+        structure.second->Tick(server->getDeltaTime());
     }
 
     menuData.RmlContext->Update();
@@ -540,8 +541,7 @@ void Window::initGame() {
     data.last = SDL_GetPerformanceCounter();
 
     Player::ClientInit(server);
-    server->addStructure({5000,5000},structureType::TREE);
-    waterSprite = new WaterSprite();
+    waterSprite = std::make_unique<WaterSprite>();
     Coordinates coord = server->getEntityPos(0);
 
     data.cameraRect = std::make_unique<SDL_FRect>(
@@ -561,6 +561,9 @@ void Window::initGame() {
 
     WorldRender wr(*this);
     wr.GenerateTextures();
+    server->addStructure({5000,5000},structureType::TREE);
+    server->addStructure({5050,5010},structureType::TREE);
+    server->addStructure({5080,5030},structureType::TREE);
     SDL_RenderClear(data.Renderer);
 
     #ifdef DEBUG
@@ -654,7 +657,6 @@ void Window::init(const std::string& title, int width, int height) {
 void Window::Destroy() {
     data.Running = false;
     data.inited = false;
-    delete waterSprite;
 
     for (const auto &val: textures | std::views::values) {
         SDL_DestroyTexture(val);
