@@ -498,6 +498,7 @@ bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     textures[SaveAs] = texture;
     return true;
 }
@@ -513,6 +514,7 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
         SDL_Log("Failed to create texture from surface %s: %s", SurfacePath.c_str(), SDL_GetError());
         return false;
     }
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     textures[TexturePath] = texture;
     return true;
 }
@@ -588,6 +590,7 @@ void Window::init(const std::string& title, int width, int height) {
 
     data.Window = SDL_CreateWindow(data.WINDOW_TITLE.c_str(), data.WINDOW_WIDTH, data.WINDOW_HEIGHT, SDL_WINDOW_FLAGS);
     data.Renderer = SDL_CreateRenderer( data.Window, nullptr);
+    SDL_SetRenderScale(data.Renderer, 1.0f, 1.0f);
     LoadSurface("assets/textures/Icon.bmp", "Icon");
     SDL_SetWindowIcon(data.Window,surfaces["Icon"]);
 

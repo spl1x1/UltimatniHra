@@ -10,7 +10,7 @@ add_compile_definitions(RMLUI_SDL_VERSION_MAJOR=3)
 add_compile_definitions(SDL_VERSION_MAJOR=3)
 
 #sdl
-CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
+CPMAddPackage("gh:libsdl-org/SDL#5b57263")
 CPMAddPackage("gh:libsdl-org/SDL_image#11154af")
 CPMAddPackage("https://download.savannah.gnu.org/releases/freetype/ft2141.zip")
 
