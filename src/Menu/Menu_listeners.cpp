@@ -87,6 +87,7 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
         dropdown->SetClass("dropdown-content", true);
         dropdown->SetClass("show", false);
     }
+    window->changeResolution(width,height);
 }
 
 // ===================================================================
@@ -192,6 +193,10 @@ void OptionsButtonListener::ProcessEvent(Rml::Event&) {
     Rml::Element* res1280 = window->menuData.documents["options_menu"]->GetElementById("res1280x720");
     if (res1280) {
         res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1280, 720));
+    }
+    Rml::Element* res1920 = window->menuData.documents["options_menu"]->GetElementById("res1920x1080");
+    if (res1920) {
+        res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1920, 1080));
     }
 
     // Volume sliders

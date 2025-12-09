@@ -480,6 +480,11 @@ bool Window::LoadTexture(const std::string& Path) {
     return true;
 }
 
+
+void Window::changeResolution(int width, int height) {
+    SDL_SetWindowSize(data.Window, width, height);
+}
+
 bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
     SDL_Texture* texture = IMG_LoadTexture(data.Renderer,Path.c_str());
     if (!texture) {
@@ -547,7 +552,6 @@ void Window::initGame() {
     };
 
     loadTexturesFromDirectory("assets/textures/entities/player");
-
 
     WorldRender wr(*this);
     wr.GenerateTextures();

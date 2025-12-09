@@ -106,6 +106,7 @@ public:
     void loadTexturesFromDirectory(const std::string& directoryPath);
     void initPauseMenu();
     void initDebugMenu();
+    void changeResolution(int width, int height);
 
     void tick();
     void initGame();
