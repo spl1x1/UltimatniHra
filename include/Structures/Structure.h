@@ -13,6 +13,7 @@
 #include "../Server/Server.h"
 
 
+class ISprite;
 
 enum class structureType{
     HOUSE,
@@ -33,18 +34,18 @@ public:
 
 class StructureRenderingComponent {
     Coordinates fourCorners[4];
-    std::unique_ptr<Sprite> sprite;
+    std::unique_ptr<ISprite> sprite;
     std::unique_ptr<SDL_FRect> Rect;
 
 
-    bool dismisCorners(SDL_FRect& windowRectangle) const;
+    [[nodiscard]] bool dismisCorners(const SDL_FRect& windowRectangle) const;
     public:
 
     //Methods
     void renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const;
     void Tick(float deltaTime) const;
 
-    explicit StructureRenderingComponent(std::unique_ptr<Sprite> sprite, Coordinates topLeft);
+    explicit StructureRenderingComponent(std::unique_ptr<ISprite> sprite, Coordinates topLeft);
 
 };
 

@@ -66,8 +66,6 @@ struct DebugMenu{
 };
 
 class Window {
-    std::unique_ptr<WaterSprite> waterSprite;
-
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
@@ -76,7 +74,7 @@ class Window {
     void loadMarkerSurface();
     void markOnMap(float x, float y);
     void handlePlayerInput() const;
-    void renderPlayer(Sprite &playerSprite);
+    void renderPlayer(ISprite &playerSprite);
 
     void renderMainMenu();
 

@@ -34,7 +34,7 @@ void Entity::checkCollision(float newX, float newY) {
 bool Entity::Move(float dX, float dY, float dt) {
 
     if (dX == 0.0f && dY == 0.0f) {
-        sprite->setAnimation(IDLE);
+        sprite->setAnimation(AnimationType::IDLE);
         return true;
     };
 
@@ -53,21 +53,21 @@ bool Entity::Move(float dX, float dY, float dt) {
     if (angle < 0) angle += 360.0f;
 
     if ((angle >= 0 && angle <= 44) || (angle >= 316 && angle <= 360)) {
-        sprite->setDirection(DOWN);
+        sprite->setDirection(Direction::DOWN);
     } else if (angle >= 136 && angle <= 224) {
-        sprite->setDirection(UP);
+        sprite->setDirection(Direction::UP);
     } else if (angle >= 45 && angle <= 135) {
-        sprite->setDirection(RIGHT);
+        sprite->setDirection(Direction::RIGHT);
     } else if (angle >= 225 && angle <= 315) {
-        sprite->setDirection(LEFT);
+        sprite->setDirection(Direction::LEFT);
     }
 
-    sprite->setAnimation(RUNNING);
+    sprite->setAnimation(AnimationType::RUNNING);
 
     return true;
 }
 
-Entity::Entity(int id,float maxHealth, Coordinates coordinates, EntityType type, const std::shared_ptr<Server> &server, float speed, std::unique_ptr<Sprite> sprite) {
+Entity::Entity(int id,float maxHealth, Coordinates coordinates, EntityType type, const std::shared_ptr<Server> &server, float speed, std::unique_ptr<ISprite> sprite) {
     this->id = id;
     this->maxHealth = maxHealth;
     this->health = maxHealth;

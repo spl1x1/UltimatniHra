@@ -75,7 +75,7 @@ void Window::handlePlayerInput() const {
 }
 
 
-void Window::renderPlayer(Sprite &playerSprite) {
+void Window::renderPlayer(ISprite &playerSprite) {
 
     SDL_FRect rect;
     rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
@@ -84,7 +84,7 @@ void Window::renderPlayer(Sprite &playerSprite) {
     rect.h = PLAYER_HEIGHT;
 
     auto texture = playerSprite.getFrame();
-
+    auto textureName = std::get<0>(texture);
     SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
 
     if (debugMenu.showDebug) {
@@ -400,7 +400,7 @@ void Window::HandleEvent(const SDL_Event *e) {
 };
 
 void Window::renderWaterLayer() {
-    const auto texture = std::get<0>(waterSprite->getFrame());
+    const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
     SDL_RenderTexture(data.Renderer, textures[texture], data.cameraWaterRect.get(), nullptr);
 }
 
@@ -531,7 +531,7 @@ void Window::tick() {
         renderMainMenu();
     }
     else if (data.Running) {
-        waterSprite->tick(deltaTime);
+        WaterSprite::Tick(deltaTime);
         advanceFrame();
     }
 }
@@ -543,7 +543,7 @@ void Window::initGame() {
     data.last = SDL_GetPerformanceCounter();
 
     Player::ClientInit(server);
-    waterSprite = std::make_unique<WaterSprite>();
+    WaterSprite::Init();
     Coordinates coord = server->getEntityPos(0);
 
     data.cameraRect = std::make_unique<SDL_FRect>(
@@ -563,6 +563,7 @@ void Window::initGame() {
 
     WorldRender wr(*this);
     wr.GenerateTextures();
+
     server->addStructure({5000,5000},structureType::TREE);
     server->addStructure({5050,5010},structureType::TREE);
     server->addStructure({5080,5030},structureType::TREE);
