@@ -6,23 +6,75 @@
 #define SPRITE_H
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <SDL3/SDL_rect.h>
 
-enum AnimationType {
+class Server;
+
+enum class AnimationType {
     NONE,
     IDLE,
     RUNNING,
     ATTACK1,
     ATTACK2,
+    INTERACT,
     DYING
 };
 
-enum Direction {
+enum class Direction {
     OMNI,
     UP,
     DOWN,
     LEFT,
     RIGHT
+};
+
+class ISprite {
+public:
+    //Interace Methods
+    virtual ~ISprite() = 0;
+    virtual void Tick(float deltaTime) = 0;
+
+    //Setters
+    virtual void setDirection(Direction newDirection)  = 0;
+    virtual void setAnimation(AnimationType newAnimation) = 0;
+
+    //Getters
+    virtual std::tuple<std::string,SDL_FRect*> getFrame();
+    [[nodiscard]] virtual int getWidth() const = 0;
+    [[nodiscard]] virtual int getHeight() const = 0;
+};
+
+class SpriteRenderingContext {
+    std::unique_ptr<SDL_FRect> frameRect = std::make_unique<SDL_FRect>();
+
+    std::string textureName;
+    AnimationType activeAnimation = AnimationType::NONE;
+    Direction direction = Direction::OMNI;
+
+    float frameTime = 0;
+    float frameDuration = 0.1; // 10 FPS
+    int currentFrame = 1;
+    int frameCount = 0;
+    float yOffset = 0;
+
+    int SpriteWidth = 32;
+    int SpriteHeight = 32;
+    int FrameSpacing = 0;
+public:
+    void Tick(float deltaTime);
+    [[nodiscard]] std::string getTexture() const;
+    [[nodiscard]] SDL_FRect* getFrameRect() const;
+
+    //Attachers
+    void attachActiveAnimation(std::string* texture) const;
+    void attachActiveDirection(std::string* texture) const;
+};
+
+class SpriteContext {
+public:
+    static std::string animationTypeToString(AnimationType type);
+    static std::string directionTypeToString(Direction type);
 };
 
 class Sprite {
@@ -40,8 +92,8 @@ class Sprite {
 
     std::string activeTexture;
     std::string textureName;
-    AnimationType activeAnimation = NONE;
-    Direction direction = OMNI;
+    AnimationType activeAnimation = AnimationType::NONE;
+    Direction direction = Direction::OMNI;
 
     public:
 

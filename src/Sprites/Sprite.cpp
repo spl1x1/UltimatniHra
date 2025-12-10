@@ -5,7 +5,75 @@
 #include "../../include/Sprites/Sprite.hpp"
 
 #include <memory>
+#include "../../include/Server/Server.h"
 
+// SpriteRenderingContext methods
+void SpriteRenderingContext::Tick(float deltaTime) {
+        if (frameCount == 0) {
+            return;
+        }
+        frameTime += deltaTime;
+        if (frameTime >= frameDuration) {
+            frameTime -= frameDuration;
+            currentFrame++;
+            if (currentFrame > frameCount) {
+                currentFrame = 1;
+            }
+        }
+}
+
+void SpriteRenderingContext::attachActiveAnimation(std::string* texture) const {
+    *texture += "_" + Sprite::animationTypeToString(activeAnimation);
+}
+
+void SpriteRenderingContext::attachActiveDirection(std::string* texture) const {
+    *texture += "_" + Sprite::directionTypeToString(direction);
+}
+
+std::string SpriteRenderingContext::getTexture() const {
+    return textureName;
+}
+
+SDL_FRect* SpriteRenderingContext::getFrameRect() const {
+    float x = 0;
+    if (currentFrame != 1) {
+        x = static_cast<float>((currentFrame - 1) * SpriteWidth + FrameSpacing);
+    }
+    frameRect->x =x;
+    frameRect->y = yOffset;
+    frameRect->w = static_cast<float>(SpriteWidth);
+    frameRect->h = static_cast<float>(SpriteHeight);
+    return frameRect.get();
+}
+
+
+// SpriteContext methods
+std::string SpriteContext::animationTypeToString(const AnimationType type) {
+    switch (type) {
+        case NONE: return "NONE";
+        case IDLE: return "IDLE";
+        case RUNNING: return "RUNNING";
+        case ATTACK1: return "ATTACK1";
+        case ATTACK2: return "ATTACK2";
+        case INTERACT: return "INTERACT";
+        case DYING: return "DYING";
+        default: return "";
+    }
+}
+
+std::string SpriteContext::directionTypeToString(const Direction type) {
+    switch (type) {
+        case DOWN: return "DOWN";
+        case UP: return "UP";
+        case LEFT: return "LEFT";
+        case RIGHT: return "RIGHT";
+        case OMNI: return "OMNI";
+        default: return "";
+    }
+}
+
+
+// Sprite methods
 std::string Sprite::animationTypeToString(const AnimationType type) {
     switch (type) {
         case NONE: return "NONE";
@@ -13,6 +81,7 @@ std::string Sprite::animationTypeToString(const AnimationType type) {
         case RUNNING: return "RUNNING";
         case ATTACK1: return "ATTACK1";
         case ATTACK2: return "ATTACK2";
+        case INTERACT: return "INTERACT";
         case DYING: return "DYING";
         default: return "";
     }
