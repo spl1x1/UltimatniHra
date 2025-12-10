@@ -4,14 +4,19 @@
 
 #include "../../include/Sprites/TreeSprite.hpp"
 
-TreeSprite::TreeSprite() {
-    frameDuration = 0.2f; // 5 FPS
-    frameCount = 16;
-    textureName = "tree";
-    SpriteWidth = 96;
-    SpriteHeight = 64;
-}
 
 std::tuple<std::string, SDL_FRect*> TreeSprite::getFrame() {
-    return  {textureName, std::get<1>(Sprite::getFrame())};
+    return {renderingContext.getTexture(), renderingContext.getFrameRect()};
+}
+
+void TreeSprite::Tick(float deltaTime) {
+    renderingContext.Tick(deltaTime);
+}
+
+int TreeSprite::getWidth() const {
+    return renderingContext.getWidth();
+}
+
+int TreeSprite::getHeight() const {
+    return renderingContext.getHeight();
 }

@@ -130,11 +130,11 @@ void Server::Tick() {
     std::lock_guard lock(serverMutex);
     for (auto &entity: _entities | std::views::values) {
         if (entity == nullptr || entity->sprite == nullptr) continue;
-        entity->sprite->tick(_deltaTime);
+        entity->sprite->Tick(_deltaTime);
     }
     for (auto &player: _players | std::views::values) {
         if (player == nullptr || player->sprite == nullptr) continue;
-        player->sprite->tick(_deltaTime);
+        player->sprite->Tick(_deltaTime);
     }
 }
 

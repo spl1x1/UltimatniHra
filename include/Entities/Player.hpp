@@ -5,7 +5,6 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
-#include <SDL3/SDL.h>
 #include "../Entities/Entity.h"
 
 

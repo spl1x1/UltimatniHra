@@ -4,13 +4,30 @@
 
 #include "../../include/Sprites/PlayerSprite.hpp"
 
-PlayerSprite::PlayerSprite() {
-    textureName = "player";
-    activeAnimation = IDLE;
-    direction = DOWN;
-    SpriteWidth = 96;
-    SpriteHeight = 96;
-    FrameSpacing = 0.0f;
-    activeTexture = "player_IDLE_DOWN";
-    frameCount = 8;
+void PlayerSprite::Tick(float deltaTime) {
+    renderingContext.Tick(deltaTime);
 }
+
+void PlayerSprite::setDirection(Direction newDirection) {
+    renderingContext.setDirection(newDirection);
+}
+void PlayerSprite::setAnimation(AnimationType newAnimation) {
+    renderingContext.setActiveAnimation(newAnimation);
+}
+
+std::tuple<std::string, SDL_FRect*> PlayerSprite::getFrame() {
+    std::string texture = renderingContext.getTexture();
+    texture = renderingContext.attachActiveAnimation(texture);
+    texture = renderingContext.attachActiveDirection(texture);
+    return  {texture, renderingContext.getFrameRect()};
+}
+
+int PlayerSprite::getWidth() const {
+    return renderingContext.getWidth();
+}
+
+int PlayerSprite::getHeight() const {
+    return renderingContext.getHeight();
+}
+
+

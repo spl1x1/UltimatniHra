@@ -11,7 +11,7 @@
 
 //StructureRenderingComponent methods
 
-StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<Sprite> sprite, Coordinates topLeft) : sprite(std::move(sprite)){
+StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<ISprite> sprite, Coordinates topLeft) : sprite(std::move(sprite)){
     Coordinates topLeftCorner = {(std::floor(topLeft.x/32))*32, (std::floor(topLeft.y/32))*32};
     auto width = static_cast<float>(this->sprite->getWidth());
     auto height = static_cast<float>(this->sprite->getHeight());
@@ -21,12 +21,12 @@ StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<Sprite>
     this->fourCorners[3] = {topLeftCorner.x + width, topLeftCorner.y + height}; //Bottom-right
 }
 
-bool StructureRenderingComponent::dismisCorners(SDL_FRect& cameraRectangle) const {
+bool StructureRenderingComponent::dismisCorners(const SDL_FRect& windowRectangle) const {
     for (const Coordinates& corner : fourCorners) {
-        if (corner.x >= cameraRectangle.x &&
-            corner.x <= cameraRectangle.x + GAMERESW &&
-            corner.y >= cameraRectangle.y &&
-            corner.y <= cameraRectangle.y + GAMERESH
+        if (corner.x >= windowRectangle.x &&
+            corner.x <= windowRectangle.x + GAMERESW &&
+            corner.y >= windowRectangle.y &&
+            corner.y <= windowRectangle.y + GAMERESH
         )  return false;
     }
     return true;
@@ -34,7 +34,7 @@ bool StructureRenderingComponent::dismisCorners(SDL_FRect& cameraRectangle) cons
 
 void StructureRenderingComponent::Tick(float deltaTime) const {
     if (!sprite) return;
-    sprite->tick(deltaTime);
+    sprite->Tick(deltaTime);
 }
 
 void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const {
