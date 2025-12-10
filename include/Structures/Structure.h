@@ -35,7 +35,7 @@ public:
 class StructureRenderingComponent {
     Coordinates fourCorners[4];
     std::unique_ptr<ISprite> sprite;
-    std::unique_ptr<SDL_FRect> Rect;
+    std::unique_ptr<SDL_FRect> Rect = std::make_unique<SDL_FRect>();
 
 
     [[nodiscard]] bool dismisCorners(const SDL_FRect& windowRectangle) const;

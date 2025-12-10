@@ -41,16 +41,15 @@ void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL
     if (dismisCorners(cameraRectangle)) return;
 
     auto renderingContex = sprite->getFrame();
-    std::unique_ptr<SDL_FRect> spritePosition = std::make_unique<SDL_FRect>();
 
-    spritePosition->x = fourCorners[0].x - cameraRectangle.x;
-    spritePosition->y = fourCorners[0].y - cameraRectangle.y;
-    spritePosition->w = static_cast<float>(sprite->getWidth());
-    spritePosition->h = static_cast<float>(sprite->getHeight());
+    Rect->x = fourCorners[0].x - cameraRectangle.x;
+    Rect->y = fourCorners[0].y - cameraRectangle.y;
+    Rect->w = static_cast<float>(sprite->getWidth());
+    Rect->h = static_cast<float>(sprite->getHeight());
 
     std::string textureName = std::get<0>(renderingContex);
     SDL_FRect* srcRect = std::get<1>(renderingContex);
-    SDL_RenderTexture(&windowRenderer, textures[textureName],srcRect, spritePosition.get());
+    SDL_RenderTexture(&windowRenderer, textures[textureName],srcRect, Rect.get());
 }
 
 //StructueHitbox methods
