@@ -267,41 +267,79 @@ sliderarrowinc {
 }
 
 /* Compact mode for small resolutions */
-body.compact .options-container {
+body.compact640 .options-container {
     padding: 10dp;
 }
 
-body.compact .content-wrapper {
+body.compact640 .content-wrapper {
     width: 600dp;
 }
 
-body.compact h1 {
+body.compact640 h1 {
     font-size: 32dp;
     margin-bottom: 10dp;
     padding-top: 2dp;
 }
 
-body.compact .section {
+body.compact640 .section {
     padding: 8dp;
     gap: 10dp;
 }
 
-body.compact .section-title {
+body.compact640 .section-title {
     font-size: 16dp;
     min-width: 100dp;
 }
 
-body.compact .dropbtn {
+body.compact640 .dropbtn {
     padding: 10dp 15dp;
     font-size: 14dp;
 }
 
-body.compact .dropdown-content p {
+body.compact640 .dropdown-content p {
     padding: 10dp 15dp;
     font-size: 14dp;
 }
 
-body.compact .back-button {
+body.compact640 .back-button {
     padding: 10dp 30dp;
     font-size: 16dp;
+}
+body.compact1280 .options-container {
+    padding: 5dp;
+}
+
+body.compact1280 .content-wrapper {
+    width: 300dp;
+}
+
+body.compact1280 h1 {
+    font-size: 16dp;
+    margin-bottom: 5dp;
+    padding-top: 1dp;
+}
+
+body.compact1280 .section {
+    padding: 4dp;
+    gap: 5dp;
+}
+
+body.compact1280 .section-title {
+    font-size: 8dp;
+    min-width: 50dp;
+}
+
+body.compact1280 .dropbtn {
+    padding: 5dp 7.5dp;
+    font-size: 7dp;
+}
+
+body.compact1280 .dropdown-content p {
+    padding: 5dp 7.5dp;
+    font-size: 7dp;
+}
+
+body.compact1280 .back-button {
+    padding: 5dp 15dp;
+    font-size: 8dp;
 }
