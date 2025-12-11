@@ -33,8 +33,6 @@ public:
 
     // Initializes the player character for client, should be called only once
     static void ClientInit(const std::shared_ptr<Server>& server);
-    static void ClientInitLoaded(const std::shared_ptr<Server>& server); //TODO: implement loading from save
-
 };
 
 

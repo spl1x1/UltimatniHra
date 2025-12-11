@@ -32,3 +32,7 @@ Tree:: Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &se
     _hitboxComponent.addPoint(1,1);
     _hitboxComponent.finalize();
 }
+
+Tree::~Tree() {
+    _hitboxComponent.destroy();
+};

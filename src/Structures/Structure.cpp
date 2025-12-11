@@ -91,3 +91,7 @@ void StructureHitbox::addPoint(int posX, int posY){
 void StructureHitbox::finalize() const {
     updateCollisionMap(1);
 }
+
+void StructureHitbox::destroy() const {
+    updateCollisionMap(0);
+}

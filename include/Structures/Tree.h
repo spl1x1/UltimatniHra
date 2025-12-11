@@ -21,6 +21,7 @@ public:
 
     //Constructor
     Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server);
+    ~Tree() override;
 };
 
 
