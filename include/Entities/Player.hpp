@@ -5,7 +5,6 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
-#include <SDL3/SDL.h>
 #include "../Entities/Entity.h"
 
 
@@ -27,12 +26,7 @@ struct PlayerEvent {
 class Player final : public Entity {
     using Entity::Move;
 public:
-    SDL_FRect *cameraRect = nullptr;
-    SDL_FRect *cameraWaterRect = nullptr;
-
     void handleEvent(PlayerEvent e); //TODO: implement
-
-    ~Player() override;
 
     // Constructors
     Player(int id, float maxHealth, Coordinates coordinates, const std::shared_ptr<Server>& server ,float speed);

@@ -63,7 +63,7 @@ protected:
 public:
     int id;
     virtual ~Entity() = default;
-    std::unique_ptr<Sprite> sprite = nullptr;
+    std::unique_ptr<ISprite> sprite = nullptr;
 
     Coordinates coordinates;
 
@@ -94,7 +94,7 @@ public:
     [[nodiscard]] Coordinates getTrueCoordinates() const { return Coordinates{coordinates.x + offsetX, coordinates.y + offsetY};}
 
     // Base Entity class, all entities inherit from this
-    Entity(int id, float maxHealth, Coordinates coordinates, EntityType type, const std::shared_ptr<Server> &server, float speed=0.0f, std::unique_ptr<Sprite> sprite = nullptr);
+    Entity(int id, float maxHealth, Coordinates coordinates, EntityType type, const std::shared_ptr<Server> &server, float speed=0.0f, std::unique_ptr<ISprite> sprite = nullptr);
 };
 
 

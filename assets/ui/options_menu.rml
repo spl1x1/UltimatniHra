@@ -5,7 +5,7 @@
     </head>
 
     <body>
-    <div id ="options-container" class="options-container">
+    <div class="options-container">
         <div class="content-wrapper">
             <div class = "center">
             <h1 class = "center">Options Menu</h1></div>

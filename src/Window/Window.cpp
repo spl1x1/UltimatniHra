@@ -16,6 +16,7 @@
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Server/Server.h"
+#include "../../include/Structures/Structure.h"
 
 
 void Window::renderMainMenu() {
@@ -74,7 +75,7 @@ void Window::handlePlayerInput() const {
 }
 
 
-void Window::renderPlayer(Sprite &playerSprite) {
+void Window::renderPlayer(ISprite &playerSprite) {
 
     SDL_FRect rect;
     rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
@@ -83,8 +84,8 @@ void Window::renderPlayer(Sprite &playerSprite) {
     rect.h = PLAYER_HEIGHT;
 
     auto texture = playerSprite.getFrame();
-
-    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture).get(), &rect);
+    auto textureName = std::get<0>(texture);
+    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
 
     if (debugMenu.showDebug) {
         if (server->isPlayerColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
@@ -399,8 +400,8 @@ void Window::HandleEvent(const SDL_Event *e) {
 };
 
 void Window::renderWaterLayer() {
-    const auto texture = std::get<0>(waterSprite->getFrame());
-    SDL_RenderTexture(data.Renderer, textures[texture], data.cameraWaterRect, nullptr);
+    const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
+    SDL_RenderTexture(data.Renderer, textures[texture], data.cameraWaterRect.get(), nullptr);
 }
 
 
@@ -426,12 +427,12 @@ void Window::advanceFrame() {
     if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
 
 
-    SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect.get(), nullptr);
 
 #ifdef DEBUG
     data.playerAngle = server->getPlayer(0)->getAngle();
 
-    SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect, nullptr);
+    SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect.get(), nullptr);
     debugMenu.dataModel.DirtyVariable("playerX");
     debugMenu.dataModel.DirtyVariable("playerY");
     debugMenu.dataModel.DirtyVariable("playerAngle");
@@ -440,6 +441,11 @@ void Window::advanceFrame() {
 
     //Render structures within screen range;
     renderPlayer(*server->getPlayer(0)->sprite);
+
+    for (const auto& structure : server->getStructures()) {
+        structure.second->render(*data.Renderer, *data.cameraRect, textures);
+        structure.second->Tick(server->getDeltaTime());
+    }
 
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
@@ -480,6 +486,11 @@ bool Window::LoadTexture(const std::string& Path) {
     return true;
 }
 
+
+void Window::changeResolution(int width, int height) {
+    SDL_SetWindowSize(data.Window, width, height);
+}
+
 bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
     SDL_Texture* texture = IMG_LoadTexture(data.Renderer,Path.c_str());
     if (!texture) {
@@ -487,6 +498,7 @@ bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     textures[SaveAs] = texture;
     return true;
 }
@@ -502,6 +514,7 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
         SDL_Log("Failed to create texture from surface %s: %s", SurfacePath.c_str(), SDL_GetError());
         return false;
     }
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     textures[TexturePath] = texture;
     return true;
 }
@@ -518,7 +531,7 @@ void Window::tick() {
         renderMainMenu();
     }
     else if (data.Running) {
-        waterSprite->tick(deltaTime);
+        WaterSprite::Tick(deltaTime);
         advanceFrame();
     }
 }
@@ -645,27 +658,30 @@ void Window::initGame() {
     data.last = SDL_GetPerformanceCounter();
 
     Player::ClientInit(server);
-    waterSprite = new WaterSprite();
+    WaterSprite::Init();
     Coordinates coord = server->getEntityPos(0);
 
-    data.cameraRect = new SDL_FRect{
+    data.cameraRect = std::make_unique<SDL_FRect>(
         coord.x - (GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f),
         coord.y - (GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f),
         GAMERESW,
         GAMERESH
-    };
+    );
 
-    data.cameraWaterRect = new SDL_FRect{
+    data.cameraWaterRect = std::make_unique<SDL_FRect>(
         64,64,
         static_cast<float>(GAMERESW),
         static_cast<float>(GAMERESH)
-    };
+    );
 
     loadTexturesFromDirectory("assets/textures/entities/player");
 
-
     WorldRender wr(*this);
     wr.GenerateTextures();
+
+    server->addStructure({5000,5000},structureType::TREE);
+    server->addStructure({5050,5010},structureType::TREE);
+    server->addStructure({5080,5030},structureType::TREE);
     SDL_RenderClear(data.Renderer);
 
     #ifdef DEBUG
@@ -690,6 +706,7 @@ void Window::init(const std::string& title, int width, int height) {
 
     data.Window = SDL_CreateWindow(data.WINDOW_TITLE.c_str(), data.WINDOW_WIDTH, data.WINDOW_HEIGHT, SDL_WINDOW_FLAGS);
     data.Renderer = SDL_CreateRenderer( data.Window, nullptr);
+    SDL_SetRenderScale(data.Renderer, 1.0f, 1.0f);
     LoadSurface("assets/textures/Icon.bmp", "Icon");
     SDL_SetWindowIcon(data.Window,surfaces["Icon"]);
 
@@ -759,7 +776,6 @@ void Window::init(const std::string& title, int width, int height) {
 void Window::Destroy() {
     data.Running = false;
     data.inited = false;
-    delete waterSprite;
 
     for (const auto &val: textures | std::views::values) {
         SDL_DestroyTexture(val);

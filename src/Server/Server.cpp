@@ -7,11 +7,15 @@
 #include <ranges>
 #include <shared_mutex>
 
-#include "../../include/MACROS.h"
+#include "../../include/Application/MACROS.h"
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Sprites/Sprite.hpp"
+#include "../../include/Structures/Structure.h"
+#include "../../include/Structures/Tree.h"
+#include "../../include/Window/WorldStructs.h"
+
 
 
 void Server::setEntityPos(int entityId, Coordinates newCoordinates) {
@@ -96,6 +100,22 @@ void Server::addEntity(const std::shared_ptr<Entity>& entity) {
     _entities[newId] = entity;
 }
 
+void Server::addStructure(Coordinates coordinates, structureType type) {
+    std::lock_guard lock(serverMutex);
+    int newId = getNextStructureId();
+
+    switch (type) {
+        case structureType::TREE: {;
+            auto newTree = std::make_shared<Tree>(newId, coordinates, getSharedPtr());
+            _structures[newId] = newTree;
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+
 
 void Server::playerUpdate(PlayerEvent e) {
     std::lock_guard lock(serverMutex);
@@ -110,11 +130,11 @@ void Server::Tick() {
     std::lock_guard lock(serverMutex);
     for (auto &entity: _entities | std::views::values) {
         if (entity == nullptr || entity->sprite == nullptr) continue;
-        entity->sprite->tick(_deltaTime);
+        entity->sprite->Tick(_deltaTime);
     }
     for (auto &player: _players | std::views::values) {
         if (player == nullptr || player->sprite == nullptr) continue;
-        player->sprite->tick(_deltaTime);
+        player->sprite->Tick(_deltaTime);
     }
 }
 
@@ -139,9 +159,18 @@ Entity* Server::getPlayer(int playerId) {
     return nullptr; // Return nullptr if entity not found
 }
 
+std::shared_ptr<Server> Server::getSharedPtr() {
+    return shared_from_this();
+}
+
 std::map<int,std::shared_ptr<class Entity>> Server::getEntities() {
     std::shared_lock lock(serverMutex);
     return _entities;
+}
+
+std::map<int,std::shared_ptr<IStructure>> Server::getStructures() {
+    std::shared_lock lock(serverMutex);
+    return _structures;
 }
 
 Coordinates Server::getEntityPos(int entityId) {
@@ -160,7 +189,13 @@ Entity* Server::getEntity(int entityId) {
     return nullptr; // Return nullptr if entity not found
 }
 
-
+IStructure* Server::getStructure(int structureId) {
+    std::shared_lock lock(serverMutex);
+    if (_structures.find(structureId) != _structures.end()) {
+        return _structures[structureId].get();
+    }
+    return nullptr; // Return nullptr if entity not found
+}
 
 
 void Server::generateWorld(){

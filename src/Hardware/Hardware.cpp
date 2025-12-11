@@ -3,7 +3,8 @@
 //
 
 #include "../../include/Hardware/Hardware.h"
-#ifdef UNIX
+
+#if defined(__APPLE__) || defined(__linux__)
 #include <hwinfo/hwinfo.h>
 
 std::string Hardware::getCpu() {
@@ -12,11 +13,11 @@ std::string Hardware::getCpu() {
 }
 
 std::string Hardware::getGpu() {
-    const auto gpus = hwinfo::getAllGPUs();
-    std::string gpuName;
-    std::string gpuMemory;
-
-    return "Detected GPU: " + gpus[0].name()  + " with " + std::to_string(gpus[0].memory_Bytes() / (1024 * 1024)) + " MB VRAM.";
+        const auto gpus = hwinfo::getAllGPUs();
+        std::string gpuName;
+        std::string gpuMemory;
+        if (gpus.empty()) return "Detected GPU: No GPU found.";
+        return "Detected GPU: " + gpus[0].name()  + " with " + std::to_string(gpus[0].memory_Bytes() / (1024 * 1024)) + " MB VRAM.";
 }
 
 std::string Hardware::getRam() {

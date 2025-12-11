@@ -17,11 +17,6 @@ void Player::handleEvent(PlayerEvent e) {
     }
 }
 
-Player::~Player() {
-    delete cameraRect;
-    delete cameraWaterRect;
-}
-
 Player::Player(int id, float maxHealth, Coordinates coordinates ,const std::shared_ptr<Server>& server ,float speed): Entity(id ,maxHealth,coordinates, EntityType::PLAYER, server ,speed, std::make_unique<PlayerSprite>()) {
     Hitbox playerHitbox = {
         {

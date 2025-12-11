@@ -12,7 +12,7 @@
 
 #include "../Menu/RmlUi_Platform_SDL.h"
 #include "../Menu/RmlUi_Renderer_SDL.h"
-#include "../MACROS.h"
+#include "../Application/MACROS.h"
 #include "../Sprites/Sprite.hpp"
 #include "../Sprites/WaterSprite.hpp"
 #include "../Server/Server.h"
@@ -42,8 +42,9 @@ struct MenuData {
 };
 
 struct WindowData {
-    SDL_FRect *cameraRect = nullptr;
-    SDL_FRect *cameraWaterRect = nullptr;
+
+    std::unique_ptr<SDL_FRect> cameraRect = nullptr;
+    std::unique_ptr<SDL_FRect> cameraWaterRect = nullptr;
 
     float playerAngle = 0.0f;
 
@@ -72,8 +73,6 @@ struct DebugMenu{
 };
 
 class Window {
-    WaterSprite *waterSprite;
-
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
@@ -82,7 +81,7 @@ class Window {
     void loadMarkerSurface();
     void markOnMap(float x, float y);
     void handlePlayerInput() const;
-    void renderPlayer(Sprite &playerSprite);
+    void renderPlayer(ISprite &playerSprite);
 
     void renderMainMenu();
     void HandleMainMenuEvent(const SDL_Event* e);
@@ -115,6 +114,7 @@ public:
     void loadTexturesFromDirectory(const std::string& directoryPath);
     void initPauseMenu();
     void initDebugMenu();
+    void changeResolution(int width, int height);
 
     void tick();
     void initGame();
