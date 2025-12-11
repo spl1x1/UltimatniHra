@@ -170,7 +170,7 @@ void SetDisplayModeListener::ProcessEvent(Rml::Event& event) {
             dropdown->SetClass("show", false);
         }
     }
-    window->changeResolution(width,height);
+    //window->changeResolution(width,height);
 }
 
 // ===================================================================
