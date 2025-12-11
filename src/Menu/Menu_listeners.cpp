@@ -100,7 +100,7 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
         dropdown->SetClass("dropdown-content", true);
         dropdown->SetClass("show", false);
     }
-    window->changeResolution(width,height);
+    //window->changeResolution(width,height);
 }
 
 // ===================================================================

@@ -67,6 +67,10 @@ public:
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
 
+    void transformMouseCoordinates(int& mouseX, int& mouseY);
+    void getLetterboxTransform(int& offsetX, int& offsetY,float& scaleX, float& scaleY);
+    void handleEvent(SDL_Event& event);
+
     //parseToRenderer() momentalne nepouzivane
     void parseToRenderer(const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
     bool LoadSurface(const std::string& Path);

@@ -316,10 +316,22 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 }
 
 void Window::tick() {
-    if (data.uiComponent->exitEventTriggered){
-        data.Running = false;
-        Destroy();
-        return;
+    while (SDL_PollEvent(&data.event)) {
+        if (data.event.type == SDL_EVENT_QUIT) {
+            data.Running = false;
+        }
+
+        // Transform and pass to RMLui
+        if (data.inMainMenu || menuData.inGameMenu) {
+            handleEvent(data.event);
+        }
+
+        // Handle other events
+        if (data.inMainMenu) {
+            HandleMainMenuEvent(&data.event);
+        } else {
+            HandleEvent(&data.event);
+        }
     }
 
     Uint64 current = SDL_GetPerformanceCounter();
@@ -365,7 +377,8 @@ void Window::applyResolution(int width, int height) {
     SDL_SetRenderLogicalPresentation(data.Renderer, GAMERESW, GAMERESH, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     if (menuData.RmlContext) {
-        menuData.RmlContext->SetDimensions(Rml::Vector2i(width, height));
+        // RMLui context dimensions should match the LOGICAL game resolution
+        menuData.RmlContext->SetDimensions(Rml::Vector2i(GAMERESW, GAMERESH));
     }
     updateOptionsMenuScale();
     SDL_SetWindowPosition(data.Window,
@@ -374,14 +387,13 @@ void Window::applyResolution(int width, int height) {
 
     SDL_Log("Window resolution applied: %dx%d (Rendering at %dx%d)", width, height, GAMERESW, GAMERESH);
 }
+
 void Window::applyDisplayMode(MenuData::DisplayMode mode) {
     SDL_Log("Applying display mode: %d", static_cast<int>(mode));
 
     switch(mode) {
         case MenuData::DisplayMode::WINDOWED: {
             SDL_SetWindowBordered(data.Window, true);
-
-            // Switch to windowed mode
             SDL_SetWindowFullscreen(data.Window, false);
 
             SDL_SetWindowSize(data.Window,
@@ -444,9 +456,90 @@ void Window::applyDisplayMode(MenuData::DisplayMode mode) {
                                      SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     if (menuData.RmlContext) {
-        menuData.RmlContext->SetDimensions(Rml::Vector2i(data.WINDOW_WIDTH, data.WINDOW_HEIGHT));
+        // RMLui should render at logical resolution
+        menuData.RmlContext->SetDimensions(Rml::Vector2i(GAMERESW, GAMERESH));
     }
     updateOptionsMenuScale();
+}
+void Window::getLetterboxTransform(int& offsetX, int& offsetY, float& scaleX, float& scaleY) {
+    float windowAspect = (float)data.WINDOW_WIDTH / data.WINDOW_HEIGHT;
+    float gameAspect = (float)GAMERESW / GAMERESH;
+
+    if (windowAspect > gameAspect) {
+        // Letterbox on sides (pillarbox)
+        int scaledWidth = (int)(data.WINDOW_HEIGHT * gameAspect);
+        offsetX = (data.WINDOW_WIDTH - scaledWidth) / 2;
+        offsetY = 0;
+        scaleX = (float)GAMERESW / scaledWidth;
+        scaleY = (float)GAMERESH / data.WINDOW_HEIGHT;
+    } else {
+        // Letterbox on top/bottom
+        int scaledHeight = (int)(data.WINDOW_WIDTH / gameAspect);
+        offsetX = 0;
+        offsetY = (data.WINDOW_HEIGHT - scaledHeight) / 2;
+        scaleX = (float)GAMERESW / data.WINDOW_WIDTH;
+        scaleY = (float)GAMERESH / scaledHeight;
+    }
+}
+
+void Window::transformMouseCoordinates(int& mouseX, int& mouseY) {
+    int offsetX, offsetY;
+    float scaleX, scaleY;
+    getLetterboxTransform(offsetX, offsetY, scaleX, scaleY);
+
+    // Remove letterbox offset
+    mouseX -= offsetX;
+    mouseY -= offsetY;
+
+    // Scale to logical coordinates
+    mouseX = (int)(mouseX * scaleX);
+    mouseY = (int)(mouseY * scaleY);
+
+    // Clamp to logical resolution
+    mouseX = std::max(0, std::min(mouseX, GAMERESW));
+    mouseY = std::max(0, std::min(mouseY, GAMERESH));
+}
+
+void Window::handleEvent(SDL_Event& event) {
+    // Transform mouse events before passing to RMLui
+    switch(event.type) {
+        case SDL_EVENT_MOUSE_MOTION: {
+            int mouseX = (int)event.motion.x;
+            int mouseY = (int)event.motion.y;
+            transformMouseCoordinates(mouseX, mouseY);
+
+            // Update event with transformed coordinates
+            event.motion.x = (float)mouseX;
+            event.motion.y = (float)mouseY;
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
+            int mouseX = (int)event.button.x;
+            int mouseY = (int)event.button.y;
+            transformMouseCoordinates(mouseX, mouseY);
+
+            // Update event with transformed coordinates
+            event.button.x = (float)mouseX;
+            event.button.y = (float)mouseY;
+            break;
+        }
+        case SDL_EVENT_MOUSE_WHEEL: {
+            // Mouse wheel position also needs transformation
+            int mouseX = (int)event.wheel.mouse_x;
+            int mouseY = (int)event.wheel.mouse_y;
+            transformMouseCoordinates(mouseX, mouseY);
+
+            event.wheel.mouse_x = (float)mouseX;
+            event.wheel.mouse_y = (float)mouseY;
+            break;
+        }
+    }
+
+    // Pass the transformed event to RMLui - window comes BEFORE event
+    if (menuData.RmlContext) {
+        RmlSDL::InputEventHandler(menuData.RmlContext, data.Window, event);
+    }
 }
 void Window::initGame() {
 
