@@ -93,6 +93,12 @@ public:
     [[nodiscard]] virtual TaskData GetTask() const = 0;
 };
 
+class EntityRenderingComponent {};
+
+class EntityLogicComponent {};
+
+class EntityHitboxComponent {};
+
 //Defines 4 hitbox corners, relative to sprite
 struct Hitbox {
     Coordinates corners[4];
