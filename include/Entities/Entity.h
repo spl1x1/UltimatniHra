@@ -4,10 +4,94 @@
 
 #ifndef ENTITY_H
 #define ENTITY_H
+#include <any>
 #include <vector>
 
 #include "../Server/Server.h"
 #include "../Sprites/Sprite.hpp"
+
+enum class Event{
+    // data = float dX, float dY
+    MOVE,
+    // data = float targetX, float targetY
+    MOVE_TO,
+    // data = attackType
+    ATTACK,
+    // data = int structureType, Coordinates position
+    PLACE,
+    // data = Coordinates position
+    INTERACT,
+    // data = std::vector<Item> items
+    INVENTORY
+};
+
+struct EventData {
+    Event type;
+    /*
+     Parameters for the event
+     first parameter should be used for delta time if needed
+     */
+    std::vector<std::any> params;
+};
+
+enum class TaskType{
+    NOTASK,
+    MOVE_TO,
+    GATHER_RESOURCE,
+    BUILD_STRUCTURE,
+    ATTACK,
+    DIE
+};
+
+struct TaskData {
+    TaskType type;
+    /*
+     Parameters for the task
+     */
+    std::vector<std::any> params;
+    //Task status
+    bool completed = false;
+};
+
+struct EntityData {
+    int angle = 0;
+    float speed = 0.0f;
+    Coordinates coordinates;
+    TaskData currentTask;
+};
+
+class IEntity {
+public:
+    //Interface methods
+    virtual ~IEntity() = 0;
+    virtual void Tick(float deltaTime) = 0;
+    virtual void Render() = 0;
+    virtual void Create() = 0;
+    virtual void Load() = 0;
+
+    //Entity actions
+    virtual void Move(float dX, float dY) = 0;
+    virtual void MoveTo(float targetX, float targetY) = 0;
+    virtual void handleAction(EventData data) = 0;
+
+    //Setters
+    virtual void SetCoordinates(const Coordinates &newCoordinates) = 0;
+    //Sets entity angle in degrees
+    virtual void SetAngle(float newAngle) = 0;
+    virtual void SetSpeed(float newSpeed) = 0;
+    //Sets current task and task data
+    virtual void SetTask(TaskData data) = 0;
+
+    //Getters
+
+    //Returns true entity coordinates (sprite center)
+    [[nodiscard]] virtual Coordinates GetCoordinates() const = 0;
+    //Returns entity collision status
+    [[nodiscard]] virtual CollisionStatus getCollisionStatus() const = 0;
+    [[nodiscard]] virtual EntityData GetEntityData() const = 0;
+    //Returns current task and task data
+    [[nodiscard]] virtual TaskData GetTask() const = 0;
+};
 
 //Defines 4 hitbox corners, relative to sprite
 struct Hitbox {
@@ -23,22 +107,6 @@ enum HitboxCorners{
     BOTTOM_RIGHT =3
 };
 
-enum class TaskType{
-    NOTASK,
-    MOVE_TO,
-    GATHER_RESOURCE,
-    BUILD_STRUCTURE,
-    ATTACK,
-    DIE
-};
-
-struct Task{
-    int taskId{} ;
-    TaskType type = TaskType::NOTASK;
-
-    Coordinates targetPosition;
-    int taskType{};
-};
 
 enum class EntityType{
     PLAYER,
@@ -52,7 +120,7 @@ enum class EntityType{
 class Entity {
     float offsetX= 0.0f;
     float offsetY= 0.0f;
-    double angle = 0.0f;
+    int angle = 0;
     std::shared_ptr<Server> server;
 
 protected:
@@ -73,7 +141,6 @@ public:
     float health;
     float maxHealth;
 
-    std::vector<Task> tasks;
 
     virtual bool Move(float dX, float dY, float dt);
 
@@ -85,7 +152,7 @@ public:
     void setSpriteOffsetY(const float newOffsetY){ offsetY = newOffsetY;}
 
     //Getters
-    [[nodiscard]] float getAngle() const { return angle;}
+    [[nodiscard]] int getAngle() const { return angle;}
     [[nodiscard]] float GetSpeed() const { return speed;}
     [[nodiscard]] Hitbox* GetHitbox() { return &hitbox;}
     [[nodiscard]] bool collisionDisabled() const {return hitbox.disableCollision;}
