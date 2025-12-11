@@ -6,7 +6,6 @@
 #define SPRITE_H
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <SDL3/SDL_rect.h>
 
 class Server;

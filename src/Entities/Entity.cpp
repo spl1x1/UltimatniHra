@@ -14,11 +14,11 @@ void Entity::checkCollision(float newX, float newY) {
     hitbox.colliding = false;
 
     for (auto corner : hitbox.corners) {
-        float cornerX = newX + corner.x;
-        float cornerY = newY + corner.y;
+        const float cornerX = newX + corner.x;
+        const float cornerY = newY + corner.y;
 
-        int tileX = static_cast<int>(std::floor(cornerX / 32.0f));
-        int tileY = static_cast<int>(std::floor(cornerY / 32.0f));
+        const int tileX = static_cast<int>(std::floor(cornerX / 32.0f));
+        const int tileY = static_cast<int>(std::floor(cornerY / 32.0f));
 
         if (tileX < 0 || tileY < 0 || tileX >= MAPSIZE || tileY >= MAPSIZE) {
             hitbox.colliding = true;
@@ -49,7 +49,7 @@ bool Entity::Move(float dX, float dY, float dt) {
     coordinates.x = newX;
     coordinates.y = newY;
 
-    angle = std::atan2(dX, dY) * 180.0f / M_PI;
+    angle = std::floor(std::atan2(dX, dY) * 180.0f / M_PI);
     if (angle < 0) angle += 360.0f;
 
     if ((angle >= 0 && angle <= 44) || (angle >= 316 && angle <= 360)) {

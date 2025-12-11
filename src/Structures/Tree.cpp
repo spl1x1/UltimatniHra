@@ -19,7 +19,7 @@ void Tree::Tick(float deltaTime) {
     _renderingComponent.Tick(deltaTime);
 }
 
-void Tree::render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const {
+void Tree::Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const {
     _renderingComponent.renderSprite(windowRenderer, cameraRectangle, textures);
 }
 

@@ -30,7 +30,7 @@ public:
     [[nodiscard]] virtual structureType getType() const = 0;
     [[nodiscard]] virtual int getId() const = 0;
     virtual void Tick(float deltaTime) = 0;
-    virtual void render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
+    virtual void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
 };
 
 class StructureRenderingComponent {

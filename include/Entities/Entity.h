@@ -6,6 +6,8 @@
 #define ENTITY_H
 #include <any>
 #include <vector>
+#include <memory>
+#include <SDL3/SDL_render.h>
 
 #include "../Server/Server.h"
 #include "../Sprites/Sprite.hpp"
@@ -13,8 +15,6 @@
 enum class Event{
     // data = float dX, float dY
     MOVE,
-    // data = float targetX, float targetY
-    MOVE_TO,
     // data = attackType
     ATTACK,
     // data = int structureType, Coordinates position
@@ -22,16 +22,27 @@ enum class Event{
     // data = Coordinates position
     INTERACT,
     // data = std::vector<Item> items
-    INVENTORY
+    INVENTORY,
+    // data = float amount
+    DAMAGE,
+    // data = float amount
+    HEAL
 };
 
 struct EventData {
-    Event type;
+    Event type{};
+    //Delta time for task processing
+    float dt{};
     /*
      Parameters for the event
-     first parameter should be used for delta time if needed
      */
-    std::vector<std::any> params;
+    union {
+        struct { float dX{0}, dY{0}; } move;
+        struct { int resourceId{0}, amount{0}; } gather;
+        struct { int structureId{-1}; float x{0},y{0};} build;
+        struct { int attackType{0}; } attack;
+        struct { float amount{0}; } healthChange;
+    };
 };
 
 enum class TaskType{
@@ -44,20 +55,17 @@ enum class TaskType{
 };
 
 struct TaskData {
-    TaskType type;
+    TaskType type{};
     /*
-     Parameters for the task
-     */
-    std::vector<std::any> params;
+    Parameters for the task
+    */
+    union {
+        struct { float targetX{0}, targetY{0}; } moveTo;
+        struct { int resourceId{0}, amount{0}; } gather;
+        struct { int structureId{-1}; float x{0},y{0};} build;
+    };
     //Task status
     bool completed = false;
-};
-
-struct EntityData {
-    int angle = 0;
-    float speed = 0.0f;
-    Coordinates coordinates;
-    TaskData currentTask;
 };
 
 class IEntity {
@@ -65,14 +73,14 @@ public:
     //Interface methods
     virtual ~IEntity() = 0;
     virtual void Tick(float deltaTime) = 0;
-    virtual void Render() = 0;
+    virtual void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) = 0;
     virtual void Create() = 0;
     virtual void Load() = 0;
 
     //Entity actions
     virtual void Move(float dX, float dY) = 0;
     virtual void MoveTo(float targetX, float targetY) = 0;
-    virtual void handleAction(EventData data) = 0;
+    virtual void HandleAction(EventData data) = 0;
 
     //Setters
     virtual void SetCoordinates(const Coordinates &newCoordinates) = 0;
@@ -81,16 +89,92 @@ public:
     virtual void SetSpeed(float newSpeed) = 0;
     //Sets current task and task data
     virtual void SetTask(TaskData data) = 0;
+    virtual void RemoveTask(TaskData data) = 0;
 
     //Getters
 
     //Returns true entity coordinates (sprite center)
     [[nodiscard]] virtual Coordinates GetCoordinates() const = 0;
     //Returns entity collision status
-    [[nodiscard]] virtual CollisionStatus getCollisionStatus() const = 0;
-    [[nodiscard]] virtual EntityData GetEntityData() const = 0;
+    [[nodiscard]] virtual CollisionStatus HetCollisionStatus() const = 0;
+    [[nodiscard]] virtual int GetAngle() const = 0;
     //Returns current task and task data
     [[nodiscard]] virtual TaskData GetTask() const = 0;
+};
+
+class EntityRenderingComponent {
+    std::unique_ptr<ISprite> sprite = nullptr;
+
+    public:
+    void Render(SDL_Renderer* renderer);
+
+    //Constructor
+    explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite): sprite(std::move(sprite)){}
+    EntityRenderingComponent(const EntityRenderingComponent&) = delete;
+    EntityRenderingComponent(EntityRenderingComponent&&) = default;
+};
+
+class EntityMovementComponent{};
+
+class EntityCollisionComponent {
+public:
+    struct HitboxData {
+        Coordinates corners[4];
+        bool disableCollision = false;
+        bool colliding = false;
+    };
+private:
+    //Defines 4 hitbox corners
+    HitboxData _hitbox;
+
+public:
+    //Methods
+
+    //Check collision with structures, entities can collide with each other
+    bool checkCollision(float newX, float newY);
+
+    //Setters
+    void SetHitbox(const HitboxData &hitbox);
+    void disableCollision(bool Switch = true);
+
+    //Getters
+    [[nodiscard]] HitboxData* GetHitbox();
+    [[nodiscard]] CollisionStatus GetCollisionStatus();
+
+    //Constructor
+    explicit EntityCollisionComponent(const HitboxData &hitbox): _hitbox(hitbox){}
+};
+
+class EntityHealthComponent {
+    float health{0.0f};
+    float maxHealth{0.0f};
+public:
+    //Methods
+    void TakeDamage(float damage);
+    void Heal(float amount);
+
+    //Setters
+    void SetHealth(float newHealth);
+    void SetMaxHealth(float newMaxHealth);
+
+    //Getters
+    [[nodiscard]] float GetHealth() const;
+    [[nodiscard]] float GetMaxHealth() const;
+    [[nodiscard]] bool isDead() const;
+
+    //Constructor
+    EntityHealthComponent(float health, float maxHealth): health(health), maxHealth(maxHealth){}
+};
+
+class EntityTransformComponent {
+    Coordinates coordinates;
+public:
+    //Setters and Getters
+    void SetCoordinates(const Coordinates &newCoordinates);
+    [[nodiscard]] Coordinates GetCoordinates() const;
+
+    //Constructor
+    explicit EntityTransformComponent(const Coordinates &coordinates): coordinates(coordinates){}
 };
 
 //Defines 4 hitbox corners, relative to sprite

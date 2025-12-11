@@ -10,7 +10,6 @@
 #include "../../include/Window/WorldRender.h"
 #include <RmlUi/Debugger.h>
 #include <SDL3_image/SDL_image.h>
-#include <RmlUi/Lua.h>
 
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
@@ -443,7 +442,7 @@ void Window::advanceFrame() {
     renderPlayer(*server->getPlayer(0)->sprite);
 
     for (const auto& structure : server->getStructures()) {
-        structure.second->render(*data.Renderer, *data.cameraRect, textures);
+        structure.second->Render(*data.Renderer, *data.cameraRect, textures);
         structure.second->Tick(server->getDeltaTime());
     }
 
@@ -620,7 +619,6 @@ void Window::init(const std::string& title, int width, int height) {
 
 #ifdef DEBUG
     Rml::Debugger::Initialise(menuData.RmlContext);
-    Rml::Lua::Initialise();
     Rml::Debugger::SetVisible(false);
 #endif
     int bbwidth, bbheight;
