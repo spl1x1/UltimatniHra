@@ -7,6 +7,9 @@
 
 #include "../../include/Application/MACROS.h"
 #include "../../include/Sprites/Sprite.hpp"
+#include <queue>
+#include <unordered_map>
+#include <algorithm>
 
 //EntityRenderingComponent methods
 void EntityRenderingComponent::Render(const SDL_Renderer* renderer, const Coordinates &entityCoordinates, const SDL_FRect &cameraRectangle, std::unordered_map<std::string, SDL_Texture*> texturePool) const {
@@ -136,9 +139,115 @@ void EntityLogicComponent::MoveTo(const float targetX, const float targetY) {
 }
 
 void EntityLogicComponent::MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server) {
-   //pathPoints.push_back({X, Y});
-   //server->getMapValue(x,y)
-    //coordinates.x; coordinates.y;
+    pathPoints.clear();
+
+    const int startX = static_cast<int>(std::floor(coordinates.x / 32.0f));
+    const int startY = static_cast<int>(std::floor(coordinates.y / 32.0f));
+    const int endX = static_cast<int>(std::floor (targetX / 32.0f));
+    const int endY = static_cast<int>(std::floor (targetY / 32.0f));
+
+    if (endX <0 || endY <0 || endX >= MAPSIZE || endY >= MAPSIZE) return;
+    if (server->getMapValue(endX, endY, WorldData::COLLISION_MAP) != 0) return;
+
+    std::priority_queue<PathNode, std::vector<PathNode>, std::greater<PathNode>> pq;
+    std::unordered_map<GridPoint, bool, GridPointHash> visited;
+    std::unordered_map<GridPoint, GridPoint, GridPointHash> parent;
+    std::unordered_map<GridPoint, float, GridPointHash> cost;
+
+    GridPoint start = {startX, startY};
+    GridPoint end = {endX, endY};
+
+    pq.push({startX, startY, 0.0f});
+    cost[start] = 0.0f;
+
+    bool pathFound = false;
+
+    while (!pq.empty()) {
+        PathNode current = pq.top();
+        pq.pop();
+
+        GridPoint currentPoint = {current.x, current.y};
+
+        if (visited[currentPoint]) continue;
+        visited[currentPoint] =true;
+
+        if (current.x == endX && current.y == endY) {
+            pathFound = true;
+            break;
+        }
+        for (int i = 0; i < 8;i++) {
+            constexpr int dx[] = {-1, 1, 0, 0, -1, -1, 1, 1};
+            constexpr int dy[] = {0, 0, -1, 1, -1, 1, -1, 1};
+            constexpr float moveCost[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.414f, 1.414f, 1.414f, 1.414f};
+            const int nx = current.x + dx[i];
+            const int ny = current.y + dy[i];
+            GridPoint neeighbour = {nx, ny};
+
+            if (nx < 0 || ny < 0 || nx >= MAPSIZE || ny >= MAPSIZE) continue;
+
+            if (server->getMapValue(nx, ny, WorldData::COLLISION_MAP) !=0) continue;
+            if (visited[neeighbour]) continue;
+
+            if (i >= 4) {
+                const int adjX1 = current.x + dx[i];
+                const int adjY1 = current.y;
+                const int adjX2 = current.x;
+                const int adjY2 = current.y + dy[i];
+
+                if (server->getMapValue(adjX1, adjY1, WorldData::COLLISION_MAP) != 0 ||
+                    server->getMapValue(adjX2, adjY2, WorldData::COLLISION_MAP) != 0) {
+                    continue;
+                    }
+            }
+            const float newCost = current.cost + moveCost[i];
+
+            if (!cost.contains(neeighbour) || newCost < cost[neeighbour]) {
+                cost[neeighbour] = newCost;
+                parent[neeighbour] = currentPoint;
+                pq.push({nx, ny, newCost});
+            }
+        }
+    }
+    if (pathFound) {
+        std::vector<GridPoint> fullPath;
+        GridPoint current = end;
+
+        while (current != start) {
+            fullPath.push_back(current);
+            current = parent[current];
+        }
+        fullPath.push_back(start);
+
+        std::ranges::reverse(fullPath);
+
+        if (fullPath.size() > 1) {
+            pathPoints.push_back({
+                static_cast<float>(fullPath[0].x * 32 + 16),
+                static_cast<float>(fullPath[0].y * 32 + 16)
+            });
+
+            for (size_t i = 1; i < fullPath.size() - 1; i++) {
+                const int prevDx = fullPath[i].x - fullPath[i-1].x;
+                const int prevDy = fullPath[i].y - fullPath[i-1].y;
+                const int nextDx = fullPath[i+1].x - fullPath[i].x;
+                const int nextDy = fullPath[i+1].y - fullPath[i].y;
+
+                if (prevDx != nextDx || prevDy != nextDy) {
+                    pathPoints.push_back({
+                        static_cast<float>(fullPath[i].x * 32 + 16),
+                        static_cast<float>(fullPath[i].y * 32 + 16)
+                    });
+                }
+            }
+
+            pathPoints.push_back({
+                static_cast<float>(fullPath.back().x * 32 + 16),
+                static_cast<float>(fullPath.back().y * 32 + 16)
+            });
+        }
+    }
+
+
 }
 
 void EntityLogicComponent::PathMovement() {

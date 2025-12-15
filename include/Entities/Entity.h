@@ -171,6 +171,27 @@ class EntityLogicComponent {
     int angle{0};
     float speed{0};
 
+    struct PathNode {
+        int x, y;
+        float cost;
+        bool operator>(const PathNode& other) const {
+            return cost > other.cost;
+        }
+    };
+
+    struct GridPoint {
+        int x, y;
+        bool operator==(const GridPoint& other) const {
+            return x == other.x && y == other.y;
+        }
+    };
+
+    struct GridPointHash {
+        size_t operator()(const GridPoint& p) const {
+            return std::hash<int>()(p.x) ^ (std::hash<int>()(p.y) << 1);
+        }
+    };
+
     float currentDX{0};
     float currentDY{0};
 
