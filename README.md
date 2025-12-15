@@ -26,7 +26,7 @@
 - [SDL](https://github.com/libsdl-org/SDL)
 - [SDL_image](https://github.com/libsdl-org/SDL_image)
 - [FreeType](https://download.savannah.gnu.org/releases/freetype/)
-- [Lua-cmake-fork](https://github.com/coopeeo/lua-cmake-fork)
+- [Lua-CPP](https://github.com/jordanvrtanoski/luacpp)
 - [HWInfo](https://github.com/C-And-Cpp-Libraries)
 - [Windows.h](https://learn.microsoft.com/en-us/windows/win32/api/)
 
