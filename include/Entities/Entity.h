@@ -59,7 +59,7 @@ struct TaskData {
         DIE
     };
     enum class Status {
-        NEW,
+        PENDING,
         IN_PROGRESS,
         DONE,
         FAILED
@@ -162,7 +162,7 @@ public:
     explicit EntityCollisionComponent(const HitboxData &hitbox): _hitbox(hitbox){}
 };
 
-class EntityMovementComponent {
+class EntityLogicComponent {
     constexpr float threshold = 1.0f; //Threshold to consider reached target
     Coordinates coordinates{0.0f, 0.0f};
     std::vector<Coordinates> pathPoints{};
@@ -174,6 +174,7 @@ class EntityMovementComponent {
     float currentDX{0};
     float currentDY{0};
 
+    void ProcessNewTask(const std::shared_ptr<Server> &server);
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
     void MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server); //Generates pathPoints based on target
     void MoveTo(float targetX, float targetY); //Sets currentDX and currentDY based on target
@@ -195,11 +196,11 @@ public:
     [[nodiscard]] int GetAngle() const;
 
     //Methods
-    static bool Move(float dX, float dY, EntityCollisionComponent &collisionComponent, Coordinates &entityCoordinates, const std::shared_ptr<Server> &server);
+    bool Move(float dX, float dY, EntityCollisionComponent &collisionComponent, Coordinates &entityCoordinates, const std::shared_ptr<Server> &server);
     void Tick(float deltaTime, const std::shared_ptr<Server> &server); //Process tasks when not already in progress else continue
 
     //Constructor
-    explicit EntityMovementComponent(const Coordinates &coordinates): coordinates(coordinates){}
+    explicit EntityLogicComponent(const Coordinates &coordinates): coordinates(coordinates){}
 };
 
 class EntityHealthComponent {

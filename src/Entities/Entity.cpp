@@ -85,44 +85,44 @@ bool EntityCollisionComponent::checkCollision(const float newX, const float newY
 }
 
 //EntityMovementComponent methods
-void EntityMovementComponent::SetPathPoints(const std::vector<Coordinates> &newPathPoints) {
+void EntityLogicComponent::SetPathPoints(const std::vector<Coordinates> &newPathPoints) {
     pathPoints = newPathPoints;
 }
 
-std::vector<Coordinates> EntityMovementComponent::GetPathPoints() const {
+std::vector<Coordinates> EntityLogicComponent::GetPathPoints() const {
     return pathPoints;
 }
 
-void EntityMovementComponent::SetTasks(const std::vector<TaskData> &newTasks) {
+void EntityLogicComponent::SetTasks(const std::vector<TaskData> &newTasks) {
     tasks = newTasks;
 }
 
-std::vector<TaskData> EntityMovementComponent::GetTasks() const {
+std::vector<TaskData> EntityLogicComponent::GetTasks() const {
     return  tasks;
 }
 
-void EntityMovementComponent::SetAngle(const int newAngle) {
+void EntityLogicComponent::SetAngle(const int newAngle) {
     angle = newAngle;
 }
 
-int EntityMovementComponent::GetAngle() const {
+int EntityLogicComponent::GetAngle() const {
     return angle;
 }
 
-void EntityMovementComponent::SetAngleBasedOnMovement(const float dX, const float dY) {
+void EntityLogicComponent::SetAngleBasedOnMovement(const float dX, const float dY) {
     angle = static_cast<int>(std::floor(std::atan2(dX, dY) * 180.0f / M_PI));
     if (angle < 0) angle += 360;
 }
 
-void EntityMovementComponent::SetCoordinates(const Coordinates &newCoordinates) {
+void EntityLogicComponent::SetCoordinates(const Coordinates &newCoordinates) {
     coordinates = newCoordinates;
 }
 
-Coordinates EntityMovementComponent::GetCoordinates() const {
+Coordinates EntityLogicComponent::GetCoordinates() const {
     return coordinates;
 }
 
-void EntityMovementComponent::MoveTo(const float targetX, const float targetY) {
+void EntityLogicComponent::MoveTo(const float targetX, const float targetY) {
 
     const float deltaX{targetX - currentDX};
     const float deltaY{targetY - currentDY};
@@ -135,13 +135,13 @@ void EntityMovementComponent::MoveTo(const float targetX, const float targetY) {
     }
 }
 
-void EntityMovementComponent::MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server) {
+void EntityLogicComponent::MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server) {
    //pathPoints.push_back({X, Y});
    //server->getMapValue(x,y)
     //coordinates.x; coordinates.y;
 }
 
-void EntityMovementComponent::PathMovement() {
+void EntityLogicComponent::PathMovement() {
     if (pathPoints.empty()) return;
     const Coordinates targetPoint = pathPoints.front();
 
@@ -149,6 +149,55 @@ void EntityMovementComponent::PathMovement() {
 
     if (std::abs(coordinates.x - targetPoint.x) <= threshold && std::abs(coordinates.y - targetPoint.y) <= threshold) {
         pathPoints.erase(pathPoints.begin());
+    }
+}
+
+void EntityLogicComponent::Tick(const float deltaTime, const std::shared_ptr<Server> &server) {
+    if (tasks.empty()) return;
+    const TaskData context{tasks.front()};
+    if (context.status == TaskData::Status::PENDING) {
+        ProcessNewTask(server);
+        return;
+    }
+    if (context.status == TaskData::Status::DONE || context.status == TaskData::Status::FAILED) {
+        //Implement logger call
+        tasks.erase(tasks.begin());
+        return;
+    }
+
+    if (context.type == TaskData::Type::MOVE_TO && tasks.front().status != TaskData::Status::DONE) {
+        PathMovement();
+        coordinates.x += currentDX * speed * deltaTime;
+        coordinates.y += currentDY * speed * deltaTime;
+    }
+}
+
+void EntityLogicComponent::ProcessNewTask(const std::shared_ptr<Server> &server) {
+    switch (TaskData &currentTask = tasks.front(); currentTask.type) {
+        case TaskData::Type::MOVE_TO:
+            MakePath(currentTask.moveTo.targetX, currentTask.moveTo.targetY, server);
+            currentTask.status = TaskData::Status::IN_PROGRESS;
+            break;
+
+        case TaskData::Type::GATHER_RESOURCE:
+            // Implement resource gathering logic here
+            currentTask.status = TaskData::Status::DONE;
+            break;
+
+        case TaskData::Type::BUILD_STRUCTURE:
+            // Implement structure building logic here
+            currentTask.status = TaskData::Status::DONE;
+            break;
+
+        case TaskData::Type::ATTACK:
+            // Implement attack logic here
+            currentTask.status = TaskData::Status::DONE;
+            break;
+
+        case TaskData::Type::DIE:
+            // Implement death logic here
+            currentTask.status = TaskData::Status::DONE;
+            break;
     }
 }
 
