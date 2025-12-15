@@ -23,7 +23,7 @@ void Tree::Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std:
     _renderingComponent.renderSprite(windowRenderer, cameraRectangle, textures);
 }
 
-Tree:: Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server)
+Tree::Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server)
     : _id(id),
       _renderingComponent(std::make_unique<TreeSprite>(), topLeftCorner),
       _hitboxComponent(server, topLeftCorner) {

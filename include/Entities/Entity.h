@@ -2,11 +2,16 @@
 // Created by Lukáš Kaplánek on 25.10.2025.
 //
 
+/*
+ *Vytvorit command dispatch thread pro entity, struktury atd.
+ *access pres konzoli ingame
+ */
+
 #ifndef ENTITY_H
 #define ENTITY_H
-#include <any>
-#include <vector>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 #include <SDL3/SDL_render.h>
 
 #include "../Server/Server.h"
@@ -45,17 +50,22 @@ struct EventData {
     };
 };
 
-enum class TaskType{
-    NOTASK,
-    MOVE_TO,
-    GATHER_RESOURCE,
-    BUILD_STRUCTURE,
-    ATTACK,
-    DIE
-};
-
 struct TaskData {
-    TaskType type{};
+    enum class Type{
+        MOVE_TO,
+        GATHER_RESOURCE,
+        BUILD_STRUCTURE,
+        ATTACK,
+        DIE
+    };
+    enum class Status {
+        NEW,
+        IN_PROGRESS,
+        DONE,
+        FAILED
+    };
+
+    Type type{};
     /*
     Parameters for the task
     */
@@ -65,7 +75,7 @@ struct TaskData {
         struct { int structureId{-1}; float x{0},y{0};} build;
     };
     //Task status
-    bool completed = false;
+    Status status = Status::NEW;
 };
 
 class IEntity {
@@ -100,13 +110,22 @@ public:
     [[nodiscard]] virtual int GetAngle() const = 0;
     //Returns current task and task data
     [[nodiscard]] virtual TaskData GetTask() const = 0;
+
+    //Disable copy constructor and allow move constructor
+    IEntity(const IEntity&) =delete;
+    IEntity(IEntity&&) = default;
 };
 
 class EntityRenderingComponent {
-    std::unique_ptr<ISprite> sprite = nullptr;
+    std::unique_ptr<ISprite> sprite{nullptr};
+    std::unique_ptr<SDL_FRect> Rect = std::make_unique<SDL_FRect>();
 
     public:
-    void Render(SDL_Renderer* renderer);
+    void Render(const SDL_Renderer* renderer, const Coordinates &entityCoordinates, const SDL_FRect &cameraRectangle, std::unordered_map<std::string, SDL_Texture*> texturePool) const;
+    void Tick(float deltaTime) const;
+
+    //Setters
+    void SetDirectionBaseOnAngle(int angle) const;
 
     //Constructor
     explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite): sprite(std::move(sprite)){}
@@ -114,14 +133,12 @@ class EntityRenderingComponent {
     EntityRenderingComponent(EntityRenderingComponent&&) = default;
 };
 
-class EntityMovementComponent{};
-
 class EntityCollisionComponent {
 public:
     struct HitboxData {
         Coordinates corners[4];
-        bool disableCollision = false;
-        bool colliding = false;
+        bool disableCollision{false};
+        bool colliding{false};
     };
 private:
     //Defines 4 hitbox corners
@@ -131,7 +148,7 @@ public:
     //Methods
 
     //Check collision with structures, entities can collide with each other
-    bool checkCollision(float newX, float newY);
+    bool checkCollision(float newX, float newY, const std::shared_ptr<Server> &server);
 
     //Setters
     void SetHitbox(const HitboxData &hitbox);
@@ -139,10 +156,50 @@ public:
 
     //Getters
     [[nodiscard]] HitboxData* GetHitbox();
-    [[nodiscard]] CollisionStatus GetCollisionStatus();
+    [[nodiscard]] CollisionStatus GetCollisionStatus() const;
 
     //Constructor
     explicit EntityCollisionComponent(const HitboxData &hitbox): _hitbox(hitbox){}
+};
+
+class EntityMovementComponent {
+    constexpr float threshold = 1.0f; //Threshold to consider reached target
+    Coordinates coordinates{0.0f, 0.0f};
+    std::vector<Coordinates> pathPoints{};
+    std::vector<TaskData> tasks{};
+
+    int angle{0};
+    float speed{0};
+
+    float currentDX{0};
+    float currentDY{0};
+
+    void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
+    void MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server); //Generates pathPoints based on target
+    void MoveTo(float targetX, float targetY); //Sets currentDX and currentDY based on target
+    void PathMovement(); //Moves entity along pathPoints
+
+public:
+
+    //Setters and Getters
+    void SetPathPoints(const std::vector<Coordinates> &newPathPoints);
+    [[nodiscard]] std::vector<Coordinates> GetPathPoints() const;
+
+    void SetCoordinates(const Coordinates &newCoordinates);
+    [[nodiscard]] Coordinates GetCoordinates() const;
+
+    void SetTasks(const std::vector<TaskData> &newTasks);
+    [[nodiscard]] std::vector<TaskData> GetTasks() const;
+
+    void SetAngle(int newAngle);
+    [[nodiscard]] int GetAngle() const;
+
+    //Methods
+    static bool Move(float dX, float dY, EntityCollisionComponent &collisionComponent, Coordinates &entityCoordinates, const std::shared_ptr<Server> &server);
+    void Tick(float deltaTime, const std::shared_ptr<Server> &server); //Process tasks when not already in progress else continue
+
+    //Constructor
+    explicit EntityMovementComponent(const Coordinates &coordinates): coordinates(coordinates){}
 };
 
 class EntityHealthComponent {
@@ -163,25 +220,22 @@ public:
     [[nodiscard]] bool isDead() const;
 
     //Constructor
-    EntityHealthComponent(float health, float maxHealth): health(health), maxHealth(maxHealth){}
+    EntityHealthComponent(const float health, const float maxHealth): health(health), maxHealth(maxHealth){}
 };
 
-class EntityTransformComponent {
-    Coordinates coordinates;
-public:
-    //Setters and Getters
-    void SetCoordinates(const Coordinates &newCoordinates);
-    [[nodiscard]] Coordinates GetCoordinates() const;
-
-    //Constructor
-    explicit EntityTransformComponent(const Coordinates &coordinates): coordinates(coordinates){}
+class EntityInventoryComponent {
+    //Inventory data and methods would go here
+    //To be implemented
 };
+
+// -------------------------------------------------------
+
 
 //Defines 4 hitbox corners, relative to sprite
 struct Hitbox {
     Coordinates corners[4];
-    bool disableCollision = false;
-    bool colliding = false;
+    bool disableCollision{false};
+    bool colliding{false};
 };
 
 enum HitboxCorners{

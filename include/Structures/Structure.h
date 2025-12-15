@@ -26,7 +26,7 @@ enum class structureType{
 class IStructure {
 
 public:
-    virtual ~IStructure() = 0;
+    virtual ~IStructure() = default;
     [[nodiscard]] virtual structureType getType() const = 0;
     [[nodiscard]] virtual int getId() const = 0;
     virtual void Tick(float deltaTime) = 0;
