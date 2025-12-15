@@ -75,7 +75,7 @@ struct TaskData {
         struct { int structureId{-1}; float x{0},y{0};} build;
     };
     //Task status
-    Status status = Status::NEW;
+    Status status = Status::PENDING;
 };
 
 class IEntity {
@@ -163,7 +163,7 @@ public:
 };
 
 class EntityLogicComponent {
-    constexpr float threshold = 1.0f; //Threshold to consider reached target
+    static constexpr float threshold = 1.0f; //Threshold to consider reached target
     Coordinates coordinates{0.0f, 0.0f};
     std::vector<Coordinates> pathPoints{};
     std::vector<TaskData> tasks{};
