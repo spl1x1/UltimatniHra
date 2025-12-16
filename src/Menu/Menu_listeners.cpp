@@ -92,6 +92,9 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
 
     SDL_Log("Setting resolution to: %dx%d", width, height);
 
+    SDL_Log("Setting resolution to: %dx%d", width, height);
+    window->applyResolution(width, height);
+
     // TODO: change resolution aj v game
     // SDL_SetWindowSize(window->sdlWindow, width, height);
 

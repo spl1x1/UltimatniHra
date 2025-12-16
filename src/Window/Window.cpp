@@ -205,7 +205,7 @@ void Window::initPauseMenu() {
 
     SDL_Log("Pause menu initialized");
 }
-//tady jsem zmenil na lepsi alignment s scalingem obrazovky
+
 void Window::HandleMainMenuEvent(const SDL_Event *e) {
     int window_w, window_h;
     SDL_GetWindowSizeInPixels(data.Window, &window_w, &window_h);
@@ -287,7 +287,6 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
 #endif
             break;
         }
-
         default:
             break;
     }
@@ -481,7 +480,7 @@ void Window::updateOptionsMenuScale() {
                     SDL_Log("Applied compact class to %s for 1280x720", menuName.c_str());
                 }
                 else {
-                    body->SetProperty("transform", "1.0");
+                    // body->SetProperty("transform", "1.0");
                     SDL_Log("Removed compact class from %s for larger resolution", menuName.c_str());
                 }
             }
@@ -721,6 +720,7 @@ void Window::init(const std::string& title, int width, int height) {
 
 
     menuData.documents["main_menu"] = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
+    Rml::ElementDocument* console_doc = menuData.RmlContext->LoadDocument("assets/ui/console.rml");
 
     if (!menuData.documents["main_menu"]) {
         SDL_Log("Failed to load main menu RML document");
@@ -742,6 +742,7 @@ void Window::init(const std::string& title, int width, int height) {
         quitButton->AddEventListener("click", new QuitButtonListener(this));
 
     menuData.documents["main_menu"]->Show();
+    ConsoleHandler::GetInstance().Setup(console_doc);
 }
 
 void Window::Destroy() {
