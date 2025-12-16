@@ -5,7 +5,6 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include "MACROS.h"
 #include <thread>
 #include <queue>
 #include <fstream>

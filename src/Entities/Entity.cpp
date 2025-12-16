@@ -13,35 +13,44 @@
 
 //EntityRenderingComponent methods
 void EntityRenderingComponent::Render(const SDL_Renderer* renderer, const Coordinates &entityCoordinates, const SDL_FRect &cameraRectangle, std::unordered_map<std::string, SDL_Texture*> texturePool) const {
-    if (!sprite) return;
+    if (!_sprite) return;
 
-    const auto renderingContex = sprite->getFrame();
+    const auto renderingContex = _sprite->getFrame();
 
-    Rect->x = entityCoordinates.x - cameraRectangle.x;
-    Rect->y = entityCoordinates.y - cameraRectangle.y;
-    Rect->w = static_cast<float>(sprite->getWidth());
-    Rect->h = static_cast<float>(sprite->getHeight());
+    _rect->x = entityCoordinates.x - cameraRectangle.x;
+    _rect->y = entityCoordinates.y - cameraRectangle.y;
+    _rect->w = static_cast<float>(_sprite->getWidth());
+    _rect->h = static_cast<float>(_sprite->getHeight());
 
-    SDL_RenderTexture(const_cast<SDL_Renderer*>(renderer), texturePool[std::get<0>(renderingContex)], std::get<1>(renderingContex), Rect.get());
+    SDL_RenderTexture(const_cast<SDL_Renderer*>(renderer), texturePool[std::get<0>(renderingContex)], std::get<1>(renderingContex), _rect.get());
 }
 
 void EntityRenderingComponent::Tick(const float deltaTime) const {
-    if (!sprite) return;
-    sprite->Tick(deltaTime);
+    if (!_sprite) return;
+    _sprite->Tick(deltaTime);
 }
 
 void EntityRenderingComponent::SetDirectionBaseOnAngle(const int angle) const {
-    if (!sprite) return;
+    if (!_sprite) return;
 
     if ((angle >= 0 && angle <= 44) || (angle >= 316 && angle <= 360)) {
-        sprite->setDirection(Direction::DOWN);
+        _sprite->setDirection(Direction::DOWN);
     } else if (angle >= 136 && angle <= 224) {
-        sprite->setDirection(Direction::UP);
+        _sprite->setDirection(Direction::UP);
     } else if (angle >= 45 && angle <= 135) {
-        sprite->setDirection(Direction::RIGHT);
+        _sprite->setDirection(Direction::RIGHT);
     } else if (angle >= 225 && angle <= 315) {
-        sprite->setDirection(Direction::LEFT);
+        _sprite->setDirection(Direction::LEFT);
     }
+}
+
+void EntityRenderingComponent::SetAnimation(const AnimationType animation) const {
+    if (!_sprite) return;
+    _sprite->setAnimation(animation);
+}
+
+void EntityRenderingComponent::SetSprite(std::unique_ptr<ISprite> sprite) {
+    _sprite = std::move(_sprite);
 }
 
 //EntityCollisionComponent methods
@@ -60,89 +69,164 @@ void EntityCollisionComponent::SetHitbox(const HitboxData &hitbox){
     _hitbox = hitbox;
 }
 
-void EntityCollisionComponent::disableCollision(const bool Switch){
+void EntityCollisionComponent::DisableCollision(const bool Switch){
     _hitbox.disableCollision = Switch;
 }
 
 
-bool EntityCollisionComponent::checkCollision(const float newX, const float newY, const std::shared_ptr<Server>& server) {
+bool EntityCollisionComponent::CheckCollision(const float newX, const float newY, const std::shared_ptr<Server>& server) {
     _hitbox.colliding = false;
 
-    for (auto corner : _hitbox.corners) {
-        const float cornerX = newX + corner.x;
-        const float cornerY = newY + corner.y;
+    auto evaluatePoint = [&, newX, newY](const Coordinates corner){;
+        const int tileX{static_cast<int>(std::floor((corner.x + newX) / 32.0f))};
+        const int tileY{static_cast<int>(std::floor((corner.y + newY) / 32.0f))};
 
-        const int tileX = static_cast<int>(std::floor(cornerX / 32.0f));
-        const int tileY = static_cast<int>(std::floor(cornerY / 32.0f));
+        if (tileX < 0 || tileY < 0
+            || tileX >= MAPSIZE
+            || tileY >= MAPSIZE
+            || server->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
+            _hitbox.colliding = true;
+        }
+    };
 
-        if (tileX < 0 || tileY < 0 || tileX >= MAPSIZE || tileY >= MAPSIZE) {
-            _hitbox.colliding = true;
-            return true; // Out of bounds
-        }
-        if (server->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
-            _hitbox.colliding = true;
-            return true;
-        }
-    }
-    return false;
+    std::ranges::for_each(_hitbox.corners, evaluatePoint);
+    return _hitbox.colliding;
+}
+
+bool EntityCollisionComponent::CheckCollisionAt(const float newX, const float newY, const std::shared_ptr<Server>& server) const{
+    bool result{false};
+
+    auto evaluatePoint = [&, newX, newY](const Coordinates corner){;
+        const int tileX{static_cast<int>(std::floor((corner.x + newX) / 32.0f))};
+        const int tileY{static_cast<int>(std::floor((corner.y + newY) / 32.0f))};
+
+        if (tileX < 0 || tileY < 0
+            || tileX >= MAPSIZE
+            || tileY >= MAPSIZE
+            || server->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
+            result = true;
+            }
+    };
+
+    std::ranges::for_each(_hitbox.corners, evaluatePoint);
+    return result;
 }
 
 //EntityMovementComponent methods
+
+void EntityLogicComponent::BindScript(const std::string &scriptName, const ScriptData &scriptData) {
+    _scriptBindings[scriptName] = scriptData;
+}
+
+void EntityLogicComponent::UnbindScript(const std::string &scriptName) {
+    _scriptBindings.erase(scriptName);
+}
+
+EntityLogicComponent::ScriptData EntityLogicComponent::GetBoundScript(const std::string &scriptName) const {
+    if (_scriptBindings.find(scriptName) != _scriptBindings.end()) {
+        return _scriptBindings.at(scriptName);
+    }
+    return ScriptData{};
+}
+
+
 void EntityLogicComponent::SetPathPoints(const std::vector<Coordinates> &newPathPoints) {
-    pathPoints = newPathPoints;
+    _pathPoints = newPathPoints;
 }
 
 std::vector<Coordinates> EntityLogicComponent::GetPathPoints() const {
-    return pathPoints;
+    return _pathPoints;
 }
 
 void EntityLogicComponent::SetTasks(const std::vector<TaskData> &newTasks) {
-    tasks = newTasks;
+    _tasks = newTasks;
+}
+
+void EntityLogicComponent::SetTask(const TaskData &newTask) {
+    _tasks.push_back(newTask);
 }
 
 std::vector<TaskData> EntityLogicComponent::GetTasks() const {
-    return  tasks;
+    return  _tasks;
 }
 
+TaskData EntityLogicComponent::GetTask(int index) const {
+    if (index < 0 || index >= _tasks.size()) return {};
+    return _tasks[index];
+}
+
+void EntityLogicComponent::SetEvents(const std::vector<EventData> &newEvents) {
+    _events = newEvents;
+}
+
+std::vector<EventData> EntityLogicComponent::GetEvents() const {
+    return _events;
+}
+
+
 void EntityLogicComponent::SetAngle(const int newAngle) {
-    angle = newAngle;
+    _angle = newAngle;
 }
 
 int EntityLogicComponent::GetAngle() const {
-    return angle;
+    return _angle;
+}
+
+void EntityLogicComponent::SetSpeed(float newSpeed) {
+    if (newSpeed < 0.0f) return;
+    _speed = newSpeed;
+}
+
+float EntityLogicComponent::GetSpeed() const {
+    return _speed;
+}
+
+void EntityLogicComponent::SwitchTask(int index) {
+    if (index < 0 || index >= static_cast<int>(_tasks.size())) return;
+    _tasks.front().status = TaskData::Status::PENDING;
+    std::ranges::rotate(_tasks, _tasks.begin() + index);
+}
+
+void EntityLogicComponent::RemoveTask(int index) {
+    if (index < 0 || index >= static_cast<int>(_tasks.size())) return;
+    _tasks.erase(_tasks.begin() + index);
 }
 
 void EntityLogicComponent::SetAngleBasedOnMovement(const float dX, const float dY) {
-    angle = static_cast<int>(std::floor(std::atan2(dX, dY) * 180.0f / M_PI));
-    if (angle < 0) angle += 360;
+    _angle = static_cast<int>(std::floor(std::atan2(dX, dY) * 180.0f / M_PI));
+    if (_angle < 0) _angle += 360;
 }
 
 void EntityLogicComponent::SetCoordinates(const Coordinates &newCoordinates) {
-    coordinates = newCoordinates;
+    _coordinates = newCoordinates;
 }
 
 Coordinates EntityLogicComponent::GetCoordinates() const {
-    return coordinates;
+    return _coordinates;
 }
 
 void EntityLogicComponent::MoveTo(const float targetX, const float targetY) {
-
-    const float deltaX{targetX - currentDX};
-    const float deltaY{targetY - currentDY};
-    currentDX= 0.0f;
-    currentDY = 0.0f;
+    const float deltaX{targetX - oldDX};
+    const float deltaY{targetY - oldDY};
+    oldDX= 0.0f;
+    oldDY = 0.0f;
 
     if (const float distance = std::sqrt(deltaX * deltaX + deltaY * deltaY); distance > threshold) {
-        currentDX = deltaX / distance;
-        currentDY = deltaY / distance;
+        oldDX = deltaX / distance;
+        oldDY = deltaY / distance;
     }
+
+    AddEvent(EventData{
+            .type = Event::MOVE,
+            .data = {oldDX, oldDY}
+    });
 }
 
-void EntityLogicComponent::MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server) {
-    pathPoints.clear();
+void EntityLogicComponent::MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server,const EntityCollisionComponent &collisionComponent) {
+    _pathPoints.clear();
 
-    const int startX = static_cast<int>(std::floor(coordinates.x / 32.0f));
-    const int startY = static_cast<int>(std::floor(coordinates.y / 32.0f));
+    const int startX = static_cast<int>(std::floor(_coordinates.x / 32.0f));
+    const int startY = static_cast<int>(std::floor(_coordinates.y / 32.0f));
     const int endX = static_cast<int>(std::floor (targetX / 32.0f));
     const int endY = static_cast<int>(std::floor (targetY / 32.0f));
 
@@ -185,7 +269,7 @@ void EntityLogicComponent::MakePath(float targetX, float targetY, const std::sha
 
             if (nx < 0 || ny < 0 || nx >= MAPSIZE || ny >= MAPSIZE) continue;
 
-            if (server->getMapValue(nx, ny, WorldData::COLLISION_MAP) !=0) continue;
+            if (collisionComponent.CheckCollisionAt(static_cast<float>(nx),static_cast<float>(ny),server)) continue;
             if (visited[neeighbour]) continue;
 
             if (i >= 4) {
@@ -194,8 +278,8 @@ void EntityLogicComponent::MakePath(float targetX, float targetY, const std::sha
                 const int adjX2 = current.x;
                 const int adjY2 = current.y + dy[i];
 
-                if (server->getMapValue(adjX1, adjY1, WorldData::COLLISION_MAP) != 0 ||
-                    server->getMapValue(adjX2, adjY2, WorldData::COLLISION_MAP) != 0) {
+                if (collisionComponent.CheckCollisionAt(static_cast<float>(adjX1),static_cast<float>(adjY1),server) ||
+                    collisionComponent.CheckCollisionAt(static_cast<float>(adjX2),static_cast<float>(adjY2),server)) {
                     continue;
                     }
             }
@@ -221,7 +305,7 @@ void EntityLogicComponent::MakePath(float targetX, float targetY, const std::sha
         std::ranges::reverse(fullPath);
 
         if (fullPath.size() > 1) {
-            pathPoints.push_back({
+            _pathPoints.push_back({
                 static_cast<float>(fullPath[0].x * 32 + 16),
                 static_cast<float>(fullPath[0].y * 32 + 16)
             });
@@ -233,14 +317,14 @@ void EntityLogicComponent::MakePath(float targetX, float targetY, const std::sha
                 const int nextDy = fullPath[i+1].y - fullPath[i].y;
 
                 if (prevDx != nextDx || prevDy != nextDy) {
-                    pathPoints.push_back({
+                    _pathPoints.push_back({
                         static_cast<float>(fullPath[i].x * 32 + 16),
                         static_cast<float>(fullPath[i].y * 32 + 16)
                     });
                 }
             }
 
-            pathPoints.push_back({
+            _pathPoints.push_back({
                 static_cast<float>(fullPath.back().x * 32 + 16),
                 static_cast<float>(fullPath.back().y * 32 + 16)
             });
@@ -250,64 +334,88 @@ void EntityLogicComponent::MakePath(float targetX, float targetY, const std::sha
 
 }
 
-void EntityLogicComponent::PathMovement() {
-    if (pathPoints.empty()) return;
-    const Coordinates targetPoint = pathPoints.front();
+void EntityLogicComponent::PathMovement(EntityCollisionComponent &collisionComponent, const std::shared_ptr<Server> &server) {
+    if (_pathPoints.empty()) return;
+    const Coordinates targetPoint = _pathPoints.front();
 
     MoveTo(targetPoint.x, targetPoint.y);
 
-    if (std::abs(coordinates.x - targetPoint.x) <= threshold && std::abs(coordinates.y - targetPoint.y) <= threshold) {
-        pathPoints.erase(pathPoints.begin());
+    if (std::abs(_coordinates.x - targetPoint.x) <= threshold && std::abs(_coordinates.y - targetPoint.y) <= threshold) {
+        _pathPoints.erase(_pathPoints.begin());
     }
 }
 
-void EntityLogicComponent::Tick(const float deltaTime, const std::shared_ptr<Server> &server) {
-    if (tasks.empty()) return;
-    const TaskData context{tasks.front()};
-    if (context.status == TaskData::Status::PENDING) {
-        ProcessNewTask(server);
+void EntityLogicComponent::Tick(const float deltaTime, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent) {
+    if (!_events.empty()) HandleEvent(_events.front(), server, collisionComponent);
+    if (!_tasks.empty()) HandleTask(_tasks.front(), server, collisionComponent);
+}
+
+void EntityLogicComponent::AddEvent(const EventData &eventData) {
+    _events.push_back(eventData);
+}
+
+
+bool EntityLogicComponent::Move(const float dX,const float dY, EntityCollisionComponent &collisionComponent, const std::shared_ptr<Server> &server) {
+    const float deltaTime = server->getDeltaTime();
+
+    const float newX{_coordinates.x + dX * _speed* deltaTime};
+    const float newY{_coordinates.y + dY * _speed * deltaTime};
+
+    collisionComponent.CheckCollision(newX, newY, server);
+    const EntityCollisionComponent::HitboxData hitbox{*collisionComponent.GetHitbox()};
+
+    if (hitbox.colliding && !hitbox.disableCollision) return false;
+    _coordinates.x = newX;
+    _coordinates.y = newY;
+    SetAngleBasedOnMovement(dX, dY);
+    return true;
+}
+
+void EntityLogicComponent::HandleEvent(const EventData &data, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent) {
+    switch (data.type) {
+        case Event::MOVE:
+            Move(data.data.move.dX, data.data.move.dY, collisionComponent, server);
+            break;
+        default:
+            break;
+    }
+    _events.erase(_events.begin());
+}
+
+void EntityLogicComponent::HandleTask(const TaskData &data, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent) {
+    if (data.status == TaskData::Status::PENDING) {
+        ProcessNewTask(server, collisionComponent);
         return;
     }
-    if (context.status == TaskData::Status::DONE || context.status == TaskData::Status::FAILED) {
+    if (data.status == TaskData::Status::DONE || data.status == TaskData::Status::FAILED) {
         //Implement logger call
-        tasks.erase(tasks.begin());
+        _tasks.erase(_tasks.begin());
         return;
     }
 
-    if (context.type == TaskData::Type::MOVE_TO && tasks.front().status != TaskData::Status::DONE) {
-        PathMovement();
-        coordinates.x += currentDX * speed * deltaTime;
-        coordinates.y += currentDY * speed * deltaTime;
-    }
+     //if (data.type == TaskData::Type::MOVE_TO && _tasks.front().status == TaskData::Status::IN_PROGRESS) {
+     //   PathMovement(collisionComponent, server);
+   // }
+
 }
 
-void EntityLogicComponent::ProcessNewTask(const std::shared_ptr<Server> &server) {
-    switch (TaskData &currentTask = tasks.front(); currentTask.type) {
-        case TaskData::Type::MOVE_TO:
-            MakePath(currentTask.moveTo.targetX, currentTask.moveTo.targetY, server);
-            currentTask.status = TaskData::Status::IN_PROGRESS;
-            break;
+void EntityLogicComponent::ProcessNewTask(const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent) {
+    TaskData &currentTask = _tasks.front();
+    _scriptBindings[currentTask.taskName]; //Check if script is bound
 
-        case TaskData::Type::GATHER_RESOURCE:
-            // Implement resource gathering logic here
-            currentTask.status = TaskData::Status::DONE;
-            break;
+    if (_scriptBindings.find(currentTask.taskName) == _scriptBindings.end()) return;
 
-        case TaskData::Type::BUILD_STRUCTURE:
-            // Implement structure building logic here
-            currentTask.status = TaskData::Status::DONE;
-            break;
-
-        case TaskData::Type::ATTACK:
-            // Implement attack logic here
-            currentTask.status = TaskData::Status::DONE;
-            break;
-
-        case TaskData::Type::DIE:
-            // Implement death logic here
-            currentTask.status = TaskData::Status::DONE;
-            break;
+    ScriptData &scriptData = _scriptBindings[currentTask.taskName];
+    if (scriptData.script == Script::NOT_IMPLEMENTED) {
+        return;
     }
+    if (scriptData.script == Script::CPP) {
+        scriptData.functionsCPP.front();
+        currentTask.status = TaskData::Status::IN_PROGRESS;
+        return;
+    }
+        // TODO: Implement Lua script execution
+
 }
 
 

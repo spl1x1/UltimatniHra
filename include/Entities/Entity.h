@@ -10,6 +10,7 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 #include <memory>
+#include <queue>
 #include <unordered_map>
 #include <vector>
 #include <SDL3/SDL_render.h>
@@ -47,17 +48,10 @@ struct EventData {
         struct { int structureId{-1}; float x{0},y{0};} build;
         struct { int attackType{0}; } attack;
         struct { float amount{0}; } healthChange;
-    };
+    } data;
 };
 
 struct TaskData {
-    enum class Type{
-        MOVE_TO,
-        GATHER_RESOURCE,
-        BUILD_STRUCTURE,
-        ATTACK,
-        DIE
-    };
     enum class Status {
         PENDING,
         IN_PROGRESS,
@@ -65,7 +59,7 @@ struct TaskData {
         FAILED
     };
 
-    Type type{};
+    std::string taskName{};
     /*
     Parameters for the task
     */
@@ -74,6 +68,7 @@ struct TaskData {
         struct { int resourceId{0}, amount{0}; } gather;
         struct { int structureId{-1}; float x{0},y{0};} build;
     };
+    int Iterations{0};
     //Task status
     Status status = Status::PENDING;
 };
@@ -81,54 +76,59 @@ struct TaskData {
 class IEntity {
 public:
     //Interface methods
-    virtual ~IEntity() = 0;
-    virtual void Tick(float deltaTime) = 0;
+    virtual void Tick() = 0;
     virtual void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) = 0;
     virtual void Create() = 0;
     virtual void Load() = 0;
 
     //Entity actions
     virtual void Move(float dX, float dY) = 0;
-    virtual void MoveTo(float targetX, float targetY) = 0;
-    virtual void HandleAction(EventData data) = 0;
+    virtual void HandleTask(TaskData data) = 0;
 
     //Setters
     virtual void SetCoordinates(const Coordinates &newCoordinates) = 0;
     //Sets entity angle in degrees
-    virtual void SetAngle(float newAngle) = 0;
+    virtual void SetAngle(int newAngle) = 0;
     virtual void SetSpeed(float newSpeed) = 0;
     //Sets current task and task data
-    virtual void SetTask(TaskData data) = 0;
-    virtual void RemoveTask(TaskData data) = 0;
+    virtual void SetTask(int index) = 0;
+    virtual void RemoveTask(int index) = 0;
 
     //Getters
 
     //Returns true entity coordinates (sprite center)
     [[nodiscard]] virtual Coordinates GetCoordinates() const = 0;
     //Returns entity collision status
-    [[nodiscard]] virtual CollisionStatus HetCollisionStatus() const = 0;
+    [[nodiscard]] virtual CollisionStatus GetCollisionStatus() const = 0;
     [[nodiscard]] virtual int GetAngle() const = 0;
     //Returns current task and task data
     [[nodiscard]] virtual TaskData GetTask() const = 0;
+    //Returns task queue
+    [[nodiscard]] virtual std::vector<TaskData> GetTasks() const = 0;
+    //Returns event queue
+    [[nodiscard]] virtual std::vector<EventData> GetEvents() const = 0;
 
     //Disable copy constructor and allow move constructor
     IEntity(const IEntity&) =delete;
-    IEntity(IEntity&&) = default;
+    virtual ~IEntity() = default;
+    IEntity() = default;
 };
 
 class EntityRenderingComponent {
-    std::unique_ptr<ISprite> sprite{nullptr};
-    std::unique_ptr<SDL_FRect> Rect = std::make_unique<SDL_FRect>();
+    std::unique_ptr<ISprite> _sprite{nullptr};
+    std::unique_ptr<SDL_FRect> _rect = std::make_unique<SDL_FRect>();
 
-    public:
+public:
     void Render(const SDL_Renderer* renderer, const Coordinates &entityCoordinates, const SDL_FRect &cameraRectangle, std::unordered_map<std::string, SDL_Texture*> texturePool) const;
     void Tick(float deltaTime) const;
 
     //Setters
     void SetDirectionBaseOnAngle(int angle) const;
+    void SetAnimation(AnimationType animation) const;
+    void SetSprite(std::unique_ptr<ISprite> sprite);
 
     //Constructor
-    explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite): sprite(std::move(sprite)){}
+    explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite): _sprite(std::move(sprite)){}
     EntityRenderingComponent(const EntityRenderingComponent&) = delete;
     EntityRenderingComponent(EntityRenderingComponent&&) = default;
 };
@@ -148,11 +148,12 @@ public:
     //Methods
 
     //Check collision with structures, entities can collide with each other
-    bool checkCollision(float newX, float newY, const std::shared_ptr<Server> &server);
+    bool CheckCollision(float newX, float newY, const std::shared_ptr<Server> &server);
+    [[nodiscard]] bool CheckCollisionAt(float newX, float newY, const std::shared_ptr<Server> &server) const;
 
     //Setters
     void SetHitbox(const HitboxData &hitbox);
-    void disableCollision(bool Switch = true);
+    void DisableCollision(bool Switch = true);
 
     //Getters
     [[nodiscard]] HitboxData* GetHitbox();
@@ -160,16 +161,38 @@ public:
 
     //Constructor
     explicit EntityCollisionComponent(const HitboxData &hitbox): _hitbox(hitbox){}
+
 };
 
 class EntityLogicComponent {
-    static constexpr float threshold = 1.0f; //Threshold to consider reached target
-    Coordinates coordinates{0.0f, 0.0f};
-    std::vector<Coordinates> pathPoints{};
-    std::vector<TaskData> tasks{};
+public:
+    enum class Script {
+        NOT_IMPLEMENTED,
+        LUA,
+        CPP
+    };
 
-    int angle{0};
-    float speed{0};
+    struct ScriptData {
+        Script script{Script::NOT_IMPLEMENTED};
+        std::vector<std::function<void(EntityLogicComponent&)>> functionsCPP{};
+        std::vector<std::string> scriptFilesLua{};
+    struct {
+        int maxIterations{0};
+        bool isIterative{false};
+    } iterationData;
+    };
+
+private:
+    static constexpr float threshold = 1.0f; //Threshold to consider reached target
+    Coordinates _coordinates{0.0f, 0.0f};
+    std::vector<Coordinates> _pathPoints{};
+    std::vector<TaskData> _tasks{};
+    std::vector<EventData> _events{};
+
+    std::unordered_map<std::string,ScriptData> _scriptBindings; //Scripts bound to entity
+
+    int _angle{0};
+    float _speed{0};
 
     struct PathNode {
         int x, y;
@@ -192,16 +215,23 @@ class EntityLogicComponent {
         }
     };
 
-    float currentDX{0};
-    float currentDY{0};
+    float oldDX{0};
+    float oldDY{0};
 
-    void ProcessNewTask(const std::shared_ptr<Server> &server);
+    void HandleEvent(const EventData &data, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent);
+    void HandleTask(const TaskData &data, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent);
+    void ProcessNewTask(const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent);
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
-    void MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server); //Generates pathPoints based on target
+    void MakePath(float targetX, float targetY, const std::shared_ptr<Server> &server, const EntityCollisionComponent &collisionComponent); //Generates pathPoints based on target
     void MoveTo(float targetX, float targetY); //Sets currentDX and currentDY based on target
-    void PathMovement(); //Moves entity along pathPoints
+    void PathMovement(EntityCollisionComponent &collisionComponent, const std::shared_ptr<Server> &server); //Moves entity along pathPoints
 
 public:
+
+    //Script binding methods
+    void BindScript(const std::string &scriptName, const ScriptData &scriptData);
+    void UnbindScript(const std::string &scriptName);
+    ScriptData GetBoundScript(const std::string &scriptName) const;
 
     //Setters and Getters
     void SetPathPoints(const std::vector<Coordinates> &newPathPoints);
@@ -211,17 +241,28 @@ public:
     [[nodiscard]] Coordinates GetCoordinates() const;
 
     void SetTasks(const std::vector<TaskData> &newTasks);
+    void SetTask(const TaskData &newTask);
     [[nodiscard]] std::vector<TaskData> GetTasks() const;
+    [[nodiscard]] TaskData GetTask(int index) const;
+
+    void SetEvents(const std::vector<EventData> &newEvents);
+    [[nodiscard]] std::vector<EventData> GetEvents() const;
 
     void SetAngle(int newAngle);
     [[nodiscard]] int GetAngle() const;
 
+    void SetSpeed(float newSpeed);
+    [[nodiscard]] float GetSpeed() const;
+
     //Methods
-    bool Move(float dX, float dY, EntityCollisionComponent &collisionComponent, Coordinates &entityCoordinates, const std::shared_ptr<Server> &server);
-    void Tick(float deltaTime, const std::shared_ptr<Server> &server); //Process tasks when not already in progress else continue
+    bool Move(float dX, float dY, EntityCollisionComponent &collisionComponent, const std::shared_ptr<Server> &server);
+    void Tick(float deltaTime, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent); //Process tasks when not already in progress else continue
+    void SwitchTask(int index);
+    void RemoveTask(int index);
+    void AddEvent(const EventData &eventData);
 
     //Constructor
-    explicit EntityLogicComponent(const Coordinates &coordinates): coordinates(coordinates){}
+    explicit EntityLogicComponent(const Coordinates &coordinates): _coordinates(coordinates){}
 };
 
 class EntityHealthComponent {

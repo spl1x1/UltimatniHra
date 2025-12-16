@@ -7,6 +7,9 @@
 #include <map>
 #include <memory>
 #include <shared_mutex>
+#include <thread>
+
+#include "../Application/Application.h"
 #include "../Application/dataStructures.h"
 #include "../Window/WorldStructs.h"
 

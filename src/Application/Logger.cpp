@@ -2,6 +2,7 @@
 // Created by USER on 15.12.2025.
 //
 #include "../../include/Application/Logger.h"
+#include "../../include/Application/MACROS.h"
 
 #include <SDL3/SDL_log.h>
 
