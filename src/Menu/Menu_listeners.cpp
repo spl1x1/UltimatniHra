@@ -5,6 +5,7 @@
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Window/Window.h"
 #include <SDL3/SDL.h>
+#include <cstdio>
 
 // ===================================================================
 // PlayButtonListener
@@ -475,4 +476,67 @@ QuitGameButtonListener::QuitGameButtonListener(Window* win) : window(win) {}
 void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Quit Game clicked!");
     window->data.inited = false;
+}
+
+// ===================================================================
+// CONSOLE MENU LISTENERS
+// ===================================================================
+
+void ConsoleEventListener::ProcessEvent(Rml::Event& event) {
+    if (event.GetType() == "click" ||
+        (event.GetType() == "keydown" && event.GetParameter<int>("key_identifier", 0) == Rml::Input::KI_RETURN)) {
+
+        // Get the input element
+        Rml::Element* input = event.GetTargetElement()->GetOwnerDocument()->GetElementById("console-input");
+        if (input) {
+            Rml::String command = input->GetAttribute<Rml::String>("value", "");
+
+            if (!command.empty()) {
+                // Process your command here
+                ProcessCommand(command);
+
+                // Clear the input
+                input->SetAttribute("value", "");
+            }
+        }
+        }
+}
+
+void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
+    printf("Console command: %s\n", command.c_str());
+    //TODO: @LukasKaplanek logika pak sem
+
+}
+
+ConsoleHandler::ConsoleHandler() : document(nullptr) {
+}
+
+ConsoleHandler::~ConsoleHandler() {
+    if (document) {
+        document->Close();
+    }
+}
+
+void ConsoleHandler::Setup(Rml::ElementDocument* console_doc) {
+    if (!console_doc) return;
+
+    document = console_doc;
+
+    Rml::Element* send_btn = document->GetElementById("send-button");
+    if (send_btn) {
+        send_btn->AddEventListener("click", &listener);
+    }
+
+    Rml::Element* input = document->GetElementById("console-input");
+    if (input) {
+        input->AddEventListener("keydown", &listener);
+        input->Focus();
+    }
+
+    document->Show();
+}
+
+ConsoleHandler& ConsoleHandler::GetInstance() {
+    static ConsoleHandler instance;
+    return instance;
 }
