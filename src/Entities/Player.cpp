@@ -5,31 +5,39 @@
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Sprites/PlayerSprite.hpp"
 #include <memory>
-#include <utility>
 
 
 //PlayerNew
 
-void PlayerNew::Tick() {
-    const auto deltaTime = _server->getDeltaTime();
+void Player::Tick() {
+    const auto oldCoords{_entityLogicComponent.GetCoordinates()};
+    const auto deltaTime = _server->getDeltaTime_unprotected();
+    _entityRenderingComponent.SetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
     _entityRenderingComponent.Tick(deltaTime);
-    _entityLogicComponent.Tick(deltaTime, _server, _entityCollisionComponent);
+    _entityLogicComponent.Tick(deltaTime, _server, _entityCollisionComponent, this);
+    if (oldCoords.x == _entityLogicComponent.GetCoordinates().x && oldCoords.y == _entityLogicComponent.GetCoordinates().y)
+        _entityRenderingComponent.SetAnimation(AnimationType::IDLE);
+    else
+        _entityRenderingComponent.SetAnimation(AnimationType::RUNNING);
 }
 
-void PlayerNew::Render(SDL_Renderer &windowRenderer, SDL_FRect &cameraRectangle,
+void Player::Render(SDL_Renderer &windowRenderer, SDL_FRect &cameraRectangle,
     std::unordered_map<std::string, SDL_Texture *> &textures) {
     _entityRenderingComponent.Render(&windowRenderer,_entityLogicComponent.GetCoordinates(),cameraRectangle,textures);
 }
 
-void PlayerNew::Create() {
+void Player::Create(const std::shared_ptr<Server>& server) {
+    auto player = std::make_shared<Player>(server, server->getSpawnPoint());
+    server->addPlayer(player);
 }
 
-void PlayerNew::Load() {
+void Player::Load(const std::shared_ptr<Server>& server) {
+    // TODO: Load player data from save
 }
 
-void PlayerNew::Move(float dX, float dY) {
+void Player::Move(float dX, float dY) {
     const auto oldCoords{_entityLogicComponent.GetCoordinates()};
-    _entityLogicComponent.Move(dX,dY, _entityCollisionComponent, _server);
+    _entityLogicComponent.Move(_server->getDeltaTime(),dX,dY, _entityCollisionComponent, _server);
     _entityRenderingComponent.SetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
     if (oldCoords.x == _entityLogicComponent.GetCoordinates().x && oldCoords.y == _entityLogicComponent.GetCoordinates().y)
         _entityRenderingComponent.SetAnimation(AnimationType::IDLE);
@@ -37,56 +45,88 @@ void PlayerNew::Move(float dX, float dY) {
         _entityRenderingComponent.SetAnimation(AnimationType::RUNNING);
 }
 
-void PlayerNew::HandleTask(TaskData data) {
+void Player::HandleTask(TaskData data) {
     _entityLogicComponent.SetTask(data);
 }
 
-void PlayerNew::SetCoordinates(const Coordinates &newCoordinates) {
+void Player::SetCoordinates(const Coordinates &newCoordinates) {
     _entityLogicComponent.SetCoordinates(newCoordinates);
 }
 
-void PlayerNew::SetAngle(const int newAngle) {
+void Player::SetAngle(const int newAngle) {
     _entityLogicComponent.SetAngle(newAngle);
     _entityRenderingComponent.SetDirectionBaseOnAngle(newAngle);
 }
 
-void PlayerNew::SetSpeed(float newSpeed) {
+void Player::SetSpeed(float newSpeed) {
     _entityLogicComponent.SetSpeed(newSpeed);
 }
 
-void PlayerNew::SetTask(const int index) {
+void Player::SetTask(const int index) {
     _entityLogicComponent.SwitchTask(index);
 }
 
-void PlayerNew::RemoveTask(const int index) {
+void Player::RemoveTask(const int index) {
     _entityLogicComponent.RemoveTask(index);
 }
 
-Coordinates PlayerNew::GetCoordinates() const {
+void Player::SetEntityCollision(bool disable) {
+    _entityCollisionComponent.DisableCollision(disable);
+}
+
+void Player::AddEvent(const EventData &eventData) {
+    _entityLogicComponent.AddEvent(eventData);
+}
+
+Coordinates Player::GetCoordinates() const {
     return _entityLogicComponent.GetCoordinates();
 }
 
-CollisionStatus PlayerNew::GetCollisionStatus() const {
+CollisionStatus Player::GetCollisionStatus() const {
     return _entityCollisionComponent.GetCollisionStatus();
 }
 
-int PlayerNew::GetAngle() const {
+int Player::GetAngle() const {
     return _entityLogicComponent.GetAngle();
 }
 
-TaskData PlayerNew::GetTask() const {
+TaskData Player::GetTask() const {
     return _entityLogicComponent.GetTask(0);
 }
 
-std::vector<TaskData> PlayerNew::GetTasks() const {
+std::vector<TaskData> Player::GetTasks() const {
     return _entityLogicComponent.GetTasks();
 }
 
-std::vector<EventData> PlayerNew::GetEvents() const {
+std::vector<EventData> Player::GetEvents() const {
     return _entityLogicComponent.GetEvents();
 }
 
-PlayerNew::PlayerNew(std::shared_ptr<Server> server, const Coordinates& coordinates):
+EntityCollisionComponent * Player::GetCollisionComponent() {
+    return &_entityCollisionComponent;
+}
+
+EntityLogicComponent * Player::GetLogicComponent() {
+    return &_entityLogicComponent;
+}
+
+EntityHealthComponent * Player::GetHealthComponent() {
+    return &_entityHealthComponent;
+}
+
+EntityRenderingComponent * Player::GetRenderingComponent() {
+    return &_entityRenderingComponent;
+}
+
+EntityInventoryComponent * Player::GetInventoryComponent() {
+    return &_entityInventoryComponent;
+}
+
+std::shared_ptr<Server> Player::GetServer() const {
+    return _server;
+}
+
+Player::Player(std::shared_ptr<Server> server, const Coordinates& coordinates):
     _entityRenderingComponent(std::make_unique<PlayerSprite>()),
     _entityLogicComponent(coordinates),
     _entityCollisionComponent(EntityCollisionComponent::HitboxData{}),
@@ -103,37 +143,7 @@ PlayerNew::PlayerNew(std::shared_ptr<Server> server, const Coordinates& coordina
         false, // disableCollision
         false // colliding
     };
-
+    _entityLogicComponent.SetSpeed(200.0f);
+    _entityRenderingComponent.SetAnimation(AnimationType::IDLE);
     _entityCollisionComponent.SetHitbox(playerHitboxData);
-}
-
-//Player
-
-void Player::handleEvent(PlayerEvent e) {
-    switch (e.type) {
-        case PlayerEvents::MOVE:
-            Move(e.data1, e.data2, e.deltaTime);
-            break;
-        default:
-            break;
-    }
-}
-
-Player::Player(int id, float maxHealth, Coordinates coordinates ,const std::shared_ptr<Server>& server ,float speed): Entity(id ,maxHealth,coordinates, EntityType::PLAYER, server ,speed, std::make_unique<PlayerSprite>()) {
-    Hitbox playerHitbox = {
-        {
-            {32, 32}, // TOP_LEFT
-            {64 ,32}, // TOP_RIGHT
-            {64, 65}, // BOTTOM_RIGHT
-            {32,65} // BOTTOM_LEFT
-        }
-    };
-    SetHitbox(playerHitbox);
-    setSpriteOffsetX(47);
-    setSpriteOffsetY(47);
-};
-
-void Player::ClientInit(const std::shared_ptr<Server>& server) {
-    auto player = std::make_shared<Player>(0, 100.0f, server->getSpawnPoint(), server, 200.0f);
-    server->addPlayer(player);
 }

@@ -21,35 +21,35 @@
 void Server::setEntityPos(int entityId, Coordinates newCoordinates) {
     std::lock_guard lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
-        _entities[entityId]->coordinates = newCoordinates;
+        _entities[entityId]->GetCoordinates() = newCoordinates;
     }
 }
 
 void Server::setPlayerPos(int playerId, Coordinates newCoordinates) {
     std::lock_guard lock(serverMutex);
     if (_players.find(playerId) != _players.end()) {
-        _players[playerId]->coordinates = newCoordinates;
+        _players[playerId]->GetCoordinates() = newCoordinates;
     }
 }
 
 void Server::setEntityCollision(int entityId, bool disable) {
     std::lock_guard lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
-        _entities[entityId]->disableCollision(disable);
+        _entities[entityId]->SetEntityCollision(disable);
     }
 }
 
 void Server::setPlayerCollision(int playerId, bool disable) {
     std::lock_guard lock(serverMutex);
     if (_players.find(playerId) != _players.end()) {
-        _players[playerId]->disableCollision(disable);
+        _players[playerId]->SetEntityCollision(disable);
     }
 }
 
 bool Server::isEntityColliding(int entityId) {
     std::shared_lock lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
-        return _entities[entityId]->isColliding();
+        return _entities[entityId]->GetCollisionStatus().colliding;
     }
     return false; // Return false if entity not found
 }
@@ -57,7 +57,7 @@ bool Server::isEntityColliding(int entityId) {
 bool Server::isPlayerColliding(int playerId) {
     std::shared_lock lock(serverMutex);
     if (_players.find(playerId) != _players.end()) {
-        return _players[playerId]->isColliding();
+        return _players[playerId]->GetCollisionStatus().colliding == true;
     }
     return false; // Return false if entity not found
 }
@@ -69,6 +69,9 @@ void Server::setDeltaTime(float dt) {
 
 float Server::getDeltaTime(){
     std::shared_lock lock(serverMutex);
+    return _deltaTime;
+}
+float Server::getDeltaTime_unprotected() const{
     return _deltaTime;
 }
 
@@ -86,17 +89,15 @@ void Server::setMapValue_unprotected(int x, int y, WorldData::MapType mapType, i
     _worldData.updateMapValue(x,y, mapType, value);
 }
 
-void Server::addPlayer(const std::shared_ptr<Entity>& player) {
+void Server::addPlayer(const std::shared_ptr<IEntity>& player) {
     std::lock_guard lock(serverMutex);
     int newId = getNextPlayerId();
-    player->id = newId;
     _players[newId] = player;
 }
 
-void Server::addEntity(const std::shared_ptr<Entity>& entity) {
+void Server::addEntity(const std::shared_ptr<IEntity>& entity) {
     std::lock_guard lock(serverMutex);
     int newId = getNextEntityId();
-    entity->id = newId;
     _entities[newId] = entity;
 }
 
@@ -117,28 +118,27 @@ void Server::addStructure(Coordinates coordinates, structureType type) {
 
 
 
-void Server::playerUpdate(PlayerEvent e) {
+void Server::playerUpdate(EventData e) {
     std::lock_guard lock(serverMutex);
-    e.deltaTime = _deltaTime;
-    Player* player = dynamic_cast<Player*>(_players[0].get());
-    if (player) {
-        player->handleEvent(e);
+    e.dt = _deltaTime;
+    if (const auto playerEntity = dynamic_cast<Player*>(_players[0].get())) {
+        playerEntity->AddEvent(e);
     }
 }
 
 void Server::Tick() {
     std::lock_guard lock(serverMutex);
     for (auto &entity: _entities | std::views::values) {
-        if (entity == nullptr || entity->sprite == nullptr) continue;
-        entity->sprite->Tick(_deltaTime);
+        if (!entity) continue;
+        entity->Tick();
     }
     for (auto &player: _players | std::views::values) {
-        if (player == nullptr || player->sprite == nullptr) continue;
-        player->sprite->Tick(_deltaTime);
+        if (!player) continue;
+        player->Tick();
     }
 }
 
-std::map<int,std::shared_ptr<class Entity>> Server::getPlayers() {
+std::map<int,std::shared_ptr<IEntity>> Server::getPlayers() {
     std::shared_lock lock(serverMutex);
     return _players;
 }
@@ -146,12 +146,12 @@ std::map<int,std::shared_ptr<class Entity>> Server::getPlayers() {
 Coordinates Server::getPlayerPos(int playerId) {
     std::shared_lock lock(serverMutex);
     if (_players.find(playerId) != _players.end()) {
-        return _players[playerId]->coordinates;
+        return _players[playerId]->GetCoordinates();
     }
     return Coordinates{0.0f, 0.0f}; // Return a default value if entity not found
 }
 
-Entity* Server::getPlayer(int playerId) {
+IEntity* Server::getPlayer(int playerId) {
     std::shared_lock lock(serverMutex);
     if (_players.find(playerId) != _players.end()) {
         return _players[playerId].get();
@@ -163,7 +163,7 @@ std::shared_ptr<Server> Server::getSharedPtr() {
     return shared_from_this();
 }
 
-std::map<int,std::shared_ptr<class Entity>> Server::getEntities() {
+std::map<int,std::shared_ptr<IEntity>> Server::getEntities() {
     std::shared_lock lock(serverMutex);
     return _entities;
 }
@@ -176,12 +176,12 @@ std::map<int,std::shared_ptr<IStructure>> Server::getStructures() {
 Coordinates Server::getEntityPos(int entityId) {
    std::shared_lock lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
-        return _entities[entityId]->coordinates;
+        return _entities[entityId]->GetCoordinates();
     }
     return Coordinates{0.0f, 0.0f}; // Return a default value if entity not found
 }
 
-Entity* Server::getEntity(int entityId) {
+IEntity* Server::getEntity(int entityId) {
     std::shared_lock lock(serverMutex);
     if (_entities.find(entityId) != _entities.end()) {
         return _entities[entityId].get();

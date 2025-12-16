@@ -4,7 +4,7 @@
 
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Window/Window.h"
-#include <SDL3/SDL.h>
+#include "../../include/Application/Logger.h"
 
 // ===================================================================
 // PlayButtonListener
@@ -13,7 +13,7 @@
 PlayButtonListener::PlayButtonListener(Window* win) : window(win) {}
 
 void PlayButtonListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Play clicked!");
+    Logger::Log("Play clicked!");
     window->menuData.documents["main_menu"]->Hide();
     window->server->setSeed(0); // TODO: get seed from user input
     window->initGame();
@@ -26,7 +26,7 @@ void PlayButtonListener::ProcessEvent(Rml::Event&) {
 BackButtonListener::BackButtonListener(Window* win) : window(win) {}
 
 void BackButtonListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Back clicked!");
+    Logger::Log("Back clicked!");
 
     if (window->menuData.documents["options_menu"]) {
         window->menuData.documents["options_menu"]->Hide();
@@ -76,7 +76,7 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
         button->SetInnerRML(std::to_string(width) + " x " + std::to_string(height));
     }
 
-    SDL_Log("Setting resolution to: %dx%d", width, height);
+    Logger::Log("Setting resolution to: " + std::to_string(width) + " " + std::to_string(height));
 
     // TODO: change resolution aj v game
     // SDL_SetWindowSize(window->sdlWindow, width, height);
@@ -108,7 +108,7 @@ void MasterVolumeListener::ProcessEvent(Rml::Event& event) {
             label->SetInnerRML("Master Volume: " + std::to_string(static_cast<int>(value)) + "%");
         }
 
-        SDL_Log("Master volume: %d%%", static_cast<int>(value));
+        Logger::Log("Master volume: " + static_cast<int>(value));
         // TODO: actually zmenit pak audio
     }
 }
@@ -131,7 +131,7 @@ void MusicVolumeListener::ProcessEvent(Rml::Event& event) {
             label->SetInnerRML("Music Volume: " + std::to_string(static_cast<int>(value)) + "%");
         }
 
-        SDL_Log("Music volume: %d%%", static_cast<int>(value));
+        Logger::Log("Music volume: %d%%" + static_cast<int>(value));
         // TODO: actually zmenit pak audio
     }
 }
@@ -154,7 +154,7 @@ void SFXVolumeListener::ProcessEvent(Rml::Event& event) {
             label->SetInnerRML("SFX Volume: " + std::to_string(static_cast<int>(value)) + "%");
         }
 
-        SDL_Log("SFX volume: %d%%", static_cast<int>(value));
+        Logger::Log("SFX volume: %d%%"+ static_cast<int>(value));
         // TODO: actually zmenit pak audio
     }
 }
@@ -166,11 +166,11 @@ void SFXVolumeListener::ProcessEvent(Rml::Event& event) {
 OptionsButtonListener::OptionsButtonListener(Window* win) : window(win) {}
 
 void OptionsButtonListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Options clicked!");
+    Logger::Log("Options clicked!");
     window->menuData.documents["options_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
 
     if (!window->menuData.documents["options_menu"]) {
-        SDL_Log("Failed to load options_menu.rml");
+        Logger::Log("Failed to load options_menu.rml");
         return;
     }
 
@@ -226,7 +226,7 @@ void OptionsButtonListener::ProcessEvent(Rml::Event&) {
 QuitButtonListener::QuitButtonListener(Window* win) : window(win) {}
 
 void QuitButtonListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Quit clicked!");
+    Logger::Log("Quit clicked!");
     window->data.inited = false;
 }
 
@@ -238,7 +238,7 @@ void QuitButtonListener::ProcessEvent(Rml::Event&) {
 ResumeButtonListener::ResumeButtonListener(Window* win) : window(win) {}
 
 void ResumeButtonListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Resume clicked!");
+    Logger::Log("Resume clicked!");
     window->menuData.inGameMenu = false;
     if (window->menuData.documents["pause_menu"]) {
         window->menuData.documents["pause_menu"]->Hide();
@@ -249,7 +249,7 @@ void ResumeButtonListener::ProcessEvent(Rml::Event&) {
 PauseSettingsButtonListener::PauseSettingsButtonListener(Window* win) : window(win) {}
 
 void PauseSettingsButtonListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Pause Settings clicked!");
+    Logger::Log("Pause Settings clicked!");
     // TODO: Implementovat nastavení v pause menu
 }
 
@@ -257,7 +257,7 @@ void PauseSettingsButtonListener::ProcessEvent(Rml::Event&) {
 MainMenuButtonListener::MainMenuButtonListener(Window* win) : window(win) {}
 
 void MainMenuButtonListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Returning to Main Menu!");
+    Logger::Log("Returning to Main Menu!");
 
     // Skrýt pause menu
     if (window->menuData.documents["pause_menu"]) {
@@ -288,6 +288,6 @@ void MainMenuButtonListener::ProcessEvent(Rml::Event&) {
 QuitGameButtonListener::QuitGameButtonListener(Window* win) : window(win) {}
 
 void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Quit Game clicked!");
+    Logger::Log("Quit Game clicked!");
     window->data.inited = false;
 }

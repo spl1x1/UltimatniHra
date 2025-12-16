@@ -16,6 +16,7 @@
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Server/Server.h"
 #include "../../include/Structures/Structure.h"
+#include  "../../include/Application/Logger.h"
 
 
 void Window::renderMainMenu() {
@@ -69,12 +70,20 @@ void Window::handlePlayerInput() const {
         dx *= 0.7071f;
         dy *= 0.7071f;
     }
-    auto event = PlayerEvent{PlayerEvents::MOVE, dx, dy};
+
+    if (dx == 0.0f && dy == 0.0f) {
+        return;
+    }
+
+    auto event = EventData{ };
+    event.type = Event::MOVE;
+    event.data.move.dX = dx;
+    event.data.move.dY = dy;
     server->playerUpdate(event);
 }
 
 
-void Window::renderPlayer(ISprite &playerSprite) {
+void Window::renderPlayer() const {
 
     SDL_FRect rect;
     rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
@@ -82,13 +91,11 @@ void Window::renderPlayer(ISprite &playerSprite) {
     rect.w = PLAYER_WIDTH;
     rect.h = PLAYER_HEIGHT;
 
-    auto texture = playerSprite.getFrame();
-    auto textureName = std::get<0>(texture);
-    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
+    server->getPlayer(0)->GetRenderingComponent()->Render(data.Renderer, server->getPlayer(0)->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
 
     if (debugMenu.showDebug) {
         if (server->isPlayerColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
-        else if (server->getPlayer(0)->collisionDisabled())
+        else if (server->getPlayer(0)->GetCollisionStatus().collisionDisabled)
             SDL_SetRenderDrawColor(data.Renderer, 0, 0, 255, 255);
         else
             SDL_SetRenderDrawColor(data.Renderer, 0, 255, 0, 255);
@@ -105,7 +112,7 @@ void Window::renderPlayer(ISprite &playerSprite) {
           rect.x,
            rect.y + 1);
 
-        Hitbox *hitbox = server->getPlayer(0)->GetHitbox();
+        EntityCollisionComponent::HitboxData *hitbox = server->getPlayer(0)->GetCollisionComponent()->GetHitbox();
 
          for (auto& corner : hitbox->corners) {
             Coordinates *end= &hitbox ->corners[0];
@@ -129,7 +136,7 @@ void Window::renderPlayer(ISprite &playerSprite) {
 void Window::loadSurfacesFromDirectory(const std::string& directoryPath){
     for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
         std::string fileName = entry.path().string();
-        SDL_Log("Loading surface: %s", fileName.c_str());
+        Logger::Log("Loading surface: " + fileName);
         LoadSurface(fileName,entry.path().filename().string());
     }
 }
@@ -137,7 +144,7 @@ void Window::loadSurfacesFromDirectory(const std::string& directoryPath){
 void Window::loadTexturesFromDirectory(const std::string& directoryPath){
     for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
         std::string fileName = entry.path().string();
-        SDL_Log("Loading surface: %s", fileName.c_str());
+        Logger::Log("Loading surface: "+ fileName);
         LoadTexture(fileName,entry.path().filename().replace_extension("").string());
     }
 }
@@ -145,7 +152,7 @@ void Window::loadTexturesFromDirectory(const std::string& directoryPath){
 void Window::parseToRenderer(const std::string& sprite, const SDL_FRect *destRect, const SDL_FRect *srcRect) {
     if (sprite.empty()) {
 #ifdef DEBUG
-        SDL_Log("Called parseToRenderer(), without valid arguments");
+        Logger::Log("Called parseToRenderer(), without valid arguments");
 #endif
         return;
     }
@@ -168,11 +175,11 @@ void Window::initDebugMenu() {
 
     menuData.documents["debug_menu"] = menuData.RmlContext->LoadDocument("assets/ui/debug_menu.rml");
     if (!menuData.documents["debug_menu"]) {
-        SDL_Log("Failed to load debug_menu.rml");
+        Logger::Log("Failed to load debug_menu.rml");
         return;
     }
 
-    SDL_Log("Debug menu initialized");
+    Logger::Log("Debug menu initialized");
 }
 
 
@@ -181,7 +188,7 @@ void Window::initPauseMenu() {
     menuData.documents["pause_menu"] = menuData.RmlContext->LoadDocument("assets/ui/pause_menu.rml");
 
     if (!menuData.documents["pause_menu"]) {
-        SDL_Log("Failed to load pause_menu.rml");
+        Logger::Log("Failed to load pause_menu.rml");
         return;
     }
 
@@ -205,7 +212,7 @@ void Window::initPauseMenu() {
         quitGameButton->AddEventListener(Rml::EventId::Click, new QuitGameButtonListener(this));
     }
 
-    SDL_Log("Pause menu initialized");
+    Logger::Log("Pause menu initialized");
 }
 //tady jsem zmenil na lepsi alignment s scalingem obrazovky
 void Window::HandleMainMenuEvent(const SDL_Event *e) {
@@ -349,25 +356,26 @@ void Window::HandleEvent(const SDL_Event *e) {
                     debugMenu.showDebug = !debugMenu.showDebug;
                     if (debugMenu.showDebug) {
                         menuData.documents["debug_menu"]->Show();
-                        SDL_Log("Debug info enabled");
+                        Logger::Log("Debug info enabled");
 
                     } else {
                         menuData.documents["debug_menu"]->Hide();
-                        SDL_Log("Debug info disabled");
+                        Logger::Log("Debug info disabled");
                     }
 
                     //TODO: Vytvořit debug overlay
-                    SDL_Log("Player at (%.2f, %.2f)", data.cameraRect->x + data.cameraOffsetX, data.cameraRect->y + data.cameraOffsetY);
-                    SDL_Log("data.CameraPos at (%.2f, %.2f)", data.cameraRect->x , data.cameraRect->y);
+                    auto playerPos = server->getPlayerPos(0);
+                    Logger::Log("Player at " +  std::to_string(playerPos.x)  + " "+  std::to_string(playerPos.y));
+                    Logger::Log("data.CameraPos at " +  std::to_string(data.cameraRect->x)  + " "+  std::to_string(data.cameraRect->y));
                     break;
                 }
                 case SDL_SCANCODE_F4: {
-                    markOnMap(data.cameraRect->x + data.cameraOffsetX, data.cameraRect->y + data.cameraOffsetY);
+                    markOnMap(data.cameraRect->x + cameraOffsetX, data.cameraRect->y + cameraOffsetY);
                     break;
                 }
                 case SDL_SCANCODE_F5: {
-                    server->setPlayerCollision(0, !server->getPlayer(0)->collisionDisabled());
-                    SDL_Log("Player collision disabled: %s", server->getPlayer(0)->collisionDisabled() ? "true" : "false");
+                    server->setPlayerCollision(0, !server->getPlayer(0)->GetCollisionStatus().collisionDisabled);
+                    Logger::Log("Player collision disabled: "+ server->getPlayer(0)->GetCollisionStatus().collisionDisabled ? "true" : "false");
                     break;
                 }
 #endif
@@ -381,12 +389,12 @@ void Window::HandleEvent(const SDL_Event *e) {
                         if (menuData.documents["pause_menu"]) {
                             menuData.documents["pause_menu"]->Show();
                         }
-                        SDL_Log("Pause menu opened");
+                        Logger::Log("Pause menu opened");
                     } else {
                         if (menuData.documents["pause_menu"]) {
                             menuData.documents["pause_menu"]->Hide();
                         }
-                        SDL_Log("Pause menu closed");
+                        Logger::Log("Pause menu closed");
                     }
                     break;
                 }
@@ -413,11 +421,11 @@ void Window::advanceFrame() {
 
     Coordinates coords = server->getPlayerPos(0);
 
-    data.cameraWaterRect->x += coords.x - (data.cameraRect->x + data.cameraOffsetX);
-    data.cameraWaterRect->y += coords.y - (data.cameraRect->y + data.cameraOffsetY);
+    data.cameraWaterRect->x += coords.x - (data.cameraRect->x + cameraOffsetX);
+    data.cameraWaterRect->y += coords.y - (data.cameraRect->y + cameraOffsetY);
 
-    data.cameraRect->x = coords.x - data.cameraOffsetX;
-    data.cameraRect->y = coords.y - data.cameraOffsetY;
+    data.cameraRect->x = coords.x - cameraOffsetX;
+    data.cameraRect->y = coords.y - cameraOffsetY;
 
 
     if (data.cameraWaterRect->x > 96) data.cameraWaterRect->x -= 32;
@@ -429,7 +437,7 @@ void Window::advanceFrame() {
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect.get(), nullptr);
 
 #ifdef DEBUG
-    data.playerAngle = server->getPlayer(0)->getAngle();
+    data.playerAngle = server->getPlayer(0)->GetAngle();
 
     SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect.get(), nullptr);
     debugMenu.dataModel.DirtyVariable("playerX");
@@ -439,7 +447,7 @@ void Window::advanceFrame() {
 
 
     //Render structures within screen range;
-    renderPlayer(*server->getPlayer(0)->sprite);
+    renderPlayer();
 
     for (const auto& structure : server->getStructures()) {
         structure.second->Render(*data.Renderer, *data.cameraRect, textures);
@@ -458,7 +466,7 @@ void Window::advanceFrame() {
 bool Window::LoadSurface(const std::string& Path) {
     SDL_Surface* surface = SDL_LoadBMP(Path.c_str());
     if (!surface) {
-        SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
+        Logger::Log("Failed to load image " + Path + " " + SDL_GetError());
         return false;
     }
     surfaces[Path] = surface;
@@ -468,7 +476,7 @@ bool Window::LoadSurface(const std::string& Path) {
 bool Window::LoadSurface(const std::string& Path, const std::string& SaveAs) {
     SDL_Surface* surface = SDL_LoadBMP(Path.c_str());
     if (!surface) {
-        SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
+        Logger::Log("Failed to load image " + Path + " " + SDL_GetError());
         return false;
     }
     surfaces[SaveAs] = surface;
@@ -478,7 +486,7 @@ bool Window::LoadSurface(const std::string& Path, const std::string& SaveAs) {
 bool Window::LoadTexture(const std::string& Path) {
     SDL_Texture* texture = IMG_LoadTexture(data.Renderer,Path.c_str());
     if (!texture) {
-        SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
+        Logger::Log("Failed to load image " + Path + " " + SDL_GetError());
         return false;
     }
     textures[Path] = texture;
@@ -494,7 +502,7 @@ bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
     SDL_Texture* texture = IMG_LoadTexture(data.Renderer,Path.c_str());
     if (!texture) {
 
-        SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
+        Logger::Log("Failed to load image " + Path + " " + SDL_GetError());
         return false;
     }
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
@@ -505,12 +513,12 @@ bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
 bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath) {
     auto it = surfaces.find(SurfacePath);
     if (it == surfaces.end()) {
-        SDL_Log("Surface %s not found", SurfacePath.c_str());
+        Logger::Log("Surface %s not found " + SurfacePath);
         return false;
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(data.Renderer, it->second);
     if (!texture) {
-        SDL_Log("Failed to create texture from surface %s: %s", SurfacePath.c_str(), SDL_GetError());
+        Logger::Log("Failed to create texture from surface " + SurfacePath + " "+ SDL_GetError());
         return false;
     }
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
@@ -523,13 +531,13 @@ void Window::tick() {
     Uint64 current = SDL_GetPerformanceCounter();
     float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
     server->setDeltaTime(deltaTime);
-    server->Tick();
     data.last = current;
 
     if (data.inMainMenu) {
         renderMainMenu();
     }
     else if (data.Running) {
+        server->Tick();
         WaterSprite::Tick(deltaTime);
         advanceFrame();
     }
@@ -541,7 +549,7 @@ void Window::initGame() {
     data.Running = true;
     data.last = SDL_GetPerformanceCounter();
 
-    Player::ClientInit(server);
+    Player::Create(server);
     WaterSprite::Init();
     Coordinates coord = server->getEntityPos(0);
 
@@ -595,7 +603,7 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_SetWindowIcon(data.Window,surfaces["Icon"]);
 
     if ( !data.Window || !data.Renderer) {
-        SDL_Log("SDL_CreateWindow Error: %s", SDL_GetError());
+        Logger::Log("SDL_CreateWindow Error: " + static_cast<std::string>(SDL_GetError()));
         return;
     }
 
@@ -625,9 +633,9 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
     int count = 0;
     SDL_GetFullscreenDisplayModes(SDL_GetDisplayForWindow(data.Window), &count);
-    SDL_Log("Display modes: %i ",count);
-    SDL_Log("Window size: %ix%i", data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
-    SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
+    Logger::Log("Display modes: " + count);
+    Logger::Log("Window size:  "+ std::to_string(data.WINDOW_WIDTH)+ " " + std::to_string(data.WINDOW_HEIGHT));
+    Logger::Log("Backbuffer size: "+ std::to_string(bbwidth)+ " " + std::to_string(bbheight));
 
     data.inMainMenu = true;
 
@@ -635,7 +643,7 @@ void Window::init(const std::string& title, int width, int height) {
     menuData.documents["main_menu"] = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
 
     if (!menuData.documents["main_menu"]) {
-        SDL_Log("Failed to load main menu RML document");
+        Logger::Log("Failed to load main menu RML document");
         return;
     }
 

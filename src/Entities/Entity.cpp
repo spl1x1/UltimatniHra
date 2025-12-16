@@ -24,7 +24,6 @@ void EntityRenderingComponent::Render(const SDL_Renderer* renderer, const Coordi
 
     SDL_RenderTexture(const_cast<SDL_Renderer*>(renderer), texturePool[std::get<0>(renderingContex)], std::get<1>(renderingContex), _rect.get());
 }
-
 void EntityRenderingComponent::Tick(const float deltaTime) const {
     if (!_sprite) return;
     _sprite->Tick(deltaTime);
@@ -51,6 +50,10 @@ void EntityRenderingComponent::SetAnimation(const AnimationType animation) const
 
 void EntityRenderingComponent::SetSprite(std::unique_ptr<ISprite> sprite) {
     _sprite = std::move(_sprite);
+}
+
+EntityRenderingComponent::EntityRenderingComponent(std::unique_ptr<ISprite> sprite) :_sprite(std::move(sprite)) {
+    _rect = std::make_unique<SDL_FRect>();
 }
 
 //EntityCollisionComponent methods
@@ -345,19 +348,38 @@ void EntityLogicComponent::PathMovement(EntityCollisionComponent &collisionCompo
     }
 }
 
-void EntityLogicComponent::Tick(const float deltaTime, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent) {
+void EntityLogicComponent::Tick(const float deltaTime, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent, IEntity* entity) {
     if (!_events.empty()) HandleEvent(_events.front(), server, collisionComponent);
-    if (!_tasks.empty()) HandleTask(_tasks.front(), server, collisionComponent);
+    if (!_tasks.empty()) HandleTask(_tasks.front(), server, collisionComponent, entity);
 }
 
 void EntityLogicComponent::AddEvent(const EventData &eventData) {
     _events.push_back(eventData);
 }
 
+void EntityLogicComponent::RegisterScriptBinding(const std::string &scriptName, const ScriptData &scriptData) {
+    _scriptBindings[scriptName] = scriptData;
+}
 
-bool EntityLogicComponent::Move(const float dX,const float dY, EntityCollisionComponent &collisionComponent, const std::shared_ptr<Server> &server) {
-    const float deltaTime = server->getDeltaTime();
+EntityLogicComponent::EntityLogicComponent(const Coordinates &coordinates) : _coordinates(coordinates) {
 
+    //Register MOVE_TO script binding
+    auto moveScript = ScriptData{
+            .script = Script::CPP,
+            .functionCPP = []( IEntity *entity){
+                auto logicComponent = entity->GetLogicComponent();
+                auto collisionComponent = entity->GetCollisionComponent();
+                if (!logicComponent) return;
+                logicComponent->PathMovement(*collisionComponent, entity->GetServer());
+
+            }
+    };
+    RegisterScriptBinding("MOVE_TO", moveScript);
+
+}
+
+
+bool EntityLogicComponent::Move(const float deltaTime, const float dX,const float dY, EntityCollisionComponent &collisionComponent, const std::shared_ptr<Server> &server) {
     const float newX{_coordinates.x + dX * _speed* deltaTime};
     const float newY{_coordinates.y + dY * _speed * deltaTime};
 
@@ -365,8 +387,8 @@ bool EntityLogicComponent::Move(const float dX,const float dY, EntityCollisionCo
     const EntityCollisionComponent::HitboxData hitbox{*collisionComponent.GetHitbox()};
 
     if (hitbox.colliding && !hitbox.disableCollision) return false;
-    _coordinates.x = newX;
-    _coordinates.y = newY;
+    this->_coordinates.x = newX;
+    this->_coordinates.y = newY;
     SetAngleBasedOnMovement(dX, dY);
     return true;
 }
@@ -374,7 +396,8 @@ bool EntityLogicComponent::Move(const float dX,const float dY, EntityCollisionCo
 void EntityLogicComponent::HandleEvent(const EventData &data, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent) {
     switch (data.type) {
         case Event::MOVE:
-            Move(data.data.move.dX, data.data.move.dY, collisionComponent, server);
+            Move(data.dt, data.data.move.dX, data.data.move.dY, collisionComponent, server);
+
             break;
         default:
             break;
@@ -382,9 +405,9 @@ void EntityLogicComponent::HandleEvent(const EventData &data, const std::shared_
     _events.erase(_events.begin());
 }
 
-void EntityLogicComponent::HandleTask(const TaskData &data, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent) {
+void EntityLogicComponent::HandleTask(const TaskData &data, const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent, IEntity* entity) {
     if (data.status == TaskData::Status::PENDING) {
-        ProcessNewTask(server, collisionComponent);
+        ProcessNewTask(server, collisionComponent, entity);
         return;
     }
     if (data.status == TaskData::Status::DONE || data.status == TaskData::Status::FAILED) {
@@ -392,16 +415,25 @@ void EntityLogicComponent::HandleTask(const TaskData &data, const std::shared_pt
         _tasks.erase(_tasks.begin());
         return;
     }
+    if (data.status == TaskData::Status::IN_PROGRESS) {
+        if (_scriptBindings.find(data.taskName) == _scriptBindings.end()) return;
+        ScriptData &scriptData = _scriptBindings[data.taskName];
 
-     //if (data.type == TaskData::Type::MOVE_TO && _tasks.front().status == TaskData::Status::IN_PROGRESS) {
-     //   PathMovement(collisionComponent, server);
-   // }
+        if (scriptData.script == Script::NOT_IMPLEMENTED) return;
+
+        if (scriptData.script == Script::CPP) {
+            scriptData.functionCPP(entity);
+            return;
+        }
+        // TODO: Implement Lua script execution
+
+        return;
+    }
 
 }
 
-void EntityLogicComponent::ProcessNewTask(const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent) {
+void EntityLogicComponent::ProcessNewTask(const std::shared_ptr<Server> &server, EntityCollisionComponent &collisionComponent, IEntity* entity) {
     TaskData &currentTask = _tasks.front();
-    _scriptBindings[currentTask.taskName]; //Check if script is bound
 
     if (_scriptBindings.find(currentTask.taskName) == _scriptBindings.end()) return;
 
@@ -410,8 +442,9 @@ void EntityLogicComponent::ProcessNewTask(const std::shared_ptr<Server> &server,
         return;
     }
     if (scriptData.script == Script::CPP) {
-        scriptData.functionsCPP.front();
         currentTask.status = TaskData::Status::IN_PROGRESS;
+        scriptData.functionCPP(entity);
+        currentTask.Iterations++;
         return;
     }
         // TODO: Implement Lua script execution
@@ -447,84 +480,5 @@ float EntityHealthComponent::GetMaxHealth() const {
 }
 bool EntityHealthComponent::isDead() const {
     return health <= 0.0f;
-}
-
-// --------------------------------------
-
-void Entity::checkCollision(float newX, float newY) {
-    hitbox.colliding = false;
-
-    for (const auto [x, y] : hitbox.corners) {
-        const float cornerX{newX + x};
-        const float cornerY{newY + y};
-
-        const int tileX{ static_cast<int>(std::floor(cornerX / 32.0f))};
-        const int tileY{static_cast<int>(std::floor(cornerY / 32.0f))};
-
-        if (tileX < 0 || tileY < 0 || tileX >= MAPSIZE || tileY >= MAPSIZE) {
-            hitbox.colliding = true;
-            return ; // Out of bounds
-        }
-        if (server->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
-            hitbox.colliding = true;
-            return;
-        }
-    }
-}
-
-bool Entity::Move(float dX, float dY, float dt) {
-
-    if (dX == 0.0f && dY == 0.0f) {
-        sprite->setAnimation(AnimationType::IDLE);
-        return true;
-    };
-
-    float relativeX = dX * speed * dt;
-    float relativeY = dY * speed * dt;
-
-    float newX = coordinates.x + relativeX;
-    float newY = coordinates.y + relativeY;
-    checkCollision(newX, newY);
-
-    if (hitbox.colliding && !hitbox.disableCollision) return false;
-    coordinates.x = newX;
-    coordinates.y = newY;
-
-    angle = std::floor(std::atan2(dX, dY) * 180.0f / M_PI);
-    if (angle < 0) angle += 360.0f;
-
-    if ((angle >= 0 && angle <= 44) || (angle >= 316 && angle <= 360)) {
-        sprite->setDirection(Direction::DOWN);
-    } else if (angle >= 136 && angle <= 224) {
-        sprite->setDirection(Direction::UP);
-    } else if (angle >= 45 && angle <= 135) {
-        sprite->setDirection(Direction::RIGHT);
-    } else if (angle >= 225 && angle <= 315) {
-        sprite->setDirection(Direction::LEFT);
-    }
-
-    sprite->setAnimation(AnimationType::RUNNING);
-
-    return true;
-}
-
-Entity::Entity(int id,float maxHealth, Coordinates coordinates, EntityType type, const std::shared_ptr<Server> &server, float speed, std::unique_ptr<ISprite> sprite) {
-    this->id = id;
-    this->maxHealth = maxHealth;
-    this->health = maxHealth;
-    this->coordinates = coordinates;
-    this->type = type;
-    this->speed = speed;
-    this->sprite = std::move(sprite);
-    this->server = server;
-
-    hitbox = Hitbox{
-            .corners = {
-                    {0.0f, 0.0f},
-                    {0.0f, 0.0f},
-                    {0.0f, 0.0f},
-                    {0.0f, 0.0f}
-            }
-    };
 }
 

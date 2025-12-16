@@ -6,7 +6,6 @@
 #define CLIENT_H
 #include <SDL3/SDL.h>
 #include <string>
-#include <iostream>
 #include <unordered_map>
 #include <RmlUi/Core.h>
 
@@ -14,9 +13,10 @@
 #include "../Menu/RmlUi_Renderer_SDL.h"
 #include "../Application/MACROS.h"
 #include "../Sprites/Sprite.hpp"
-#include "../Sprites/WaterSprite.hpp"
 #include "../Server/Server.h"
 
+constexpr float cameraOffsetX = GAMERESW/ 2.0f - PLAYER_WIDTH / 2.0f;
+constexpr float cameraOffsetY = GAMERESH / 2.0f - PLAYER_WIDTH/ 2.0f;
 
 struct MenuData {
     Rml::Context* RmlContext;
@@ -39,10 +39,7 @@ struct WindowData {
     std::unique_ptr<SDL_FRect> cameraRect = nullptr;
     std::unique_ptr<SDL_FRect> cameraWaterRect = nullptr;
 
-    float playerAngle = 0.0f;
-
-    float cameraOffsetX = (static_cast<float>(GAMERESW)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
-    float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
+    int playerAngle = 0;
 
     SDL_Window* Window;
     SDL_Renderer* Renderer;
@@ -74,7 +71,7 @@ class Window {
     void loadMarkerSurface();
     void markOnMap(float x, float y);
     void handlePlayerInput() const;
-    void renderPlayer(ISprite &playerSprite);
+    void renderPlayer() const;
 
     void renderMainMenu();
 

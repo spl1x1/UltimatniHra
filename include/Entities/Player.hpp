@@ -8,26 +8,7 @@
 #include "../Entities/Entity.h"
 #include "../Sprites/PlayerSprite.hpp"
 
-
-class Player;
-
-enum class PlayerEvents{
-    MOVE,
-    ATTACK,
-    PLACE,
-    INTERACT,
-    INVENTORY
-};
-
-struct PlayerEvent {
-    PlayerEvents type;
-    float data1;
-    float data2;
-    float deltaTime;
-};
-
-
-class PlayerNew final : public IEntity {
+class Player final : public IEntity {
     EntityRenderingComponent _entityRenderingComponent;
     EntityCollisionComponent _entityCollisionComponent;
     EntityLogicComponent _entityLogicComponent;
@@ -40,8 +21,9 @@ public:
     //Interface methods implementation
     void Tick() override;
     void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) override;
-    void Create() override;
-    void Load() override;
+
+    static void Create(const std::shared_ptr<Server>& server) ;
+    static void Load(const std::shared_ptr<Server>& server);
 
     //Entity actions
     void Move(float dX, float dY) override;
@@ -55,6 +37,9 @@ public:
     //Sets current task and task data
     void SetTask(int index) override;
     void RemoveTask(int index) override;
+    void SetEntityCollision(bool disable) override;
+    //Event
+    void AddEvent(const EventData &eventData) override;
 
     //Getters
 
@@ -70,21 +55,20 @@ public:
     //Returns event queue
     [[nodiscard]] std::vector<EventData> GetEvents() const override;
 
-    PlayerNew(std::shared_ptr<Server> server, const Coordinates& coordinates);
+    EntityCollisionComponent* GetCollisionComponent() override;
+    //Get EntityLogicComponent
+    EntityLogicComponent* GetLogicComponent() override;
+    //Get EntityHealthComponent
+    EntityHealthComponent* GetHealthComponent() override;
+    //Get EntityRenderingComponent
+    EntityRenderingComponent* GetRenderingComponent() override;
+    //Get EntityInventoryComponent
+    EntityInventoryComponent* GetInventoryComponent() override;
+
+    //Get server pointer
+    [[nodiscard]] std::shared_ptr<Server> GetServer() const override;
+
+    Player(std::shared_ptr<Server> server, const Coordinates& coordinates);
 };
-
-class Player final : public Entity {
-    using Entity::Move;
-public:
-    void handleEvent(PlayerEvent e); //TODO: implement
-
-    // Constructors
-    Player(int id, float maxHealth, Coordinates coordinates, const std::shared_ptr<Server>& server ,float speed);
-
-    // Initializes the player character for client, should be called only once
-    static void ClientInit(const std::shared_ptr<Server>& server);
-};
-
-
 
 #endif //PLAYER_HPP

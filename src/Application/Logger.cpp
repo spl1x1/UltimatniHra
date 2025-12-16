@@ -2,6 +2,9 @@
 // Created by USER on 15.12.2025.
 //
 #include "../../include/Application/Logger.h"
+
+#include <iomanip>
+
 #include "../../include/Application/MACROS.h"
 
 #include <SDL3/SDL_log.h>
@@ -14,6 +17,7 @@ Logger::Logger() {
     logThread = std::thread(&Logger::logWorker, this);
     #ifdef LOGGER_LOG_TO_FILE
     logFile = std::ofstream("application.log", std::ios::app);
+    logFile << "----- Logger started -----" << std::endl;
     #endif
 }
 
@@ -27,16 +31,21 @@ void Logger::InternalLog(const std::string &message) {
 };
 
 void Logger::logWorker() {
+    auto now = std::chrono::system_clock::now();
     while (running) {
+    const auto in_time_t = std::chrono::system_clock::to_time_t(now);
         std::string message;
         {
             std::lock_guard lock(logMutex);
             if (!logQueue.empty()) {
-                message = logQueue.front();
+                message += logQueue.front();
                 logQueue.pop();
             }
         }
-        message.empty() ? std::this_thread::sleep_for(std::chrono::milliseconds(100)) :  InternalLog(message);
+        std::stringstream ss;
+        ss << "["<< std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X] ");
+
+        message.empty() ? std::this_thread::sleep_for(std::chrono::milliseconds(100)) :  InternalLog( ss.str() + message);
         }
 }
 

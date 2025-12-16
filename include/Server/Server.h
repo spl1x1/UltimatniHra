@@ -7,16 +7,14 @@
 #include <map>
 #include <memory>
 #include <shared_mutex>
-#include <thread>
 
-#include "../Application/Application.h"
 #include "../Application/dataStructures.h"
 #include "../Window/WorldStructs.h"
 
+struct EventData;
 enum class structureType;
 class Sprite;
 class WorldData;
-struct PlayerEvent;
 enum class EntityType;
 class IStructure;
 
@@ -31,8 +29,8 @@ class Server : public std::enable_shared_from_this<Server> {
     Coordinates _spawnPoint = {4000.0f, 4000.0f};
 
     //mozna by vector byl lepsi, ale toto by melo setrit pamet
-    std::map<int,std::shared_ptr<class Entity>> _entities{};
-    std::map<int,std::shared_ptr<Entity>> _players{};
+    std::map<int,std::shared_ptr<class IEntity>> _entities{};
+    std::map<int,std::shared_ptr<IEntity>> _players{};
     std::map<int,std::shared_ptr<IStructure>> _structures{};
 
     //ID counters, k limitu se nikdy nedostaneme reclaim neni nutny
@@ -58,19 +56,20 @@ public:
 
     //Getters
     [[nodiscard]] float getDeltaTime(); //Musi byt thread safe protoze se vola kazdy frame, a k datum muze pristupovat vice threadu
+    [[nodiscard]] float getDeltaTime_unprotected() const;
     [[nodiscard]] Coordinates getSpawnPoint() const {return _spawnPoint;} //Nemusi byt thread safe, spawn point se nemeni po spusteni serveru
     [[nodiscard]] int getSeed() const {return _seed;} //Nemusi byt thread safe, seed se nemeni
     [[nodiscard]] int getMapValue(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP); //Musi byt thread safe, vraci hodnotu collision mapy na danych souradnicich
     [[nodiscard]] int getMapValue_unprotected(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP) const {return _worldData.getMapValue(x,y, mapType);}; //Verze bez locku, pro vnitrni pouziti
     [[nodiscard]] Coordinates getEntityPos(int entityId); //Musi byt thread safe, vraci pozici entity podle id
-    [[nodiscard]] Entity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
+    [[nodiscard]] IEntity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] IStructure* getStructure(int structureId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] bool isEntityColliding(int entityId);
     [[nodiscard]] bool isPlayerColliding(int playerId);
-    [[nodiscard]] std::map<int,std::shared_ptr<Entity>> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] std::map<int,std::shared_ptr<IEntity>> getEntities(); //Musi byt thread safe, vraci kopii entity mapy
     [[nodiscard]] std::map<int,std::shared_ptr<IStructure>> getStructures(); //Musi byt thread safe, vraci kopii strukturu mapy
-    [[nodiscard]] Entity*  getPlayer(int playerId); //Metoda je thread safe, ale operace s pointerem na entitu ne
-    [[nodiscard]] std::map<int,std::shared_ptr<Entity>> getPlayers(); //Musi byt thread safe, vraci kopii entity mapy
+    [[nodiscard]] IEntity*  getPlayer(int playerId); //Metoda je thread safe, ale operace s pointerem na entitu ne
+    [[nodiscard]] std::map<int,std::shared_ptr<IEntity>> getPlayers(); //Musi byt thread safe, vraci kopii entity mapy
     [[nodiscard]] Coordinates getPlayerPos(int playerId); //Musi byt thread safe, vraci pozici hrace podle id
     [[nodiscard]] std::shared_ptr<Server> getSharedPtr();
 
@@ -78,12 +77,12 @@ public:
     //Methods
     void generateWorld(); //Generuje mapy sveta pro jistotu lockuje mutex serveru
     void Tick(); //Tick serveru, zatim tickuje sprity TODO: implementovat, nezapomenout na thread safety
-    void playerUpdate(PlayerEvent e); //Tick pro hrace TODO: implementovat, nezapomenout na thread safety
+    void playerUpdate(EventData e); //Tick pro hrace TODO: implementovat, nezapomenout na thread safety
 
     void addEntity(Coordinates coordinates, EntityType type); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
-    void addEntity(const std::shared_ptr<Entity>& entity); //Prida na server entitu
+    void addEntity(const std::shared_ptr<IEntity>& entity); //Prida na server entitu
     void addPlayer(Coordinates coordinates); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
-    void addPlayer(const std::shared_ptr<Entity>& player); //Prida na server entitu
+    void addPlayer(const std::shared_ptr<IEntity>& player); //Prida na server entitu
 
     void addStructure(Coordinates coordinates,  structureType type); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
     void addStructure(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
