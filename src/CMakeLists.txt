@@ -13,5 +13,8 @@ add_executable(UltimatniHra
         ${SOURCES}
 )
 
-target_link_libraries(UltimatniHra LibsBundle)
+target_link_libraries(UltimatniHra
+        LibsBundle
+        ImguiDependency
+)
 add_dependencies(UltimatniHra copy_assets)

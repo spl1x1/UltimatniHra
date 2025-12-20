@@ -28,10 +28,7 @@ struct MenuData {
     int masterVolume = 100;
     int musicVolume = 100;
     int sfxVolume = 100;
-
     bool inGameMenu = false;
-
-
 };
 
 struct WindowData {

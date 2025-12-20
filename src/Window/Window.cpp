@@ -633,7 +633,6 @@ void Window::init(const std::string& title, int width, int height) {
 
     data.inMainMenu = true;
 
-
     menuData.documents["main_menu"] = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
 
     if (!menuData.documents["main_menu"]) {
