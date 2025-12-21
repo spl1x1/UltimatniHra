@@ -10,6 +10,7 @@
 #include "../../include/Window/WorldRender.h"
 #include <RmlUi/Debugger.h>
 #include <SDL3_image/SDL_image.h>
+#include <RmlUi/Lua.h>
 
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
@@ -19,14 +20,22 @@
 
 
 void Window::renderMainMenu() {
-
     SDL_RenderClear(data.Renderer);
     SDL_RenderTexture(data.Renderer, textures["MainMenuBackground"], nullptr, nullptr);
     menuData.RmlContext->Update();
     menuData.RmlContext->Render();
     SDL_RenderPresent(data.Renderer);
+
     SDL_Event e;
-    if (SDL_PollEvent(&e)) HandleMainMenuEvent(&e);
+    if (SDL_PollEvent(&e)) {
+        if (e.type == SDL_EVENT_MOUSE_MOTION ||
+            e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+            e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+            e.type == SDL_EVENT_MOUSE_WHEEL) {
+            SDL_ConvertEventToRenderCoordinates(data.Renderer, &e);
+            }
+        HandleMainMenuEvent(&e);
+    }
 }
 
 
@@ -299,11 +308,59 @@ void Window::HandleEvent(const SDL_Event *e) {
             Destroy();
             break;
         }
+        case SDL_EVENT_MOUSE_MOTION: {
+            menuData.RmlContext->ProcessMouseMove(static_cast<int>(e->motion.x), static_cast<int>(e->motion.y), 0);
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        {
+            int button = e->button.button;
+            int rml_button = button - 1;
+            menuData.RmlContext->ProcessMouseButtonDown(rml_button, 0);
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+        {
+            int button = e->button.button;
+            int rml_button = button - 1;
+            menuData.RmlContext->ProcessMouseButtonUp(rml_button, 0);
+            break;
+        }
         case SDL_EVENT_KEY_DOWN: {
             const SDL_Keycode keycode = e->key.key;
+            Rml::Input::KeyIdentifier rml_key = RmlSDL::ConvertKey(static_cast<int>(keycode));
+            menuData.RmlContext->ProcessKeyDown(rml_key, 0);
+
+            if (keycode == SDLK_RETURN || keycode == SDLK_KP_ENTER)
+            {
+                menuData.RmlContext->ProcessTextInput("\n");
+            }
+
             switch (e->key.scancode)
             {
 #ifdef DEBUG
+                case SDL_SCANCODE_F8: {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Changing visibility of Debugger");
+                    Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
+                    break;
+                }
+                case SDL_SCANCODE_F9: {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_ERROR, "Throwing exception for testing purposes");
+                    throw std::runtime_error("Test exception thrown by F9 key");
+                }
+                case SDL_SCANCODE_F3: {
+                    debugMenu.showDebug = !debugMenu.showDebug;
+                    if (debugMenu.showDebug) {
+                        menuData.documents["debug_menu"]->Show();
+                        SDL_Log("Debug info enabled");
+                    } else {
+                        menuData.documents["debug_menu"]->Hide();
+                        SDL_Log("Debug info disabled");
+                    }
+                    SDL_Log("Player at (%.2f, %.2f)", data.cameraRect->x + data.cameraOffsetX, data.cameraRect->y + data.cameraOffsetY);
+                    SDL_Log("data.CameraPos at (%.2f, %.2f)", data.cameraRect->x , data.cameraRect->y);
+                    break;
+                }
                 case SDL_SCANCODE_F4: {
                     markOnMap(data.cameraRect->x + data.cameraOffsetX, data.cameraRect->y + data.cameraOffsetY);
                     break;
@@ -314,13 +371,37 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
 #endif
+                case SDL_SCANCODE_ESCAPE: {
+                    menuData.inGameMenu = !menuData.inGameMenu;
+                    if (menuData.inGameMenu) {
+                        if (!menuData.documents["pause_menu"]) {
+                            initPauseMenu();
+                        }
+                        if (menuData.documents["pause_menu"]) {
+                            menuData.documents["pause_menu"]->Show();
+                        }
+                        SDL_Log("Pause menu opened");
+                    } else {
+                        if (menuData.documents["pause_menu"]) {
+                            menuData.documents["pause_menu"]->Hide();
+                        }
+                        SDL_Log("Pause menu closed");
+                    }
+                    break;
+                }
                 default:
-                    break;}
+                    break;
+            }
+            break;
+        }
+        case SDL_EVENT_TEXT_INPUT: {
+            menuData.RmlContext->ProcessTextInput(e->text.text);
+            break;
         }
         default:
             break;
     }
-};
+}
 
 void Window::renderWaterLayer() {
     const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
@@ -371,7 +452,15 @@ void Window::advanceFrame() {
     SDL_RenderPresent(data.Renderer);
 
     SDL_Event e;
-    if (SDL_PollEvent(&e)) HandleEvent(&e);
+    if (SDL_PollEvent(&e)) {
+        if (e.type == SDL_EVENT_MOUSE_MOTION ||
+            e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+            e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+            e.type == SDL_EVENT_MOUSE_WHEEL) {
+            SDL_ConvertEventToRenderCoordinates(data.Renderer, &e);
+            }
+        HandleEvent(&e);
+    }
 }
 
 bool Window::LoadSurface(const std::string& Path) {
@@ -444,7 +533,12 @@ void Window::tick() {
             data.Running = false;
         }
 
-        SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
+        if (event.type == SDL_EVENT_MOUSE_MOTION ||
+            event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+            event.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+            event.type == SDL_EVENT_MOUSE_WHEEL) {
+            SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
+            }
 
         if (data.inMainMenu) {
             HandleMainMenuEvent(&event);
@@ -650,6 +744,7 @@ void Window::initGame() {
     server->addStructure({5000,5000},structureType::TREE);
     server->addStructure({5050,5010},structureType::TREE);
     server->addStructure({5080,5030},structureType::TREE);
+    SDL_RenderClear(data.Renderer);
 
     #ifdef DEBUG
     loadMarkerSurface();
@@ -699,15 +794,19 @@ void Window::init(const std::string& title, int width, int height) {
     data.uiComponent = std::make_unique<UIComponent>(data.Renderer, data.Window, this);
     data.uiComponent->getDocuments()->at("main_menu")->Show();
 
-    menuData.RmlContext = Rml::CreateContext("main", Rml::Vector2i(data.WINDOW_WIDTH, data.WINDOW_HEIGHT), menuData.render_interface);
+    menuData.RmlContext = Rml::CreateContext("main",
+                                             Rml::Vector2i(GAMERESW, GAMERESH),
+                                             menuData.render_interface);
 
     Rml::LoadFontFace("assets/fonts/Poppins-Regular.ttf");
+    Rml::LoadFontFace("assets/fonts/Poppins-Regular.ttf", false, Rml::Style::FontWeight::Normal);
 
 #ifdef DEBUG
     Rml::Debugger::Initialise(menuData.RmlContext);
     Rml::Lua::Initialise();
     Rml::Debugger::SetVisible(false);
 #endif
+
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
     int count = 0;
@@ -715,9 +814,9 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_Log("Display modes: %i ",count);
     SDL_Log("Window size: %ix%i", data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
+    SDL_Log("Logical rendering size: %ix%i", GAMERESW, GAMERESH);
 
     data.inMainMenu = true;
-
 
     menuData.documents["main_menu"] = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
     Rml::ElementDocument* console_doc = menuData.RmlContext->LoadDocument("assets/ui/console.rml");
@@ -730,7 +829,6 @@ void Window::init(const std::string& title, int width, int height) {
     Rml::Element* playButton = menuData.documents["main_menu"]->GetElementById("play_button");
     Rml::Element* optionsButton = menuData.documents["main_menu"]->GetElementById("options_button");
     Rml::Element* quitButton = menuData.documents["main_menu"]->GetElementById("quit_button");
-
 
     if (playButton)
         playButton->AddEventListener("click", new PlayButtonListener(this));
@@ -746,6 +844,9 @@ void Window::init(const std::string& title, int width, int height) {
 }
 
 void Window::Destroy() {
+    data.Running = false;
+    data.inited = false;
+
     for (const auto &val: textures | std::views::values) {
         SDL_DestroyTexture(val);
     }

@@ -5,6 +5,7 @@
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Window/Window.h"
 #include <SDL3/SDL.h>
+#include <cstdio>
 
 // ===================================================================
 // PlayButtonListener
@@ -26,7 +27,7 @@ void PlayButtonListener::ProcessEvent(Rml::Event&) {
 // BackButtonListener
 // ===================================================================
 
-BackButtonListener::BackButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
+BackButtonListener::BackButtonListener(Window* win) : window(win) {}
 
 void BackButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Back clicked!");
@@ -91,12 +92,8 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
     }
 
     SDL_Log("Setting resolution to: %dx%d", width, height);
-
-    SDL_Log("Setting resolution to: %dx%d", width, height);
     window->applyResolution(width, height);
 
-    // TODO: change resolution aj v game
-    // SDL_SetWindowSize(window->sdlWindow, width, height);
 
     // Close dropdown
     if (Rml::Element* dropdown = documents->at("options_menu")->GetElementById("resolutionDropdown")) {
@@ -321,4 +318,64 @@ QuitGameButtonListener::QuitGameButtonListener(Window* win, UIComponent* ui) : w
 void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Quit Game clicked!");
     window->data.Running = false;
+}
+
+// ===================================================================
+// CONSOLE MENU LISTENERS
+// ===================================================================
+
+void ConsoleEventListener::ProcessEvent(Rml::Event& event) {
+    if (event.GetType() == "click" ||
+        (event.GetType() == "keydown" && event.GetParameter<int>("key_identifier", 0) == Rml::Input::KI_RETURN)) {
+
+        Rml::Element* input = event.GetTargetElement()->GetOwnerDocument()->GetElementById("console-input");
+        if (input) {
+            Rml::String command = input->GetAttribute<Rml::String>("value", "");
+
+            if (!command.empty()) {
+                ProcessCommand(command);
+
+                input->SetAttribute("value", "");
+            }
+        }
+        }
+}
+
+void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
+    printf("Console command: %s\n", command.c_str());
+    //TODO: @LukasKaplanek logika pak sem
+
+}
+
+ConsoleHandler::ConsoleHandler() : document(nullptr) {
+}
+
+ConsoleHandler::~ConsoleHandler() {
+    if (document) {
+        document->Close();
+    }
+}
+
+void ConsoleHandler::Setup(Rml::ElementDocument* console_doc) {
+    if (!console_doc) return;
+
+    document = console_doc;
+
+    Rml::Element* send_btn = document->GetElementById("send-button");
+    if (send_btn) {
+        send_btn->AddEventListener("click", &listener);
+    }
+
+    Rml::Element* input = document->GetElementById("console-input");
+    if (input) {
+        input->AddEventListener("keydown", &listener);
+        input->Focus();
+    }
+
+    document->Show();
+}
+
+ConsoleHandler& ConsoleHandler::GetInstance() {
+    static ConsoleHandler instance;
+    return instance;
 }
