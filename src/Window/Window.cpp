@@ -28,7 +28,12 @@ void Window::renderMainMenu() {
 
     SDL_Event e;
     if (SDL_PollEvent(&e)) {
-        SDL_ConvertEventToRenderCoordinates(data.Renderer, &e);
+        if (e.type == SDL_EVENT_MOUSE_MOTION ||
+            e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+            e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+            e.type == SDL_EVENT_MOUSE_WHEEL) {
+            SDL_ConvertEventToRenderCoordinates(data.Renderer, &e);
+            }
         HandleMainMenuEvent(&e);
     }
 }
@@ -301,7 +306,6 @@ void Window::HandleEvent(const SDL_Event *e) {
         {
             int button = e->button.button;
             int rml_button = button - 1;
-
             menuData.RmlContext->ProcessMouseButtonDown(rml_button, 0);
             break;
         }
@@ -309,13 +313,11 @@ void Window::HandleEvent(const SDL_Event *e) {
         {
             int button = e->button.button;
             int rml_button = button - 1;
-
             menuData.RmlContext->ProcessMouseButtonUp(rml_button, 0);
             break;
         }
         case SDL_EVENT_KEY_DOWN: {
             const SDL_Keycode keycode = e->key.key;
-
             Rml::Input::KeyIdentifier rml_key = RmlSDL::ConvertKey(static_cast<int>(keycode));
             menuData.RmlContext->ProcessKeyDown(rml_key, 0);
 
@@ -341,13 +343,10 @@ void Window::HandleEvent(const SDL_Event *e) {
                     if (debugMenu.showDebug) {
                         menuData.documents["debug_menu"]->Show();
                         SDL_Log("Debug info enabled");
-
                     } else {
                         menuData.documents["debug_menu"]->Hide();
                         SDL_Log("Debug info disabled");
                     }
-
-                    //TODO: Vytvořit debug overlay
                     SDL_Log("Player at (%.2f, %.2f)", data.cameraRect->x + data.cameraOffsetX, data.cameraRect->y + data.cameraOffsetY);
                     SDL_Log("data.CameraPos at (%.2f, %.2f)", data.cameraRect->x , data.cameraRect->y);
                     break;
@@ -364,7 +363,6 @@ void Window::HandleEvent(const SDL_Event *e) {
 #endif
                 case SDL_SCANCODE_ESCAPE: {
                     menuData.inGameMenu = !menuData.inGameMenu;
-
                     if (menuData.inGameMenu) {
                         if (!menuData.documents["pause_menu"]) {
                             initPauseMenu();
@@ -382,12 +380,18 @@ void Window::HandleEvent(const SDL_Event *e) {
                     break;
                 }
                 default:
-                    break;}
+                    break;
+            }
+            break;
+        }
+        case SDL_EVENT_TEXT_INPUT: {
+            menuData.RmlContext->ProcessTextInput(e->text.text);
+            break;
         }
         default:
             break;
     }
-};
+}
 
 void Window::renderWaterLayer() {
     const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
@@ -439,7 +443,12 @@ void Window::advanceFrame() {
 
     SDL_Event e;
     if (SDL_PollEvent(&e)) {
-        SDL_ConvertEventToRenderCoordinates(data.Renderer, &e);
+        if (e.type == SDL_EVENT_MOUSE_MOTION ||
+            e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+            e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+            e.type == SDL_EVENT_MOUSE_WHEEL) {
+            SDL_ConvertEventToRenderCoordinates(data.Renderer, &e);
+            }
         HandleEvent(&e);
     }
 }
@@ -514,7 +523,12 @@ void Window::tick() {
             data.Running = false;
         }
 
-        SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
+        if (event.type == SDL_EVENT_MOUSE_MOTION ||
+            event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+            event.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+            event.type == SDL_EVENT_MOUSE_WHEEL) {
+            SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
+            }
 
         if (data.inMainMenu) {
             HandleMainMenuEvent(&event);
@@ -780,10 +794,11 @@ void Window::init(const std::string& title, int width, int height) {
     Rml::Initialise();
 
     menuData.RmlContext = Rml::CreateContext("main",
-                                             Rml::Vector2i(GAMERESW, GAMERESH),  // Game resolution!
+                                             Rml::Vector2i(GAMERESW, GAMERESH),
                                              menuData.render_interface);
 
     Rml::LoadFontFace("assets/fonts/Poppins-Regular.ttf");
+    Rml::LoadFontFace("assets/fonts/Poppins-Regular.ttf", false, Rml::Style::FontWeight::Normal);
 
 #ifdef DEBUG
     Rml::Debugger::Initialise(menuData.RmlContext);

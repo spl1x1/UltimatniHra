@@ -486,16 +486,13 @@ void ConsoleEventListener::ProcessEvent(Rml::Event& event) {
     if (event.GetType() == "click" ||
         (event.GetType() == "keydown" && event.GetParameter<int>("key_identifier", 0) == Rml::Input::KI_RETURN)) {
 
-        // Get the input element
         Rml::Element* input = event.GetTargetElement()->GetOwnerDocument()->GetElementById("console-input");
         if (input) {
             Rml::String command = input->GetAttribute<Rml::String>("value", "");
 
             if (!command.empty()) {
-                // Process your command here
                 ProcessCommand(command);
 
-                // Clear the input
                 input->SetAttribute("value", "");
             }
         }
