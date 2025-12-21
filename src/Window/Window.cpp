@@ -18,6 +18,18 @@
 #include "../../include/Structures/Structure.h"
 
 
+void Window::renderMainMenu() {
+
+    SDL_RenderClear(data.Renderer);
+    SDL_RenderTexture(data.Renderer, textures["MainMenuBackground"], nullptr, nullptr);
+    menuData.RmlContext->Update();
+    menuData.RmlContext->Render();
+    SDL_RenderPresent(data.Renderer);
+    SDL_Event e;
+    if (SDL_PollEvent(&e)) HandleMainMenuEvent(&e);
+}
+
+
 void Window::loadMarkerSurface() {
     surfaces["marker"]= SDL_CreateSurface(MAPSIZE*32, MAPSIZE*32, SDL_PIXELFORMAT_ABGR8888);
 }
@@ -162,6 +174,125 @@ void Window::initDebugMenu() {
 }
 
 
+
+void Window::initPauseMenu() {
+    menuData.documents["pause_menu"] = menuData.RmlContext->LoadDocument("assets/ui/pause_menu.rml");
+
+    if (!menuData.documents["pause_menu"]) {
+        SDL_Log("Failed to load pause_menu.rml");
+        return;
+    }
+
+    // Resume button
+    if (Rml::Element* resumeButton = menuData.documents["pause_menu"]->GetElementById("resume_button")) {
+        resumeButton->AddEventListener(Rml::EventId::Click, new ResumeButtonListener(this));
+    }
+
+    // Settings button
+    if (Rml::Element* settingsButton = menuData.documents["pause_menu"]->GetElementById("settings_button")) {
+        settingsButton->AddEventListener(Rml::EventId::Click, new PauseSettingsButtonListener(this));
+    }
+
+    // Main Menu button
+    if (Rml::Element* mainMenuButton = menuData.documents["pause_menu"]->GetElementById("main_menu_button")) {
+        mainMenuButton->AddEventListener(Rml::EventId::Click, new MainMenuButtonListener(this));
+    }
+
+    // Quit Game button
+    if (Rml::Element* quitGameButton = menuData.documents["pause_menu"]->GetElementById("quit_game_button")) {
+        quitGameButton->AddEventListener(Rml::EventId::Click, new QuitGameButtonListener(this));
+    }
+
+    SDL_Log("Pause menu initialized");
+}
+//tady jsem zmenil na lepsi alignment s scalingem obrazovky
+void Window::HandleMainMenuEvent(const SDL_Event *e) {
+    int window_w, window_h;
+    SDL_GetWindowSizeInPixels(data.Window, &window_w, &window_h);
+
+    auto logical_w = static_cast<float>(data.WINDOW_WIDTH);
+    auto logical_h = static_cast<float>(data.WINDOW_HEIGHT);
+
+    float scale_x = logical_w / static_cast<float>(window_w);
+    float scale_y = logical_h / static_cast<float>(window_h);
+
+    switch (e->type)
+    {
+        case SDL_EVENT_QUIT:
+        {
+            Destroy();
+            break;
+        }
+
+        case SDL_EVENT_MOUSE_MOTION:
+        {
+
+            int scaled_x = static_cast<int>(e->motion.x * scale_x);
+            int scaled_y = static_cast<int>(e->motion.y * scale_y);
+            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            break;
+        }
+
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        {
+            int button = e->button.button;
+            int rml_button = button - 1;
+
+
+            int scaled_x = static_cast<int>(e->button.x * scale_x);
+            int scaled_y = static_cast<int>(e->button.y * scale_y);
+
+            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            menuData.RmlContext->ProcessMouseButtonDown(rml_button, 0);
+            break;
+        }
+
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+        {
+            int button = e->button.button;
+            int rml_button = button - 1;
+
+
+            int scaled_x = static_cast<int>(e->button.x * scale_x);
+            int scaled_y = static_cast<int>(e->button.y * scale_y);
+
+            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            menuData.RmlContext->ProcessMouseButtonUp(rml_button, 0);
+            break;
+        }
+
+        case SDL_EVENT_KEY_DOWN: {
+            const SDL_Keycode keycode = e->key.key;
+
+            Rml::Input::KeyIdentifier rml_key = RmlSDL::ConvertKey(static_cast<int>(keycode));
+            menuData.RmlContext->ProcessKeyDown(rml_key, 0);
+
+            if (keycode == SDLK_RETURN || keycode == SDLK_KP_ENTER)
+            {
+                menuData.RmlContext->ProcessTextInput("\n");
+            }
+
+#ifdef DEBUG
+            switch (e->key.scancode)
+            {
+                case SDL_SCANCODE_F8:
+                {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Changing visibility of Debugger");
+                    Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
+                    break;
+                }
+                default:
+                    break;
+            }
+#endif
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
 void Window::HandleEvent(const SDL_Event *e) {
     switch (e->type)
     {
@@ -215,27 +346,22 @@ void Window::advanceFrame() {
         data.cameraRect->x = coords.x - data.cameraOffsetX;
         data.cameraRect->y = coords.y - data.cameraOffsetY;
 
+    if (data.cameraWaterRect->x > 96) data.cameraWaterRect->x -= 32;
+    if (data.cameraWaterRect->x < 32) data.cameraWaterRect->x += 32;
+    if (data.cameraWaterRect->y > 96) data.cameraWaterRect->y -= 32;
+    if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
 
-        if (data.cameraWaterRect->x > 96) data.cameraWaterRect->x -= 32;
-        if (data.cameraWaterRect->x < 32) data.cameraWaterRect->x += 32;
-        if (data.cameraWaterRect->y > 96) data.cameraWaterRect->y -= 32;
-        if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
-
-
-        SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect.get(), nullptr);
+    SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect.get(), nullptr);
 
 #ifdef DEBUG
-        data.playerAngle = server->getPlayer(0)->getAngle();
-
-        SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect.get(), nullptr);
-        dataModel.DirtyVariable("playerX");
+    data.playerAngle = server->getPlayer(0)->getAngle();
+    SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect.get(), nullptr);
+    dataModel.DirtyVariable("playerX");
         dataModel.DirtyVariable("playerY");
         dataModel.DirtyVariable("playerAngle");
 #endif
 
-
-        //Render structures within screen range;
-        renderPlayer(*server->getPlayer(0)->sprite);
+    renderPlayer(*server->getPlayer(0)->sprite);
 
         for (const auto& structure : server->getStructures()) {
             structure.second->render(*data.Renderer, *data.cameraRect, textures);
@@ -243,13 +369,10 @@ void Window::advanceFrame() {
         }
     }
     data.uiComponent->Render();
-
     SDL_RenderPresent(data.Renderer);
 
     SDL_Event e;
-    if (!SDL_PollEvent(&e)) return;
-    if (!data.uiComponent->blockInput) HandleEvent(&e);
-    data.uiComponent->HandleEvent(&e);
+    if (SDL_PollEvent(&e)) HandleEvent(&e);
 }
 
 bool Window::LoadSurface(const std::string& Path) {
@@ -316,21 +439,18 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
 }
 
 void Window::tick() {
-    while (SDL_PollEvent(&data.event)) {
-        if (data.event.type == SDL_EVENT_QUIT) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_EVENT_QUIT) {
             data.Running = false;
         }
 
-        // Transform and pass to RMLui
-        if (data.inMainMenu || menuData.inGameMenu) {
-            handleEvent(data.event);
-        }
+        SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
 
-        // Handle other events
         if (data.inMainMenu) {
-            HandleMainMenuEvent(&data.event);
+            HandleMainMenuEvent(&event);
         } else {
-            HandleEvent(&data.event);
+            HandleEvent(&event);
         }
     }
 
@@ -373,19 +493,14 @@ void Window::applyResolution(int width, int height) {
     data.WINDOW_HEIGHT = height;
 
     SDL_SetWindowSize(data.Window, width, height);
-
-    SDL_SetRenderLogicalPresentation(data.Renderer, GAMERESW, GAMERESH, SDL_LOGICAL_PRESENTATION_LETTERBOX);
-
-    if (menuData.RmlContext) {
-        // RMLui context dimensions should match the LOGICAL game resolution
-        menuData.RmlContext->SetDimensions(Rml::Vector2i(GAMERESW, GAMERESH));
-    }
-    updateOptionsMenuScale();
     SDL_SetWindowPosition(data.Window,
-                    SDL_WINDOWPOS_CENTERED,
-                    SDL_WINDOWPOS_CENTERED);
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED);
 
-    SDL_Log("Window resolution applied: %dx%d (Rendering at %dx%d)", width, height, GAMERESW, GAMERESH);
+    updateOptionsMenuScale();
+
+    SDL_Log("Window resolution applied: %dx%d (Rendering at %dx%d)",
+            width, height, GAMERESW, GAMERESH);
 }
 
 void Window::applyDisplayMode(MenuData::DisplayMode mode) {
@@ -395,18 +510,14 @@ void Window::applyDisplayMode(MenuData::DisplayMode mode) {
         case MenuData::DisplayMode::WINDOWED: {
             SDL_SetWindowBordered(data.Window, true);
             SDL_SetWindowFullscreen(data.Window, false);
-
             SDL_SetWindowSize(data.Window,
                             menuData.resolutionWidth,
                             menuData.resolutionHeight);
-
             SDL_SetWindowPosition(data.Window,
                                 SDL_WINDOWPOS_CENTERED,
                                 SDL_WINDOWPOS_CENTERED);
-
             data.WINDOW_WIDTH = menuData.resolutionWidth;
             data.WINDOW_HEIGHT = menuData.resolutionHeight;
-
             SDL_Log("Switched to Windowed mode: %dx%d",
                    data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
             break;
@@ -416,15 +527,12 @@ void Window::applyDisplayMode(MenuData::DisplayMode mode) {
             SDL_DisplayID displayID = SDL_GetDisplayForWindow(data.Window);
             SDL_Rect displayBounds;
             SDL_GetDisplayUsableBounds(displayID, &displayBounds);
-
             SDL_SetWindowFullscreen(data.Window, false);
             SDL_SetWindowBordered(data.Window, false);
             SDL_SetWindowPosition(data.Window, displayBounds.x, displayBounds.y);
             SDL_SetWindowSize(data.Window, displayBounds.w, displayBounds.h);
-
             data.WINDOW_WIDTH = displayBounds.w;
             data.WINDOW_HEIGHT = displayBounds.h;
-
             SDL_Log("Switched to Borderless Fullscreen: %dx%d",
                    displayBounds.w, displayBounds.h);
             break;
@@ -433,14 +541,11 @@ void Window::applyDisplayMode(MenuData::DisplayMode mode) {
         case MenuData::DisplayMode::FULLSCREEN: {
             SDL_DisplayID displayID = SDL_GetDisplayForWindow(data.Window);
             const SDL_DisplayMode* displayMode = SDL_GetCurrentDisplayMode(displayID);
-
             if (displayMode) {
                 SDL_SetWindowBordered(data.Window, true);
                 SDL_SetWindowFullscreen(data.Window, true);
-
                 data.WINDOW_WIDTH = displayMode->w;
                 data.WINDOW_HEIGHT = displayMode->h;
-
                 SDL_Log("Switched to Fullscreen: %dx%d",
                        displayMode->w, displayMode->h);
             } else {
@@ -449,16 +554,6 @@ void Window::applyDisplayMode(MenuData::DisplayMode mode) {
             break;
         }
     }
-
-    SDL_SetRenderLogicalPresentation(data.Renderer,
-                                     GAMERESW,
-                                     GAMERESH,
-                                     SDL_LOGICAL_PRESENTATION_LETTERBOX);
-
-    if (menuData.RmlContext) {
-        // RMLui should render at logical resolution
-        menuData.RmlContext->SetDimensions(Rml::Vector2i(GAMERESW, GAMERESH));
-    }
     updateOptionsMenuScale();
 }
 void Window::getLetterboxTransform(int& offsetX, int& offsetY, float& scaleX, float& scaleY) {
@@ -466,14 +561,12 @@ void Window::getLetterboxTransform(int& offsetX, int& offsetY, float& scaleX, fl
     float gameAspect = (float)GAMERESW / GAMERESH;
 
     if (windowAspect > gameAspect) {
-        // Letterbox on sides (pillarbox)
         int scaledWidth = (int)(data.WINDOW_HEIGHT * gameAspect);
         offsetX = (data.WINDOW_WIDTH - scaledWidth) / 2;
         offsetY = 0;
         scaleX = (float)GAMERESW / scaledWidth;
         scaleY = (float)GAMERESH / data.WINDOW_HEIGHT;
     } else {
-        // Letterbox on top/bottom
         int scaledHeight = (int)(data.WINDOW_WIDTH / gameAspect);
         offsetX = 0;
         offsetY = (data.WINDOW_HEIGHT - scaledHeight) / 2;
@@ -487,28 +580,23 @@ void Window::transformMouseCoordinates(int& mouseX, int& mouseY) {
     float scaleX, scaleY;
     getLetterboxTransform(offsetX, offsetY, scaleX, scaleY);
 
-    // Remove letterbox offset
     mouseX -= offsetX;
     mouseY -= offsetY;
 
-    // Scale to logical coordinates
     mouseX = (int)(mouseX * scaleX);
     mouseY = (int)(mouseY * scaleY);
 
-    // Clamp to logical resolution
     mouseX = std::max(0, std::min(mouseX, GAMERESW));
     mouseY = std::max(0, std::min(mouseY, GAMERESH));
 }
 
 void Window::handleEvent(SDL_Event& event) {
-    // Transform mouse events before passing to RMLui
     switch(event.type) {
         case SDL_EVENT_MOUSE_MOTION: {
             int mouseX = (int)event.motion.x;
             int mouseY = (int)event.motion.y;
             transformMouseCoordinates(mouseX, mouseY);
 
-            // Update event with transformed coordinates
             event.motion.x = (float)mouseX;
             event.motion.y = (float)mouseY;
             break;
@@ -519,13 +607,11 @@ void Window::handleEvent(SDL_Event& event) {
             int mouseY = (int)event.button.y;
             transformMouseCoordinates(mouseX, mouseY);
 
-            // Update event with transformed coordinates
             event.button.x = (float)mouseX;
             event.button.y = (float)mouseY;
             break;
         }
         case SDL_EVENT_MOUSE_WHEEL: {
-            // Mouse wheel position also needs transformation
             int mouseX = (int)event.wheel.mouse_x;
             int mouseY = (int)event.wheel.mouse_y;
             transformMouseCoordinates(mouseX, mouseY);
@@ -536,7 +622,6 @@ void Window::handleEvent(SDL_Event& event) {
         }
     }
 
-    // Pass the transformed event to RMLui - window comes BEFORE event
     if (menuData.RmlContext) {
         RmlSDL::InputEventHandler(menuData.RmlContext, data.Window, event);
     }
@@ -580,8 +665,8 @@ void Window::init(const std::string& title, int width, int height) {
     data.WINDOW_WIDTH = width;
     data.WINDOW_HEIGHT = height;
 
-    offsetX = (static_cast<float>(width)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
-    offsetY = (static_cast<float>(height) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
+    offsetX = (static_cast<float>(GAMERESW) / 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
+    offsetY = (static_cast<float>(GAMERESH) / 2.0f - static_cast<float>(PLAYER_HEIGHT) / 2.0f);
 
     if (!SDL_Init(SDL_FLAGS))
     {
@@ -589,23 +674,41 @@ void Window::init(const std::string& title, int width, int height) {
     }
 
     data.Window = SDL_CreateWindow(data.WINDOW_TITLE.c_str(), data.WINDOW_WIDTH, data.WINDOW_HEIGHT, SDL_WINDOW_FLAGS);
-    data.Renderer = SDL_CreateRenderer( data.Window, nullptr);
-    SDL_SetRenderScale(data.Renderer, 1.0f, 1.0f);
-    LoadSurface("assets/textures/Icon.bmp", "Icon");
-    SDL_SetWindowIcon(data.Window,surfaces["Icon"]);
+    data.Renderer = SDL_CreateRenderer(data.Window, nullptr);
 
-    if ( !data.Window || !data.Renderer) {
+    SDL_SetRenderLogicalPresentation(data.Renderer,
+                                     GAMERESW,
+                                     GAMERESH,
+                                     SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    SDL_SetRenderVSync(data.Renderer, true);
+
+    LoadSurface("assets/textures/Icon.bmp", "Icon");
+    SDL_SetWindowIcon(data.Window, surfaces["Icon"]);
+
+    if (!data.Window || !data.Renderer) {
         SDL_Log("SDL_CreateWindow Error: %s", SDL_GetError());
         return;
     }
 
+    menuData.render_interface = new RenderInterface_SDL(data.Renderer);
+
+    menuData.system_interface = new SystemInterface_SDL();
+    menuData.system_interface->SetWindow(data.Window);
+
     SDL_SetWindowMinimumSize(data.Window, data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
-    SDL_SetRenderLogicalPresentation(data.Renderer, data.WINDOW_WIDTH, data.WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
-    SDL_SetRenderVSync(data.Renderer, true);
 
     data.uiComponent = std::make_unique<UIComponent>(data.Renderer, data.Window, this);
     data.uiComponent->getDocuments()->at("main_menu")->Show();
 
+    menuData.RmlContext = Rml::CreateContext("main", Rml::Vector2i(data.WINDOW_WIDTH, data.WINDOW_HEIGHT), menuData.render_interface);
+
+    Rml::LoadFontFace("assets/fonts/Poppins-Regular.ttf");
+
+#ifdef DEBUG
+    Rml::Debugger::Initialise(menuData.RmlContext);
+    Rml::Lua::Initialise();
+    Rml::Debugger::SetVisible(false);
+#endif
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window , &bbwidth, &bbheight);
     int count = 0;
@@ -613,6 +716,32 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_Log("Display modes: %i ",count);
     SDL_Log("Window size: %ix%i", data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
+
+    data.inMainMenu = true;
+
+
+    menuData.documents["main_menu"] = menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
+
+    if (!menuData.documents["main_menu"]) {
+        SDL_Log("Failed to load main menu RML document");
+        return;
+    }
+
+    Rml::Element* playButton = menuData.documents["main_menu"]->GetElementById("play_button");
+    Rml::Element* optionsButton = menuData.documents["main_menu"]->GetElementById("options_button");
+    Rml::Element* quitButton = menuData.documents["main_menu"]->GetElementById("quit_button");
+
+
+    if (playButton)
+        playButton->AddEventListener("click", new PlayButtonListener(this));
+
+    if (optionsButton)
+        optionsButton->AddEventListener("click", new OptionsButtonListener(this));
+
+    if (quitButton)
+        quitButton->AddEventListener("click", new QuitButtonListener(this));
+
+    menuData.documents["main_menu"]->Show();
 }
 
 void Window::Destroy() {
