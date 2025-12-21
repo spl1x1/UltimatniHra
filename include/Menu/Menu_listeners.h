@@ -160,4 +160,24 @@ public:
     void ProcessEvent(Rml::Event& event) override;
 };
 
+class ConsoleEventListener : public Rml::EventListener {
+public:
+    void ProcessEvent(Rml::Event& event) override;
+
+private:
+    void ProcessCommand(const Rml::String& command);
+};
+
+class ConsoleHandler {
+public:
+    ConsoleHandler();
+    ~ConsoleHandler();
+    void Setup(Rml::ElementDocument* console_doc);
+
+    static ConsoleHandler& GetInstance();
+
+private:
+    ConsoleEventListener listener;
+    Rml::ElementDocument* document;
+};
 #endif //ULTIMATNIHRA_MENU_LISTENERS_H
