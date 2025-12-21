@@ -8,6 +8,7 @@ project(
 set(CMAKE_CXX_STANDARD 20)
 
 include(cmake/FetchDependecies.cmake)
+include(cmake/ImguiDependency.cmake)
 
 add_custom_target(copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
