@@ -4,17 +4,15 @@ include_directories("/imgui")
 file(GLOB SOURCES
         "imgui/*.cpp"
         "imgui/*.h"
+        "imgui/backends/imgui_impl_sdl3.h"
+        "imgui/backends/imgui_impl_sdl3.cpp"
+        "imgui/backends/imgui_impl_sdlrenderer3.h"
+        "imgui/backends/imgui_impl_sdlrenderer3.cpp"
 )
 
-add_library(imgui STATIC
-        ${SOURCES}
-        )
+include_directories("imgui")
+include_directories("imgui/backends")
 
-add_library(ImguiDependency
-        INTERFACE
-        )
-target_link_libraries(ImguiDependency INTERFACE
-        imgui
-        imgui
-        imgui_backends
+add_library(ImguiDependency STATIC
+        ${SOURCES}
         )

@@ -24,9 +24,10 @@ void Application::init() const{
 
 void Application::run() const {
     try {
-        while (gameWindow->data.inited) {
+        while (gameWindow->data.Running) {
             gameWindow->tick();
         }
+        Rml::Shutdown();
     }
     catch (const std::exception& e) {
         std::cerr << "Exception caught: " << e.what() << std::endl;

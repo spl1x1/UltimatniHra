@@ -10,11 +10,14 @@
 // PlayButtonListener
 // ===================================================================
 
-PlayButtonListener::PlayButtonListener(Window* win) : window(win) {}
+PlayButtonListener::PlayButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void PlayButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Play clicked!");
-    window->menuData.documents["main_menu"]->Hide();
+    auto documents = uiComponent->getDocuments();
+    if (documents->contains("main_menu")) {
+        documents->at("main_menu")->Hide();
+    }
     window->server->setSeed(0); // TODO: get seed from user input
     window->initGame();
 }
@@ -23,19 +26,18 @@ void PlayButtonListener::ProcessEvent(Rml::Event&) {
 // BackButtonListener
 // ===================================================================
 
-BackButtonListener::BackButtonListener(Window* win) : window(win) {}
+BackButtonListener::BackButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void BackButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Back clicked!");
+    auto documents = uiComponent->getDocuments();
 
-    if (window->menuData.documents["options_menu"]) {
-        window->menuData.documents["options_menu"]->Hide();
-        window->menuData.documents["options_menu"]->Close();
-        window->menuData.documents.erase("options_menu");
+    if (documents->contains("options_menu")) {
+        documents->at("options_menu")->Hide();
     }
 
-    if (window->menuData.documents["main_menu"]) {
-        window->menuData.documents["main_menu"]->Show();
+    if (documents->contains("main_menu")) {
+        documents->at("main_menu")->Show();
     }
 }
 
@@ -43,11 +45,17 @@ void BackButtonListener::ProcessEvent(Rml::Event&) {
 // ToggleDropdownListener
 // ===================================================================
 
-ToggleDropdownListener::ToggleDropdownListener(Window* win) : window(win) {}
+ToggleDropdownListener::ToggleDropdownListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void ToggleDropdownListener::ProcessEvent(Rml::Event&) {
-    Rml::Element* dropdown = window->menuData.documents["options_menu"]->GetElementById("resolutionDropdown");
-    if (dropdown) {
+    auto documents = uiComponent->getDocuments();
+
+    if (!documents->contains("options_menu")) {
+        SDL_Log("Options menu document not found!");
+        return;
+    }
+
+    if (Rml::Element* dropdown = documents->at("options_menu")->GetElementById("resolutionDropdown")) {
         // Check if it has the 'show' class
         if (dropdown->IsClassSet("show")) {
             // Remove the 'show' class
@@ -63,16 +71,22 @@ void ToggleDropdownListener::ProcessEvent(Rml::Event&) {
 // SetResolutionListener
 // ===================================================================
 
-SetResolutionListener::SetResolutionListener(Window* win, int w, int h)
-    : window(win), width(w), height(h) {}
+SetResolutionListener::SetResolutionListener(Window* win, UIComponent* ui, int w, int h)
+    : window(win), uiComponent(ui),width(w), height(h) {}
 
 void SetResolutionListener::ProcessEvent(Rml::Event&) {
-    window->menuData.resolutionWidth = width;
-    window->menuData.resolutionHeight = height;
+    auto data = uiComponent->getMenuData();
+    data.resolutionWidth = width;
+    data.resolutionHeight = height;
+    uiComponent->setMenuData(data);
 
     // Update button text
-    Rml::Element* button = window->menuData.documents["options_menu"]->GetElementById("resolutionButton");
-    if (button) {
+    auto documents = uiComponent->getDocuments();
+    if (!documents->contains("options_menu")) {
+        SDL_Log("Options menu document not found!");
+        return;
+    }
+    if (Rml::Element* button = documents->at("options_menu")->GetElementById("resolutionButton")) {
         button->SetInnerRML(std::to_string(width) + " x " + std::to_string(height));
     }
 
@@ -82,8 +96,7 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
     // SDL_SetWindowSize(window->sdlWindow, width, height);
 
     // Close dropdown
-    Rml::Element* dropdown = window->menuData.documents["options_menu"]->GetElementById("resolutionDropdown");
-    if (dropdown) {
+    if (Rml::Element* dropdown = documents->at("options_menu")->GetElementById("resolutionDropdown")) {
         dropdown->SetClass("dropdown-content", true);
         dropdown->SetClass("show", false);
     }
@@ -94,17 +107,24 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
 // MasterVolumeListener
 // ===================================================================
 
-MasterVolumeListener::MasterVolumeListener(Window* win) : window(win) {}
+MasterVolumeListener::MasterVolumeListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void MasterVolumeListener::ProcessEvent(Rml::Event& event) {
-    Rml::Element* slider = event.GetCurrentElement();
-    if (slider) {
+    if (Rml::Element* slider = event.GetCurrentElement()) {
         float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
-        window->menuData.masterVolume = static_cast<int>(value);
+        auto data = uiComponent->getMenuData();
+
+        data.masterVolume = static_cast<int>(value);
+        uiComponent->setMenuData(data);
 
         // Update label
-        Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("masterLabel");
-        if (label) {
+        auto documents = uiComponent->getDocuments();
+        if (!documents->contains("options_menu")) {
+            SDL_Log("Options menu document not found!");
+            return;
+        }
+
+        if (Rml::Element* label = documents->at("options_menu")->GetElementById("masterLabel")) {
             label->SetInnerRML("Master Volume: " + std::to_string(static_cast<int>(value)) + "%");
         }
 
@@ -117,17 +137,22 @@ void MasterVolumeListener::ProcessEvent(Rml::Event& event) {
 // MusicVolumeListener
 // ===================================================================
 
-MusicVolumeListener::MusicVolumeListener(Window* win) : window(win) {}
+MusicVolumeListener::MusicVolumeListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void MusicVolumeListener::ProcessEvent(Rml::Event& event) {
-    Rml::Element* slider = event.GetCurrentElement();
-    if (slider) {
+    if (Rml::Element* slider = event.GetCurrentElement()) {
         float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
-        window->menuData.musicVolume = static_cast<int>(value);
+        auto data = uiComponent->getMenuData();
+        data.musicVolume = static_cast<int>(value);
+        uiComponent->setMenuData(data);
 
         // Update label
-        Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("musicLabel");
-        if (label) {
+        auto documents = uiComponent->getDocuments();
+        if (!documents->contains("options_menu")) {
+            SDL_Log("Options menu document not found!");
+            return;
+        }
+        if (Rml::Element* label = documents->at("options_menu")->GetElementById("musicLabel")) {
             label->SetInnerRML("Music Volume: " + std::to_string(static_cast<int>(value)) + "%");
         }
 
@@ -140,17 +165,23 @@ void MusicVolumeListener::ProcessEvent(Rml::Event& event) {
 // SFXVolumeListener
 // ===================================================================
 
-SFXVolumeListener::SFXVolumeListener(Window* win) : window(win) {}
+SFXVolumeListener::SFXVolumeListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void SFXVolumeListener::ProcessEvent(Rml::Event& event) {
-    Rml::Element* slider = event.GetCurrentElement();
-    if (slider) {
+    if (Rml::Element* slider = event.GetCurrentElement()) {
         float value = std::stof(slider->GetAttribute<Rml::String>("value", "100"));
-        window->menuData.sfxVolume = static_cast<int>(value);
+        auto data = uiComponent->getMenuData();
+        data.sfxVolume = static_cast<int>(value);
+        uiComponent->setMenuData(data);
 
         // Update label
-        Rml::Element* label = window->menuData.documents["options_menu"]->GetElementById("sfxLabel");
-        if (label) {
+        auto documents = uiComponent->getDocuments();
+
+        if (!documents->contains("options_menu")) {
+            SDL_Log("Options menu document not found!");
+            return;
+        }
+        if (Rml::Element* label = documents->at("options_menu")->GetElementById("sfxLabel")) {
             label->SetInnerRML("SFX Volume: " + std::to_string(static_cast<int>(value)) + "%");
         }
 
@@ -163,71 +194,66 @@ void SFXVolumeListener::ProcessEvent(Rml::Event& event) {
 // OptionsButtonListener
 // ===================================================================
 
-OptionsButtonListener::OptionsButtonListener(Window* win) : window(win) {}
+OptionsButtonListener::OptionsButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void OptionsButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Options clicked!");
-    window->menuData.documents["options_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/options_menu.rml");
+    const auto documents = uiComponent->getDocuments();
 
-    if (!window->menuData.documents["options_menu"]) {
-        SDL_Log("Failed to load options_menu.rml");
+    if (!documents->contains("options_menu")) {
+        SDL_Log("Options menu document not found!");
         return;
     }
-
-    Rml::Element* backButton = window->menuData.documents["options_menu"]->GetElementById("backButton");
-    if (backButton) {
-        backButton->AddEventListener(Rml::EventId::Click, new BackButtonListener(window));
+    if (Rml::Element* backButton = documents->at("options_menu")->GetElementById("backButton")) {
+        backButton->AddEventListener(Rml::EventId::Click, new BackButtonListener(window, uiComponent));
     }
 
-    Rml::Element* resButton = window->menuData.documents["options_menu"]->GetElementById("resolutionButton");
-    if (resButton) {
-        resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window));
+    if (Rml::Element* resButton = documents->at("options_menu")->GetElementById("resolutionButton")) {
+        resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window, uiComponent));
     }
 
     // Resolution options
-    Rml::Element* res640 = window->menuData.documents["options_menu"]->GetElementById("res640x360");
-    if (res640) {
-        res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 640, 360));
+    if (Rml::Element* res640 = documents->at("options_menu")->GetElementById("res640x360")) {
+        res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window,uiComponent,640, 360));
     }
 
-    Rml::Element* res1280 = window->menuData.documents["options_menu"]->GetElementById("res1280x720");
-    if (res1280) {
-        res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1280, 720));
+    if (Rml::Element* res1280 = documents->at("options_menu")->GetElementById("res1280x720")) {
+        res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window,uiComponent, 1280, 720));
     }
-    Rml::Element* res1920 = window->menuData.documents["options_menu"]->GetElementById("res1920x1080");
-    if (res1920) {
-        res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, 1920, 1080));
+    if (Rml::Element* res1920 = documents->at("options_menu")->GetElementById("res1920x1080")) {
+        res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window,uiComponent,1920, 1080));
     }
 
     // Volume sliders
-    Rml::Element* masterSlider = window->menuData.documents["options_menu"]->GetElementById("masterSlider");
-    if (masterSlider) {
-        masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window));
+    if (Rml::Element* masterSlider =documents->at("options_menu")->GetElementById("masterSlider")) {
+        masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window, uiComponent));
     }
 
-    Rml::Element* musicSlider = window->menuData.documents["options_menu"]->GetElementById("musicSlider");
-    if (musicSlider) {
-        musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window));
+    if (Rml::Element* musicSlider = documents->at("options_menu")->GetElementById("musicSlider")) {
+        musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window,uiComponent));
     }
 
-    Rml::Element* sfxSlider = window->menuData.documents["options_menu"]->GetElementById("sfxSlider");
-    if (sfxSlider) {
-        sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window));
+    if (Rml::Element* sfxSlider = documents->at("options_menu")->GetElementById("sfxSlider")) {
+        sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window, uiComponent));
     }
 
-    window->menuData.documents["main_menu"]->Hide();
-    window->menuData.documents["options_menu"]->Show();
+    if (!documents->contains("main_menu")) {
+        SDL_Log("Main menu document not found!");
+        return;
+    }
+    documents->at("main_menu")->Hide();
+    documents->at("options_menu")->Show();
 }
 
 // ===================================================================
 // QuitButtonListener
 // ===================================================================
 
-QuitButtonListener::QuitButtonListener(Window* win) : window(win) {}
+QuitButtonListener::QuitButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void QuitButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Quit clicked!");
-    window->data.inited = false;
+    window->data.Running = false;
 }
 
 // ===================================================================
@@ -235,18 +261,23 @@ void QuitButtonListener::ProcessEvent(Rml::Event&) {
 // ===================================================================
 
 // ResumeButtonListener
-ResumeButtonListener::ResumeButtonListener(Window* win) : window(win) {}
+ResumeButtonListener::ResumeButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void ResumeButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Resume clicked!");
-    window->menuData.inGameMenu = false;
-    if (window->menuData.documents["pause_menu"]) {
-        window->menuData.documents["pause_menu"]->Hide();
+
+    auto data = uiComponent->getMenuData();
+    data.inGameMenu = false;
+    uiComponent->setMenuData(data);
+
+    auto documents = uiComponent->getDocuments();
+    if (documents->contains("pause_menu")) {
+        documents->at("pause_menu")->Hide();
     }
 }
 
 // PauseSettingsButtonListener
-PauseSettingsButtonListener::PauseSettingsButtonListener(Window* win) : window(win) {}
+PauseSettingsButtonListener::PauseSettingsButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui) {}
 
 void PauseSettingsButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Pause Settings clicked!");
@@ -254,40 +285,37 @@ void PauseSettingsButtonListener::ProcessEvent(Rml::Event&) {
 }
 
 // MainMenuButtonListener
-MainMenuButtonListener::MainMenuButtonListener(Window* win) : window(win) {}
+MainMenuButtonListener::MainMenuButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui){}
 
 void MainMenuButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Returning to Main Menu!");
+    auto documents = uiComponent->getDocuments();
 
     // Skrýt pause menu
-    if (window->menuData.documents["pause_menu"]) {
-        window->menuData.documents["pause_menu"]->Hide();
-        window->menuData.documents["pause_menu"]->Close();
-        window->menuData.documents.erase("pause_menu");
+    if (documents->contains("pause_menu")) {
+        documents->at("pause_menu")->Hide();
     }
 
     // Skrýt temp menu (in-game UI)
-    if (window->menuData.documents["temp"]) {
-        window->menuData.documents["temp"]->Hide();
+    if (documents->contains("temp")) {
+        documents->at("temp")->Hide();
     }
 
-    window->menuData.inGameMenu = false;
-    window->data.inMainMenu = true;
-    window->data.Running = false;
+    auto data = uiComponent->getMenuData();
+   data.inGameMenu = false;
+    window->data.mainScreen = true;
+    uiComponent->setMenuData(data);
 
     // Zobrazit hlavní menu
-    if (!window->menuData.documents["main_menu"]) {
-        window->menuData.documents["main_menu"] = window->menuData.RmlContext->LoadDocument("assets/ui/main_menu.rml");
-    }
-    if (window->menuData.documents["main_menu"]) {
-        window->menuData.documents["main_menu"]->Show();
+    if (documents->contains("main_menu")) {
+        documents->at("main_menu")->Show();
     }
 }
 
 // QuitGameButtonListener
-QuitGameButtonListener::QuitGameButtonListener(Window* win) : window(win) {}
+QuitGameButtonListener::QuitGameButtonListener(Window* win, UIComponent* ui) : window(win), uiComponent(ui){}
 
 void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Quit Game clicked!");
-    window->data.inited = false;
+    window->data.Running = false;
 }

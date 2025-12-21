@@ -9,8 +9,12 @@
 
 #include <SDL3/SDL_render.h>
 
+#include "imgui.h"
 #include "RmlUi_Platform_SDL.h"
 #include "RmlUi_Renderer_SDL.h"
+
+
+class Window;
 
 class UIComponent {
 public:
@@ -21,44 +25,67 @@ public:
         int musicVolume{100};
         int sfxVolume{100};
         bool inGameMenu{false};
+        bool showImgui{false};
+        bool debugOverlay{false};
     };
 
 private:
-    static int instanceCount;
-    static std::unique_ptr<UIComponent> instance;
     std::unique_ptr<Rml::Context> RmlContext{};
     std::unique_ptr<Rml::RenderInterface> RmlRenderer{};
     std::unique_ptr<SystemInterface_SDL> RmlSystem{};
     std::unordered_map<std::string, std::unique_ptr<Rml::ElementDocument>> documents{};
 
-    std::shared_ptr<SDL_Renderer> _renderer{};
-    std::shared_ptr<SDL_Window> _window{};
+    SDL_Renderer* renderer{};
+    SDL_Window* window{};
+    Window* windowClass{};
 
-    void destroy();
-    void init();
+    std::string docDirectory{"assets/ui/"};
+    std::string fontDirectory{"assets/fonts/"};
+    MenuData menuData{};
+    ImVec4 clear_color;
+    Uint64 DeltaTime{0};
+
+    void RegisterButtonBindings(Window *window);
 
 public:
 
+    bool exitEventTriggered{false};
+    bool blockInput{false};
+
     //Methods
-    void ReloadDocument(const char* docPath);
-    void ReloadAllDocuments();
+    void LoadDocumentsFromDirectory(const std::string& docDirectory); // Loads all .rml files from the given directory with hot reload support
+    void LoadDocumentsFromDirectory(); // Loads all .rml files from the set document directory
+    static void LoadFaceFromDirectory(const std::string& fontDirectory);
+    void LoadFaceFromDirectory() const; // Loads all font faces from the set font directory
+    void HandleEvent(const SDL_Event *e);
+    void Render();
+
+    static void LoadFontFace(const std::string& fontPath);
+    void LoadDocument(const std::string &docPath);
+    void ReloadDocument(const std::string &docPath);
+    void Init();
 
     //Constructors and destructors
-    UIComponent(UIComponent const &other) = delete
-    ~UIComponent();
-    UIComponent(SDL_Renderer* renderer, SDL_Window* window);
+    UIComponent(UIComponent const &other) = delete;
+    void operator=(UIComponent const &other) = delete;
 
-    static void Initialize(SDL_Renderer *renderer, SDL_Window *window);
+    UIComponent(SDL_Renderer* renderer, SDL_Window* window, Window *windowClass);
+    ~UIComponent();
 
     //Getters
-    Rml::Context* getRmlContext();
-    Rml::RenderInterface* getRmlRenderer();
-    Rml::SystemInterface* getRmlSystem();
-    std::unordered_map<std::string, std::unique_ptr<Rml::ElementDocument>>* getDocuments();
-    MenuData& getMenuData();
+    Rml::Context* getRmlContext() const;
+    Rml::RenderInterface* getRmlRenderer() const;
+    Rml::SystemInterface* getRmlSystem() const;
+    std::unordered_map<std::string, std::unique_ptr<Rml::ElementDocument>>* getDocuments(); //Returns pointer to allow modification
 
-    //Singleton Getters
-    static UIComponent* getInstance();
+    MenuData getMenuData() const;
+    std::string getDocumentDirectory() const;
+    std::string getFontDirectory() const;
+
+    //Setters
+    void setDocDirectory(const std::string& directory);
+    void setMenuData(const MenuData& menuData);
+    void setFontDirectory(const std::string& fontDirectory);
 };
 
 #endif //UICOMPONENT_H
