@@ -10,40 +10,15 @@
 #include <unordered_map>
 #include <RmlUi/Core.h>
 
-#include "../Menu/RmlUi_Platform_SDL.h"
-#include "../Menu/RmlUi_Renderer_SDL.h"
-#include "../MACROS.h"
+
+#include "../Application/MACROS.h"
+#include "../Menu/UIComponent.h"
 #include "../Sprites/Sprite.hpp"
-#include "../Sprites/WaterSprite.hpp"
 #include "../Server/Server.h"
 
-
-struct MenuData {
-    Rml::Context* RmlContext;
-    RenderInterface_SDL* render_interface;
-    SystemInterface_SDL* system_interface;
-    std::unordered_map<std::string, Rml::ElementDocument*> documents;
-    int resolutionWidth = 640;
-    int resolutionHeight = 360;
-    int masterVolume = 100;
-    int musicVolume = 100;
-    int sfxVolume = 100;
-
-    bool inGameMenu = false;
-
-    enum class DisplayMode {
-        WINDOWED,
-        BORDERLESS_FULLSCREEN,
-        FULLSCREEN
-    };
-    DisplayMode currentDisplayMode = DisplayMode::WINDOWED;
-
-
-};
-
 struct WindowData {
-    SDL_FRect *cameraRect = nullptr;
-    SDL_FRect *cameraWaterRect = nullptr;
+    std::unique_ptr<SDL_FRect> cameraRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
+    std::unique_ptr<SDL_FRect> cameraWaterRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
 
     float playerAngle = 0.0f;
 
@@ -54,10 +29,12 @@ struct WindowData {
     SDL_Renderer* Renderer;
     SDL_Event event;
 
-    bool inited = false;
-    bool Running;
-    bool inMainMenu;
-    bool inGameMenu;
+    std::unique_ptr<UIComponent> uiComponent = nullptr;
+
+    bool initialized{false};
+    bool Running{false};
+    bool wasLoaded{false};
+    bool mainScreen{true};
 
     std::string WINDOW_TITLE;
     int WINDOW_WIDTH;
@@ -66,14 +43,7 @@ struct WindowData {
     Uint64 last;
 };
 
-struct DebugMenu{
-    bool showDebug = false;
-    Rml::DataModelHandle dataModel;
-};
-
 class Window {
-    WaterSprite *waterSprite;
-
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
@@ -82,27 +52,20 @@ class Window {
     void loadMarkerSurface();
     void markOnMap(float x, float y);
     void handlePlayerInput() const;
-    void renderPlayer(Sprite &playerSprite);
+    void renderPlayer(ISprite &playerSprite);
 
-    void renderMainMenu();
-    void HandleMainMenuEvent(const SDL_Event* e);
     void HandleEvent(const SDL_Event* e);
     void advanceFrame();
-    void Destroy();
 
-    DebugMenu debugMenu;
+    Rml::DataModelHandle dataModel;
 
 public:
     std::shared_ptr<Server> server = nullptr;
 
     WindowData data;
-    MenuData menuData;
 
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
-    void applyResolution(int width, int height);
-    void applyDisplayMode(MenuData::DisplayMode mode);
-    void updateOptionsMenuScale();
 
     //parseToRenderer() momentalne nepouzivane
     void parseToRenderer(const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
@@ -113,12 +76,13 @@ public:
     bool CreateTextureFromSurface(const std::string& SurfacePath, const std::string& TexturePath);
     void loadSurfacesFromDirectory(const std::string& directoryPath);
     void loadTexturesFromDirectory(const std::string& directoryPath);
-    void initPauseMenu();
     void initDebugMenu();
+    void changeResolution(int width, int height) const;
 
     void tick();
     void initGame();
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
+    void Destroy();
     ~Window();
 };
 

@@ -6,9 +6,11 @@
 #define ULTIMATNIHRA_MENU_LISTENERS_H
 
 #include <RmlUi/Core.h>
-#include "../Window/Window.h"
+
+#include "UIComponent.h"
+
+// Forward declaration
 class Window;
-struct MenuData;
 
 /**
  * @brief Event listener pro tlačítko Play v hlavním menu
@@ -16,7 +18,8 @@ struct MenuData;
 class PlayButtonListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit PlayButtonListener(Window* win);
+    UIComponent* uiComponent;
+    explicit PlayButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -26,13 +29,8 @@ public:
 class BackButtonListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit BackButtonListener(Window* win);
-    void ProcessEvent(Rml::Event& event) override;
-};
-class SettingsBackButtonListener : public Rml::EventListener {
-public:
-    Window* window;
-    explicit SettingsBackButtonListener(Window* win);
+    UIComponent* uiComponent;
+    explicit BackButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -40,10 +38,10 @@ public:
  * @brief Event listener pro toggle dropdown menu s rozlišeními
  */
 class ToggleDropdownListener : public Rml::EventListener {
-    Window* window;
-    std::string dropdownId;
 public:
-    ToggleDropdownListener(Window* win, const std::string& id);
+    Window* window;
+    UIComponent* uiComponent;
+    explicit ToggleDropdownListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -53,16 +51,10 @@ public:
 class SetResolutionListener : public Rml::EventListener {
 public:
     Window* window;
+    UIComponent* uiComponent;
     int width;
     int height;
-    SetResolutionListener(Window* win, int w, int h);
-    void ProcessEvent(Rml::Event& event) override;
-};
-class SetDisplayModeListener : public Rml::EventListener {
-    Window* window;
-    MenuData::DisplayMode mode;
-public:
-    SetDisplayModeListener(Window* win, MenuData::DisplayMode m);
+    SetResolutionListener(Window* win, UIComponent* ui, int w, int h);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -72,7 +64,8 @@ public:
 class MasterVolumeListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit MasterVolumeListener(Window* win);
+    UIComponent* uiComponent;
+    explicit MasterVolumeListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -82,7 +75,8 @@ public:
 class MusicVolumeListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit MusicVolumeListener(Window* win);
+    UIComponent* uiComponent;
+    explicit MusicVolumeListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -92,7 +86,8 @@ public:
 class SFXVolumeListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit SFXVolumeListener(Window* win);
+    UIComponent* uiComponent;
+    explicit SFXVolumeListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -102,7 +97,8 @@ public:
 class OptionsButtonListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit OptionsButtonListener(Window* win);
+    UIComponent* uiComponent;
+    explicit OptionsButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -112,7 +108,8 @@ public:
 class QuitButtonListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit QuitButtonListener(Window* win);
+    UIComponent* uiComponent;
+    explicit QuitButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -126,7 +123,8 @@ public:
 class ResumeButtonListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit ResumeButtonListener(Window* win);
+    UIComponent* uiComponent;
+    explicit ResumeButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -136,7 +134,8 @@ public:
 class PauseSettingsButtonListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit PauseSettingsButtonListener(Window* win);
+    UIComponent* uiComponent;
+    explicit PauseSettingsButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -146,7 +145,8 @@ public:
 class MainMenuButtonListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit MainMenuButtonListener(Window* win);
+    UIComponent* uiComponent;
+    explicit MainMenuButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -156,7 +156,8 @@ public:
 class QuitGameButtonListener : public Rml::EventListener {
 public:
     Window* window;
-    explicit QuitGameButtonListener(Window* win);
+    UIComponent* uiComponent;
+    explicit QuitGameButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 

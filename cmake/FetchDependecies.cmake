@@ -10,7 +10,7 @@ add_compile_definitions(RMLUI_SDL_VERSION_MAJOR=3)
 add_compile_definitions(SDL_VERSION_MAJOR=3)
 
 #sdl
-CPMAddPackage("gh:libsdl-org/SDL#a8589a8")
+CPMAddPackage("gh:libsdl-org/SDL#5b57263")
 CPMAddPackage("gh:libsdl-org/SDL_image#11154af")
 CPMAddPackage("https://download.savannah.gnu.org/releases/freetype/ft2141.zip")
 
@@ -30,10 +30,10 @@ CPMAddPackage("gh:nlohmann/json#55f9368")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
 
 # HWINFO nefunguje pro Windows
-if (UNIX)
+if (NOT WIN32)
     CPMAddPackage("gh:C-And-Cpp-Libraries/hwinfo-machine-id#cf9fa44")
     target_link_libraries(LibsBundle INTERFACE lfreist-hwinfo::hwinfo)
-else(WIN32)
+else()
     target_link_libraries(LibsBundle INTERFACE dxgi)
 endif()
 

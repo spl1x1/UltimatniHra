@@ -5,7 +5,7 @@
     </head>
 
     <body>
-    <div id ="options-container" class="options-container">
+    <div class="options-container">
         <div class="content-wrapper">
             <div class = "center">
             <h1 class = "center">Options Menu</h1></div>
@@ -19,18 +19,6 @@
                         <p id="res640x360">640 x 360</p>
                         <p id="res1280x720">1280 x 720</p>
                         <p id="res1920x1080">1920 x 1080</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Display Mode Section -->
-            <div class="section">
-                <div class="section-title">Display Mode</div>
-                <div class="dropdown">
-                    <button id="displayModeButton" class="dropbtn">Windowed</button>
-                    <div id="displayModeDropdown" class="dropdown-content">
-                        <p id="modeWindowed">Windowed</p>
-                        <p id="modeBorderless">Borderless Fullscreen</p>
-                        <p id="modeFullscreen">Fullscreen</p>
                     </div>
                 </div>
             </div>
