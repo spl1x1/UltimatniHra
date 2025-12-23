@@ -20,6 +20,7 @@
 
 
 void Window::renderMainMenu() {
+
     SDL_RenderClear(data.Renderer);
     SDL_RenderTexture(data.Renderer, textures["MainMenuBackground"], nullptr, nullptr);
     menuData.RmlContext->Update();
@@ -235,10 +236,10 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
 
         case SDL_EVENT_MOUSE_MOTION:
         {
-
-            int scaled_x = static_cast<int>(e->motion.x * scale_x);
-            int scaled_y = static_cast<int>(e->motion.y * scale_y);
-            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            menuData.RmlContext->ProcessMouseMove(
+                static_cast<int>(e->motion.x),
+                static_cast<int>(e->motion.y),
+                0);
             break;
         }
 
@@ -247,11 +248,10 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
             int button = e->button.button;
             int rml_button = button - 1;
 
-
-            int scaled_x = static_cast<int>(e->button.x * scale_x);
-            int scaled_y = static_cast<int>(e->button.y * scale_y);
-
-            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            menuData.RmlContext->ProcessMouseMove(
+                static_cast<int>(e->button.x),
+                static_cast<int>(e->button.y),
+                0);
             menuData.RmlContext->ProcessMouseButtonDown(rml_button, 0);
             break;
         }
@@ -261,18 +261,16 @@ void Window::HandleMainMenuEvent(const SDL_Event *e) {
             int button = e->button.button;
             int rml_button = button - 1;
 
-
-            int scaled_x = static_cast<int>(e->button.x * scale_x);
-            int scaled_y = static_cast<int>(e->button.y * scale_y);
-
-            menuData.RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            menuData.RmlContext->ProcessMouseMove(
+                static_cast<int>(e->button.x),
+                static_cast<int>(e->button.y),
+                0);
             menuData.RmlContext->ProcessMouseButtonUp(rml_button, 0);
             break;
         }
 
         case SDL_EVENT_KEY_DOWN: {
             const SDL_Keycode keycode = e->key.key;
-
             Rml::Input::KeyIdentifier rml_key = RmlSDL::ConvertKey(static_cast<int>(keycode));
             menuData.RmlContext->ProcessKeyDown(rml_key, 0);
 
@@ -401,7 +399,7 @@ void Window::HandleEvent(const SDL_Event *e) {
         default:
             break;
     }
-}
+};
 
 void Window::renderWaterLayer() {
     const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
@@ -426,15 +424,18 @@ void Window::advanceFrame() {
         data.cameraRect->x = coords.x - data.cameraOffsetX;
         data.cameraRect->y = coords.y - data.cameraOffsetY;
 
+
     if (data.cameraWaterRect->x > 96) data.cameraWaterRect->x -= 32;
     if (data.cameraWaterRect->x < 32) data.cameraWaterRect->x += 32;
     if (data.cameraWaterRect->y > 96) data.cameraWaterRect->y -= 32;
     if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
 
+
     SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect.get(), nullptr);
 
 #ifdef DEBUG
     data.playerAngle = server->getPlayer(0)->getAngle();
+
     SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect.get(), nullptr);
     dataModel.DirtyVariable("playerX");
         dataModel.DirtyVariable("playerY");
@@ -582,6 +583,7 @@ void Window::updateOptionsMenuScale() {
     }
 }
 void Window::applyResolution(int width, int height) {
+    // Update stored dimensions
     data.WINDOW_WIDTH = width;
     data.WINDOW_HEIGHT = height;
 
@@ -626,6 +628,7 @@ void Window::applyDisplayMode(MenuData::DisplayMode mode) {
             SDL_SetWindowSize(data.Window, displayBounds.w, displayBounds.h);
             data.WINDOW_WIDTH = displayBounds.w;
             data.WINDOW_HEIGHT = displayBounds.h;
+
             SDL_Log("Switched to Borderless Fullscreen: %dx%d",
                    displayBounds.w, displayBounds.h);
             break;
@@ -785,7 +788,6 @@ void Window::init(const std::string& title, int width, int height) {
     }
 
     menuData.render_interface = new RenderInterface_SDL(data.Renderer);
-
     menuData.system_interface = new SystemInterface_SDL();
     menuData.system_interface->SetWindow(data.Window);
 
@@ -793,6 +795,13 @@ void Window::init(const std::string& title, int width, int height) {
 
     data.uiComponent = std::make_unique<UIComponent>(data.Renderer, data.Window, this);
     data.uiComponent->getDocuments()->at("main_menu")->Show();
+
+    menuData.RmlContext = Rml::CreateContext("main",
+                                             Rml::Vector2i(GAMERESW, GAMERESH),
+                                             menuData.render_interface);
+    Rml::SetRenderInterface(menuData.render_interface);
+    Rml::SetSystemInterface(menuData.system_interface);
+    Rml::Initialise();
 
     menuData.RmlContext = Rml::CreateContext("main",
                                              Rml::Vector2i(GAMERESW, GAMERESH),

@@ -22,6 +22,18 @@
                     </div>
                 </div>
             </div>
+            <!-- Display Mode Section -->
+            <div class="section">
+                <div class="section-title">Display Mode</div>
+                <div class="dropdown">
+                    <button id="displayModeButton" class="dropbtn">Windowed</button>
+                    <div id="displayModeDropdown" class="dropdown-content">
+                        <p id="modeWindowed">Windowed</p>
+                        <p id="modeBorderless">Borderless Fullscreen</p>
+                        <p id="modeFullscreen">Fullscreen</p>
+                    </div>
+                </div>
+            </div>
 
             <!-- Audio Section -->
             <div class="section">

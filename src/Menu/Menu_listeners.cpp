@@ -5,7 +5,6 @@
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Window/Window.h"
 #include <SDL3/SDL.h>
-#include <cstdio>
 
 // ===================================================================
 // PlayButtonListener
@@ -101,6 +100,55 @@ void SetResolutionListener::ProcessEvent(Rml::Event&) {
         dropdown->SetClass("show", false);
     }
     //window->changeResolution(width,height);
+}
+
+// ===================================================================
+// SetDisplayModeListener
+// ===================================================================
+SetDisplayModeListener::SetDisplayModeListener(Window* win, MenuData::DisplayMode m)
+    : window(win), mode(m) {}
+
+void SetDisplayModeListener::ProcessEvent(Rml::Event& event) {
+    SDL_Log("Display mode change triggered");
+
+    window->menuData.currentDisplayMode = mode;
+
+    // Get the current document from the event
+    Rml::Element* target = event.GetTargetElement();
+    Rml::ElementDocument* document = target ? target->GetOwnerDocument() : nullptr;
+
+    // Update button text in the current document
+    if (document) {
+        Rml::Element* button = document->GetElementById("displayModeButton");
+        if (button) {
+            const char* modeText = "";
+            switch(mode) {
+                case MenuData::DisplayMode::WINDOWED:
+                    modeText = "Windowed";
+                    break;
+                case MenuData::DisplayMode::BORDERLESS_FULLSCREEN:
+                    modeText = "Borderless Fullscreen";
+                    break;
+                case MenuData::DisplayMode::FULLSCREEN:
+                    modeText = "Fullscreen";
+                    break;
+            }
+            button->SetInnerRML(modeText);
+        }
+    }
+
+    // Apply the display mode
+    window->applyDisplayMode(mode);
+
+    // Close dropdown in the current document
+    if (document) {
+        Rml::Element* dropdown = document->GetElementById("displayModeDropdown");
+        if (dropdown) {
+            dropdown->SetClass("dropdown-content", true);
+            dropdown->SetClass("show", false);
+        }
+    }
+    window->changeResolution(width,height);
 }
 
 // ===================================================================
