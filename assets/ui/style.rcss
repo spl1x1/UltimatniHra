@@ -47,29 +47,29 @@ thead, tbody, tfoot { display: table-row-group; }
     align-items: center;
     justify-content: center;
     height: 100%;
-    width: 640px;
-    gap: 30px;
+    width: 640dp;
+    gap: 30dp;
     align-content: center;
 }
 
 /* Buttons */
 .menu-button {
-    width: 220px;
-    min-height: 50px;
-    line-height: 50px;
+    width: 220dp;
+    min-height: 50dp;
+    line-height: 50dp;
     text-align: center;
     vertical-align: middle;
     justify-content: center;
     align-content: center;
     align-items: center;
-    font-size: 22px;
+    font-size: 22dp;
     font-weight: 600;
     color: #007BFF;
     background-color: #d3d3d3;
     align-self: center;
 
-    border-width: 2px;
-    border-radius: 12px;
+    border-width: 2dp;
+    border-radius: 12dp;
 
     cursor: pointer;
     position: relative;
@@ -77,8 +77,8 @@ thead, tbody, tfoot { display: table-row-group; }
     padding: 0;
     z-index: 0;
 }
-/* Hover effects (no transitions) */
 
+/* Hover effects (no transitions) */
 #play_button:hover {
     border-color: #00ff99;
     color: black;
@@ -86,13 +86,14 @@ thead, tbody, tfoot { display: table-row-group; }
 
 #options_button:hover {
     border-color: #0099ff;
-    color: black
+    color: black;
 }
 
 #quit_button:hover {
     border-color: #ff0066;
     color: black;
 }
+
 /*------------Options Menu------------------- */
 body {
     width: 100%;
@@ -103,7 +104,6 @@ body {
 }
 
 .options-container {
-    /*width: 100%;*/
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -115,16 +115,16 @@ body {
 .content-wrapper {
     width: 640dp;
     max-width: 100%;
-
 }
-.center{
+
+.center {
     align-content: center;
     align-self: center;
     text-align: center;
 }
 
 h1 {
-    font-size: 48dp;
+    font-size: 40dp;
     color: white;
     text-align: center;
     padding-top: 5dp;
@@ -134,10 +134,9 @@ h1 {
 }
 
 .section {
-    /*margin-bottom: 40dp;*/
     background-color: rgba(52, 73, 94, 0.8);
     padding: 15dp;
-    border-radius: 10dp;
+    /*border-radius: 10dp;*/
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -145,19 +144,18 @@ h1 {
 }
 
 .section-title {
-    font-size: 24dp;
+    font-size: 20dp;
     font-weight: bold;
     color: white;
     margin-bottom: 0dp;
     margin-top: 0dp;
-    min-width: 150dp;
+    min-width: 140dp;
 }
 
 .dropdown {
     position: relative;
     display: flex;
     flex: 1;
-    /*width: 100%;*/
 }
 
 .dropbtn {
@@ -169,6 +167,7 @@ h1 {
     width: 100%;
     text-align: center;
     border-radius: 5dp;
+    max-width: 300dp;
 }
 
 .dropbtn:hover {
@@ -205,14 +204,15 @@ h1 {
 }
 
 .slider-container {
-    margin-bottom: 30dp;
+    /*margin-bottom: 30dp;*/
 }
 
 .slider-label {
     display: block;
-    margin-bottom: 12dp;
+    margin-bottom: 6dp;
     color: white;
     font-size: 18dp;
+    width: 120dp;
 }
 
 input[type="range"] {
@@ -234,11 +234,10 @@ input[type="range"] sliderbar {
 
 /* Slider thumb (the draggable circle) styling */
 input[type="range"] sliderbar {
-    /* background-color: #45a049;*/
-    width: 15px;
-    height: 15px;
+    width: 15dp;
+    height: 15dp;
     background: #c0392b;
-    border-radius: 3px;
+    border-radius: 3dp;
     cursor: pointer;
 }
 
@@ -256,8 +255,8 @@ sliderarrowinc {
 .back-button {
     background-color: #e74c3c;
     color: white;
-    padding: 15dp 50dp;
-    font-size: 20dp;
+    padding: 10dp 50dp;
+    font-size: 15dp;
     cursor: pointer;
     border-radius: 5dp;
 }
@@ -267,41 +266,41 @@ sliderarrowinc {
 }
 
 /* Compact mode for small resolutions */
-body.compact .options-container {
+body.compact640 .options-container {
     padding: 10dp;
 }
 
-body.compact .content-wrapper {
+body.compact640 .content-wrapper {
     width: 600dp;
 }
 
-body.compact h1 {
+body.compact640 h1 {
     font-size: 32dp;
     margin-bottom: 10dp;
     padding-top: 2dp;
 }
 
-body.compact .section {
+body.compact640 .section {
     padding: 8dp;
     gap: 10dp;
 }
 
-body.compact .section-title {
+body.compact640 .section-title {
     font-size: 16dp;
     min-width: 100dp;
 }
 
-body.compact .dropbtn {
+body.compact640 .dropbtn {
     padding: 10dp 15dp;
     font-size: 14dp;
 }
 
-body.compact .dropdown-content p {
+body.compact640 .dropdown-content p {
     padding: 10dp 15dp;
     font-size: 14dp;
 }
 
-body.compact .back-button {
+body.compact640 .back-button {
     padding: 10dp 30dp;
     font-size: 16dp;
 }
