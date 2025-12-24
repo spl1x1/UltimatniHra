@@ -171,14 +171,6 @@ void UIComponent::Init() {
 void UIComponent::HandleEvent(const SDL_Event *e) {
     if (menuData.showImgui) ImGui_ImplSDL3_ProcessEvent(e);
 
-    int window_w, window_h;
-    SDL_GetWindowSizeInPixels(window, &window_w, &window_h);
-
-    float logical_w = GAMERESW;
-    float logical_h = GAMERESH;
-
-    float scale_x = logical_w / static_cast<float>(window_w);
-    float scale_y = logical_h / static_cast<float>(window_h);
 
     switch (e->type)
     {
@@ -189,10 +181,10 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
 
         case SDL_EVENT_MOUSE_MOTION:
         {
-
-            int scaled_x = static_cast<int>(e->motion.x * scale_x);
-            int scaled_y = static_cast<int>(e->motion.y * scale_y);
-            RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            RmlContext->ProcessMouseMove(
+                static_cast<int>(e->motion.x),
+                static_cast<int>(e->motion.y),
+                0);
             break;
         }
 
@@ -201,10 +193,10 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
             int button = e->button.button;
             int rml_button = button - 1;
 
-            int scaled_x = static_cast<int>(e->button.x * scale_x);
-            int scaled_y = static_cast<int>(e->button.y * scale_y);
-
-            RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            RmlContext->ProcessMouseMove(
+                static_cast<int>(e->button.x),
+                static_cast<int>(e->button.y),
+                0);
             RmlContext->ProcessMouseButtonDown(rml_button, 0);
             break;
         }
@@ -214,11 +206,10 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
             int button = e->button.button;
             int rml_button = button - 1;
 
-
-            int scaled_x = static_cast<int>(e->button.x * scale_x);
-            int scaled_y = static_cast<int>(e->button.y * scale_y);
-
-            RmlContext->ProcessMouseMove(scaled_x, scaled_y, 0);
+            RmlContext->ProcessMouseMove(
+                static_cast<int>(e->button.x),
+                static_cast<int>(e->button.y),
+                0);
             RmlContext->ProcessMouseButtonUp(rml_button, 0);
             break;
         }
@@ -243,22 +234,27 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     break;
                 }
                 case SDL_SCANCODE_ESCAPE:
-                    {
-                        if (documents.at("main_menu")->IsVisible()) break;
-                        blockInput = !blockInput;
-                        if (blockInput) {
-                            SDL_Log("Game paused, input blocked.");
-                            documents.at("pause_menu")->Show();
-                        } else {
-                            SDL_Log("Game unpaused, input unblocked.");
-                            documents.at("pause_menu")->Hide();
-                        }
-                        break;
+                {
+                    if (documents.at("main_menu")->IsVisible()) break;
+                    blockInput = !blockInput;
+                    if (blockInput) {
+                        SDL_Log("Game paused, input blocked.");
+                        documents.at("pause_menu")->Show();
+                    } else {
+                        SDL_Log("Game unpaused, input unblocked.");
+                        documents.at("pause_menu")->Hide();
                     }
+                    break;
+                }
                 default:
                     break;
             }
 #endif
+            break;
+        }
+
+        case SDL_EVENT_TEXT_INPUT: {
+            RmlContext->ProcessTextInput(e->text.text);
             break;
         }
 
@@ -337,4 +333,5 @@ void UIComponent::RegisterButtonBindings(Window* window) {
         mainMenuButton->AddEventListener(Rml::EventId::Click, new MainMenuButtonListener(window,this));
     if (Rml::Element* quitGameButton = documents.at("pause_menu")->GetElementById("quit_game_button"))
         quitGameButton->AddEventListener(Rml::EventId::Click, new QuitGameButtonListener(window,this));
+
 }

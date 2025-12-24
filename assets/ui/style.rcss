@@ -124,7 +124,7 @@ body {
 }
 
 h1 {
-    font-size: 48dp;
+    font-size: 40dp;
     color: white;
     text-align: center;
     padding-top: 5dp;
@@ -136,7 +136,7 @@ h1 {
 .section {
     background-color: rgba(52, 73, 94, 0.8);
     padding: 15dp;
-    border-radius: 10dp;
+    /*border-radius: 10dp;*/
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -144,12 +144,12 @@ h1 {
 }
 
 .section-title {
-    font-size: 24dp;
+    font-size: 20dp;
     font-weight: bold;
     color: white;
     margin-bottom: 0dp;
     margin-top: 0dp;
-    min-width: 150dp;
+    min-width: 140dp;
 }
 
 .dropdown {
@@ -167,6 +167,7 @@ h1 {
     width: 100%;
     text-align: center;
     border-radius: 5dp;
+    max-width: 300dp;
 }
 
 .dropbtn:hover {
@@ -203,14 +204,15 @@ h1 {
 }
 
 .slider-container {
-    margin-bottom: 30dp;
+    /*margin-bottom: 30dp;*/
 }
 
 .slider-label {
     display: block;
-    margin-bottom: 12dp;
+    margin-bottom: 6dp;
     color: white;
     font-size: 18dp;
+    width: 120dp;
 }
 
 input[type="range"] {
@@ -253,8 +255,8 @@ sliderarrowinc {
 .back-button {
     background-color: #e74c3c;
     color: white;
-    padding: 15dp 50dp;
-    font-size: 20dp;
+    padding: 10dp 50dp;
+    font-size: 15dp;
     cursor: pointer;
     border-radius: 5dp;
 }

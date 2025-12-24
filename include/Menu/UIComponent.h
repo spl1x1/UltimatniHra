@@ -8,6 +8,9 @@
 #include <RmlUi/Core/Context.h>
 
 #include <SDL3/SDL_render.h>
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 
 #include "imgui.h"
 #include "RmlUi_Platform_SDL.h"
@@ -15,6 +18,12 @@
 
 
 class Window;
+
+enum class DisplayMode {
+    WINDOWED,
+    BORDERLESS_FULLSCREEN,
+    FULLSCREEN
+};
 
 class UIComponent {
 public:

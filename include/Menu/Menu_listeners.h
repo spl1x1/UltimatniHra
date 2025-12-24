@@ -8,6 +8,7 @@
 #include <RmlUi/Core.h>
 
 #include "UIComponent.h"
+#include "../Window/Window.h"
 
 // Forward declaration
 class Window;
@@ -31,6 +32,14 @@ public:
     Window* window;
     UIComponent* uiComponent;
     explicit BackButtonListener(Window* win, UIComponent* ui);
+    void    ProcessEvent(Rml::Event& event) override;
+};
+
+class SettingsBackButtonListener : public Rml::EventListener {
+public:
+    Window* window;
+    UIComponent* uiComponent;
+    explicit SettingsBackButtonListener(Window* win, UIComponent* ui);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -41,7 +50,8 @@ class ToggleDropdownListener : public Rml::EventListener {
 public:
     Window* window;
     UIComponent* uiComponent;
-    explicit ToggleDropdownListener(Window* win, UIComponent* ui);
+    std::string dropdownId;
+    explicit ToggleDropdownListener(Window* win, UIComponent* ui, const std::string &id);
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -55,6 +65,16 @@ public:
     int width;
     int height;
     SetResolutionListener(Window* win, UIComponent* ui, int w, int h);
+    void ProcessEvent(Rml::Event& event) override;
+};
+
+class SetDisplayModeListener : public Rml::EventListener {
+public:
+    Window* window;
+    UIComponent* uiComponent;
+    DisplayMode mode;
+
+    SetDisplayModeListener(Window* win, UIComponent* ui, DisplayMode m);
     void ProcessEvent(Rml::Event& event) override;
 };
 

@@ -33,7 +33,7 @@
 .pause-title {
     font-size: 36px;
     color: #ffffff;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
     text-align: center;
 }
 

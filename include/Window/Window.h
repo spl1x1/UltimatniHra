@@ -35,6 +35,8 @@ struct WindowData {
     bool Running{false};
     bool wasLoaded{false};
     bool mainScreen{true};
+    bool inMainMenu{true};
+    bool inited{false};
 
     std::string WINDOW_TITLE;
     int WINDOW_WIDTH;
@@ -49,12 +51,14 @@ class Window {
 
     void renderWaterLayer();
 
+    void renderMainMenu();
+
     void loadMarkerSurface();
     void markOnMap(float x, float y);
     void handlePlayerInput() const;
     void renderPlayer(ISprite &playerSprite);
 
-    void HandleEvent(const SDL_Event* e);
+    void HandleEvent(const SDL_Event* e) const;
     void advanceFrame();
 
     Rml::DataModelHandle dataModel;
@@ -67,13 +71,25 @@ public:
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, SDL_Surface*> surfaces;
 
-    void transformMouseCoordinates(int& mouseX, int& mouseY);
-    void getLetterboxTransform(int& offsetX, int& offsetY,float& scaleX, float& scaleY);
+    struct MenuDataCompat {
+        Rml::Context* RmlContext{nullptr};
+        std::unordered_map<std::string, Rml::ElementDocument*> documents;
+        RenderInterface_SDL* render_interface{nullptr};
+        SystemInterface_SDL* system_interface{nullptr};
+        int resolutionWidth{640};
+        int resolutionHeight{360};
+        int masterVolume{100};
+        int musicVolume{100};
+        int sfxVolume{100};
+        bool inGameMenu{false};
+
+        DisplayMode currentDisplayMode{DisplayMode::WINDOWED};  // Use the shared enum
+    } menuData;
+
+    // void transformMouseCoordinates(int& mouseX, int& mouseY);
+    // void getLetterboxTransform(int& offsetX, int& offsetY,float& scaleX, float& scaleY);
     void handleEvent(SDL_Event& event);
 
-    void transformMouseCoordinates(int& mouseX, int& mouseY);
-    void getLetterboxTransform(int& offsetX, int& offsetY,float& scaleX, float& scaleY);
-    void handleEvent(SDL_Event& event);
 
     //parseToRenderer() momentalne nepouzivane
     void parseToRenderer(const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
@@ -85,9 +101,22 @@ public:
     void loadSurfacesFromDirectory(const std::string& directoryPath);
     void loadTexturesFromDirectory(const std::string& directoryPath);
     void initDebugMenu();
+
+    static void initPauseMenu();
+
+    void HandleMainMenuEvent(const SDL_Event *e) const;
+
     void changeResolution(int width, int height) const;
+    void applyResolution(int width, int height);
+    void applyDisplayMode(DisplayMode mode);
+
+    void saveConfig();
+    void loadConfig();
 
     void tick();
+
+    void updateOptionsMenuScale();
+
     void initGame();
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
     void Destroy();
