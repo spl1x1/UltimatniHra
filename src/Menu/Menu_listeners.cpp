@@ -547,6 +547,80 @@ void ConsoleEventListener::ProcessEvent(Rml::Event& event) {
 void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
     printf("Console command: %s\n", command.c_str());
     //TODO: @LukasKaplanek logika pak sem
+    std::string cmd = command.c_str();
+
+    if (cmd.empty() || cmd[0] != '/') {
+        printf("Error: Commands must start with '/'\n");
+        return;
+    }
+
+    cmd = cmd.substr(1);
+
+    size_t spacePos = cmd.find(' ');
+    std::string commandName = (spacePos != std::string::npos) ? cmd.substr(0, spacePos) : cmd;
+    std::string args = (spacePos != std::string::npos) ? cmd.substr(spacePos + 1) : "";
+
+    if (commandName == "rmlshow") {
+        if (args.empty()) {
+            printf("Usage: /rmlshow <document-name>\n");
+            printf("Example: /rmlshow pause_menu\n");
+            return;
+        }
+
+        if (window) {
+            auto documents = window->data.uiComponent->getDocuments();
+
+            if (documents->contains(args)) {
+                documents->at(args)->Show();
+                printf("Shown document: %s\n", args.c_str());
+            } else {
+                printf("Error: Document '%s' not found\n", args.c_str());
+                printf("Available documents:\n");
+                for (const auto& doc : *documents) {
+                    printf("  - %s\n", doc.first.c_str());
+                }
+            }
+        }
+    }
+    else if (commandName == "rmlhide") {
+        if (args.empty()) {
+            printf("Usage: /rmlhide <document-name>\n");
+            return;
+        }
+
+        if (window) {
+            auto documents = window->data.uiComponent->getDocuments();
+
+            if (documents->contains(args)) {
+                documents->at(args)->Hide();
+                printf("Hidden document: %s\n", args.c_str());
+            } else {
+                printf("Error: Document '%s' not found\n", args.c_str());
+            }
+        }
+    }
+    else if (commandName == "rmllist") {
+        if (window) {
+            auto documents = window->data.uiComponent->getDocuments();
+            printf("Available RML documents:\n");
+            for (const auto& doc : *documents) {
+                printf("  - %s (%s)\n",
+                       doc.first.c_str(),
+                       doc.second->IsVisible() ? "visible" : "hidden");
+            }
+        }
+    }
+    else if (commandName == "help") {
+        printf("Available commands:\n");
+        printf("  /rmlshow <name>  - Show an RML document\n");
+        printf("  /rmlhide <name>  - Hide an RML document\n");
+        printf("  /rmllist         - List all loaded documents\n");
+        printf("  /help            - Show this help message\n");
+    }
+    else {
+        printf("Unknown command: %s\n", commandName.c_str());
+        printf("Type /help for available commands\n");
+    }
 }
 
 ConsoleHandler::ConsoleHandler() : document(nullptr) {
@@ -558,10 +632,12 @@ ConsoleHandler::~ConsoleHandler() {
     }
 }
 
-void ConsoleHandler::Setup(Rml::ElementDocument* console_doc) {
+void ConsoleHandler::Setup(Rml::ElementDocument* console_doc, Window* window) {
     if (!console_doc) return;
 
     document = console_doc;
+
+    listener.SetWindow(window);
 
     Rml::Element* send_btn = document->GetElementById("send-button");
     if (send_btn) {

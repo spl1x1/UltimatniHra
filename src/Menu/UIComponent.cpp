@@ -233,6 +233,23 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     SDL_Log("Toggling ImGui visibility to %s", menuData.showImgui ? "true" : "false");
                     break;
                 }
+                case SDL_SCANCODE_GRAVE:
+                case SDL_SCANCODE_F1: {
+                    auto& consoleHandler = ConsoleHandler::GetInstance();
+                    if (consoleHandler.document) {
+                        if (consoleHandler.document->IsVisible()) {
+                            consoleHandler.document->Hide();
+                            SDL_Log("Console hidden");}
+                        else {
+                            consoleHandler.document->Show();
+                            SDL_Log("Console show");
+                            if (Rml::Element* input = consoleHandler.document->GetElementById("console-input")) {
+                                input->Focus();
+                            }
+                        }
+                    }
+                    break;
+                }
                 case SDL_SCANCODE_ESCAPE:
                 {
                     if (documents.at("main_menu")->IsVisible()) break;

@@ -182,23 +182,26 @@ public:
 };
 
 class ConsoleEventListener : public Rml::EventListener {
-public:
-    void ProcessEvent(Rml::Event& event) override;
-
 private:
+    Window* window = nullptr;
     void ProcessCommand(const Rml::String& command);
+
+public:
+    void SetWindow(Window* win) { window = win; }
+    void ProcessEvent(Rml::Event& event) override;
 };
 
 class ConsoleHandler {
 public:
     ConsoleHandler();
     ~ConsoleHandler();
-    void Setup(Rml::ElementDocument* console_doc);
-
+    void Setup(Rml::ElementDocument* console_doc, Window* window);
     static ConsoleHandler& GetInstance();
+
+    Rml::ElementDocument* document;
 
 private:
     ConsoleEventListener listener;
-    Rml::ElementDocument* document;
+
 };
 #endif //ULTIMATNIHRA_MENU_LISTENERS_H

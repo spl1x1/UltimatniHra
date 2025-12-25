@@ -606,6 +606,10 @@ void Window::init(const std::string& title, int width, int height) {
     if (data.uiComponent->getDocuments()->contains("main_menu")) {
         data.uiComponent->getDocuments()->at("main_menu")->Show();
     }
+    if (data.uiComponent->getDocuments()->contains("console")) {
+        ConsoleHandler::GetInstance().Setup(data.uiComponent->getDocuments()->at("console").get(),this);
+    }
+
 }
 
 void Window::Destroy() {
