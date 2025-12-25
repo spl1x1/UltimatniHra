@@ -1,0 +1,40 @@
+﻿<rml>
+    <head>
+        <title>Play MENU</title>
+        <link type="text/rcss" href="play.rcss"/>
+
+    </head>
+    <body>
+
+    <div id="menu">
+        <h1>Save Select</h1>
+
+        <div class="save-slot">
+            <div class="slot-title">Save Slot 1</div>
+            <div class="slot-buttons">
+                <div class="menu-button enter">Enter</div>
+                <div class="menu-button create">Create</div>
+            </div>
+        </div>
+
+        <div class="save-slot">
+            <div class="slot-title">Save Slot 2</div>
+            <div class="slot-buttons">
+                <div class="menu-button enter">Enter</div>
+                <div class="menu-button create">Create</div>
+            </div>
+        </div>
+
+        <div class="save-slot">
+            <div class="slot-title">Save Slot 3</div>
+            <div class="slot-buttons">
+                <div class="menu-button enter">Enter</div>
+                <div class="menu-button create">Create</div>
+            </div>
+        </div>
+
+        <div class="back-button">Back</div>
+    </div>
+
+    </body>
+</rml>
