@@ -1,39 +1,54 @@
 ﻿<rml>
     <head>
         <title>Play MENU</title>
+        <link type="text/rcss" href="style.rcss"/>
         <link type="text/rcss" href="play.rcss"/>
-
     </head>
     <body>
 
     <div id="menu">
         <h1>Save Select</h1>
 
-        <div class="save-slot">
-            <div class="slot-title">Save Slot 1</div>
-            <div class="slot-buttons">
-                <div class="menu-button enter">Enter</div>
-                <div class="menu-button create">Create</div>
+        <div class="section">
+            <!-- Save Slot 1 - Empty -->
+            <div class="save-slot" data-slot="1">
+                <div class="slot-header">
+                    <div class="slot-title">Slot 1</div>
+                    <div class="slot-info empty">Empty</div>
+                </div>
+                <div class="slot-buttons">
+                    <div class="menu-button create-button" onclick="createSave(1)">Create</div>
+                </div>
+            </div>
+
+            <!-- Save Slot 2 - Has Save -->
+            <div class="save-slot has-save" data-slot="2">
+                <div class="slot-header">
+                    <div class="slot-title">Slot 2</div>
+                    <div class="slot-info">
+                        <div class="save-name">Adventure</div>
+                        <div class="save-details">Level 5</div>
+                    </div>
+                </div>
+                <div class="slot-buttons">
+                    <div class="menu-button enter-button" onclick="enterSave(2)">Enter</div>
+                    <div class="menu-button delete-button" onclick="deleteSave(2)">Delete</div>
+                </div>
+            </div>
+
+            <!-- Save Slot 3 - Empty -->
+            <div class="save-slot" data-slot="3">
+                <div class="slot-header">
+                    <div class="slot-title">Slot 3</div>
+                    <div class="slot-info empty">Empty</div>
+                </div>
+                <div class="slot-buttons">
+                    <div class="menu-button create-button" onclick="createSave(3)">Create</div>
+                </div>
             </div>
         </div>
 
-        <div class="save-slot">
-            <div class="slot-title">Save Slot 2</div>
-            <div class="slot-buttons">
-                <div class="menu-button enter">Enter</div>
-                <div class="menu-button create">Create</div>
-            </div>
-        </div>
-
-        <div class="save-slot">
-            <div class="slot-title">Save Slot 3</div>
-            <div class="slot-buttons">
-                <div class="menu-button enter">Enter</div>
-                <div class="menu-button create">Create</div>
-            </div>
-        </div>
-
-        <div class="back-button">Back</div>
+        <div class="back-button" onclick="goBack()">Back</div>
     </div>
 
     </body>
