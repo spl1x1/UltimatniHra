@@ -15,15 +15,15 @@ class Player final : public IEntity {
     EntityHealthComponent _entityHealthComponent;
     EntityInventoryComponent _entityInventoryComponent;
 
-    std::shared_ptr<Server> _server;
+    Server* _server;
 
 public:
     //Interface methods implementation
     void Tick() override;
     void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) override;
 
-    static void Create(const std::shared_ptr<Server>& server) ;
-    static void Load(const std::shared_ptr<Server>& server);
+    static void Create(Server* server) ;
+    static void Load(Server* server);
 
     //Entity actions
     void Move(float dX, float dY) override;
@@ -48,12 +48,7 @@ public:
     //Returns entity collision status
     [[nodiscard]] CollisionStatus GetCollisionStatus() const override;
     [[nodiscard]] int GetAngle() const override;
-    //Returns current task and task data
-    [[nodiscard]] TaskData GetTask() const override;
-    //Returns task queue
-    [[nodiscard]] std::vector<TaskData> GetTasks() const override;
-    //Returns event queue
-    [[nodiscard]] std::vector<EventData> GetEvents() const override;
+
 
     EntityCollisionComponent* GetCollisionComponent() override;
     //Get EntityLogicComponent
@@ -66,9 +61,9 @@ public:
     EntityInventoryComponent* GetInventoryComponent() override;
 
     //Get server pointer
-    [[nodiscard]] std::shared_ptr<Server> GetServer() const override;
+    [[nodiscard]] Server* GetServer() const override;
 
-    Player(std::shared_ptr<Server> server, const Coordinates& coordinates);
+    Player(Server* server, const Coordinates& coordinates);
 };
 
 #endif //PLAYER_HPP

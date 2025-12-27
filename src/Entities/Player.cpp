@@ -26,12 +26,12 @@ void Player::Render(SDL_Renderer &windowRenderer, SDL_FRect &cameraRectangle,
     _entityRenderingComponent.Render(&windowRenderer,_entityLogicComponent.GetCoordinates(),cameraRectangle,textures);
 }
 
-void Player::Create(const std::shared_ptr<Server>& server) {
+void Player::Create(Server* server) {
     auto player = std::make_shared<Player>(server, server->getSpawnPoint());
     server->addPlayer(player);
 }
 
-void Player::Load(const std::shared_ptr<Server>& server) {
+void Player::Load(Server* server) {
     // TODO: Load player data from save
 }
 
@@ -62,12 +62,12 @@ void Player::SetSpeed(float newSpeed) {
     _entityLogicComponent.SetSpeed(newSpeed);
 }
 
-void Player::SetTask(const int index) {
-    _entityLogicComponent.SwitchTask(index);
+void Player::SetTask(int index) {
+    // Not implemented for Player
 }
 
-void Player::RemoveTask(const int index) {
-    _entityLogicComponent.RemoveTask(index);
+void Player::RemoveTask(int index) {
+    // Not implemented for Player
 }
 
 void Player::SetEntityCollision(bool disable) {
@@ -90,18 +90,6 @@ int Player::GetAngle() const {
     return _entityLogicComponent.GetAngle();
 }
 
-TaskData Player::GetTask() const {
-    return _entityLogicComponent.GetTask(0);
-}
-
-std::vector<TaskData> Player::GetTasks() const {
-    return _entityLogicComponent.GetTasks();
-}
-
-std::vector<EventData> Player::GetEvents() const {
-    return _entityLogicComponent.GetEvents();
-}
-
 EntityCollisionComponent * Player::GetCollisionComponent() {
     return &_entityCollisionComponent;
 }
@@ -122,16 +110,16 @@ EntityInventoryComponent * Player::GetInventoryComponent() {
     return &_entityInventoryComponent;
 }
 
-std::shared_ptr<Server> Player::GetServer() const {
+Server* Player::GetServer() const {
     return _server;
 }
 
-Player::Player(std::shared_ptr<Server> server, const Coordinates& coordinates):
+Player::Player(Server* server, const Coordinates& coordinates):
     _entityRenderingComponent(std::make_unique<PlayerSprite>()),
-    _entityLogicComponent(coordinates),
     _entityCollisionComponent(EntityCollisionComponent::HitboxData{}),
+    _entityLogicComponent(coordinates),
     _entityHealthComponent(100.0f, 100.0f) {
-    _server = server; // Should be copied
+    _server = server;
 
     EntityCollisionComponent::HitboxData playerHitboxData = {
         {

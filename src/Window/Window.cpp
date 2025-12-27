@@ -494,7 +494,7 @@ bool Window::LoadTexture(const std::string& Path) {
 }
 
 
-void Window::changeResolution(int width, int height) {
+void Window::changeResolution(int width, int height) const{
     SDL_SetWindowSize(data.Window, width, height);
 }
 
@@ -549,7 +549,7 @@ void Window::initGame() {
     data.Running = true;
     data.last = SDL_GetPerformanceCounter();
 
-    Player::Create(server);
+    Player::Create(server.get());
     WaterSprite::Init();
     Coordinates coord = server->getEntityPos(0);
 
