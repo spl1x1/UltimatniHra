@@ -20,7 +20,7 @@ struct WindowData {
     std::unique_ptr<SDL_FRect> cameraRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
     std::unique_ptr<SDL_FRect> cameraWaterRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
 
-    float playerAngle = 0.0f;
+    int playerAngle = 0;
 
     float cameraOffsetX = (static_cast<float>(GAMERESW)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
     float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
@@ -56,7 +56,7 @@ class Window {
     void loadMarkerSurface();
     void markOnMap(float x, float y);
     void handlePlayerInput() const;
-    void renderPlayer(ISprite &playerSprite);
+    void renderPlayer() const;
 
     void HandleEvent(const SDL_Event* e) const;
     void advanceFrame();
@@ -110,12 +110,12 @@ public:
     void applyResolution(int width, int height);
     void applyDisplayMode(DisplayMode mode);
 
-    void saveConfig();
+    void saveConfig() const;
     void loadConfig();
 
     void tick();
 
-    void updateOptionsMenuScale();
+    static void updateOptionsMenuScale();
 
     void initGame();
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
