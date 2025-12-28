@@ -52,7 +52,7 @@ public:
     void setPlayerPos(int playerId, Coordinates newCoordinates); //Musi byt thread safe, nastavuje pozici entity podle id
     void setPlayerCollision(int playerId, bool disable); //Musi byt thread safe, nastavuje zda ma entity kolidovat
     void setMapValue(int x, int y, WorldData::MapType mapType, int value); //Musi byt thread safe, nastavuje hodnotu collision mapy na danych souradnicich
-    void setMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value); //Unprotected verze setMapValue , nastavuje hodnotu collision mapy na danych souradnicich
+    void setMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) const; //Unprotected verze setMapValue , nastavuje hodnotu collision mapy na danych souradnicich
 
     //Getters
     [[nodiscard]] float getDeltaTime(); //Musi byt thread safe protoze se vola kazdy frame, a k datum muze pristupovat vice threadu

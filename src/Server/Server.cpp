@@ -11,7 +11,6 @@
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
-#include "../../include/Sprites/Sprite.hpp"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Structures/Tree.h"
 #include "../../include/Window/WorldStructs.h"
@@ -20,35 +19,35 @@
 
 void Server::setEntityPos(int entityId, Coordinates newCoordinates) {
     std::lock_guard lock(serverMutex);
-    if (_entities.find(entityId) != _entities.end()) {
+    if (_entities.contains(entityId)) {
         _entities[entityId]->GetCoordinates() = newCoordinates;
     }
 }
 
 void Server::setPlayerPos(int playerId, Coordinates newCoordinates) {
     std::lock_guard lock(serverMutex);
-    if (_players.find(playerId) != _players.end()) {
+    if (_players.contains(playerId)) {
         _players[playerId]->GetCoordinates() = newCoordinates;
     }
 }
 
 void Server::setEntityCollision(int entityId, bool disable) {
     std::lock_guard lock(serverMutex);
-    if (_entities.find(entityId) != _entities.end()) {
+    if (_entities.contains(entityId)) {
         _entities[entityId]->SetEntityCollision(disable);
     }
 }
 
 void Server::setPlayerCollision(int playerId, bool disable) {
     std::lock_guard lock(serverMutex);
-    if (_players.find(playerId) != _players.end()) {
+    if (_players.contains(playerId)) {
         _players[playerId]->SetEntityCollision(disable);
     }
 }
 
 bool Server::isEntityColliding(int entityId) {
     std::shared_lock lock(serverMutex);
-    if (_entities.find(entityId) != _entities.end()) {
+    if (_entities.contains(entityId)) {
         return _entities[entityId]->GetCollisionStatus().colliding;
     }
     return false; // Return false if entity not found
@@ -56,7 +55,7 @@ bool Server::isEntityColliding(int entityId) {
 
 bool Server::isPlayerColliding(int playerId) {
     std::shared_lock lock(serverMutex);
-    if (_players.find(playerId) != _players.end()) {
+    if (_players.contains(playerId)) {
         return _players[playerId]->GetCollisionStatus().colliding == true;
     }
     return false; // Return false if entity not found
@@ -85,7 +84,7 @@ void Server::setMapValue(int x, int y, WorldData::MapType mapType, int value) {
     _worldData.updateMapValue(x,y, mapType, value);
 }
 
-void Server::setMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) {
+void Server::setMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) const {
     _worldData.updateMapValue(x,y, mapType, value);
 }
 
@@ -145,7 +144,7 @@ std::map<int,std::shared_ptr<IEntity>> Server::getPlayers() {
 
 Coordinates Server::getPlayerPos(int playerId) {
     std::shared_lock lock(serverMutex);
-    if (_players.find(playerId) != _players.end()) {
+    if (_players.contains(playerId)) {
         return _players[playerId]->GetCoordinates();
     }
     return Coordinates{0.0f, 0.0f}; // Return a default value if entity not found
@@ -153,7 +152,7 @@ Coordinates Server::getPlayerPos(int playerId) {
 
 IEntity* Server::getPlayer(int playerId) {
     std::shared_lock lock(serverMutex);
-    if (_players.find(playerId) != _players.end()) {
+    if (_players.contains(playerId)) {
         return _players[playerId].get();
     }
     return nullptr; // Return nullptr if entity not found
@@ -175,7 +174,7 @@ std::map<int,std::shared_ptr<IStructure>> Server::getStructures() {
 
 Coordinates Server::getEntityPos(int entityId) {
    std::shared_lock lock(serverMutex);
-    if (_entities.find(entityId) != _entities.end()) {
+    if (_entities.contains(entityId)) {
         return _entities[entityId]->GetCoordinates();
     }
     return Coordinates{0.0f, 0.0f}; // Return a default value if entity not found
@@ -183,7 +182,7 @@ Coordinates Server::getEntityPos(int entityId) {
 
 IEntity* Server::getEntity(int entityId) {
     std::shared_lock lock(serverMutex);
-    if (_entities.find(entityId) != _entities.end()) {
+    if (_entities.contains(entityId)) {
         return _entities[entityId].get();
     }
     return nullptr; // Return nullptr if entity not found
@@ -191,7 +190,7 @@ IEntity* Server::getEntity(int entityId) {
 
 IStructure* Server::getStructure(int structureId) {
     std::shared_lock lock(serverMutex);
-    if (_structures.find(structureId) != _structures.end()) {
+    if (_structures.contains(structureId)) {
         return _structures[structureId].get();
     }
     return nullptr; // Return nullptr if entity not found

@@ -127,7 +127,7 @@ void EntityLogicComponent::UnbindScript(const std::string &scriptName) {
 }
 
 EntityLogicComponent::ScriptData EntityLogicComponent::GetBoundScript(const std::string &scriptName) const {
-    if (_scriptBindings.find(scriptName) != _scriptBindings.end()) {
+    if (_scriptBindings.contains(scriptName)) {
         return _scriptBindings.at(scriptName);
     }
     return ScriptData{};
