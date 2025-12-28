@@ -1,0 +1,150 @@
+﻿/* Slots container */
+.slots-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20dp;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Save slot container */
+.save-slot {
+    width: 200dp;
+    background-color: rgba(52, 73, 94, 0.8);
+    padding: 20dp;
+    display: flex;
+    flex-direction: column;
+    gap: 15dp;
+    align-items: center;
+}
+
+/* Slot header */
+.slot-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8dp;
+    min-height: 60dp;
+    width: 100%;
+}
+
+/* Slot title */
+.slot-title {
+    font-size: 20dp;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+
+/* Slot info */
+.slot-info {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.slot-info.empty {
+    color: #95a5a6;
+    font-style: italic;
+    font-size: 14dp;
+}
+
+.save-name {
+    font-size: 16dp;
+    font-weight: 600;
+    color: #00ff99;
+    margin-bottom: 4dp;
+}
+
+.save-details {
+    font-size: 12dp;
+    color: #bdc3c7;
+}
+
+/* Buttons row */
+.slot-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 10dp;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Button overrides for slots */
+.save-slot .menu-button {
+    width: auto;
+    min-width: 70dp;
+    min-height: 35dp;
+    line-height: 35dp;
+    font-size: 15dp;
+    padding: 0dp 15dp;
+}
+
+/* Enter button styling */
+.enter-button {
+    color: #00ff99;
+}
+
+.enter-button:hover {
+    border-color: #00ff99;
+    color: black;
+}
+
+/* Create button styling */
+.create-button {
+    color: #0099ff;
+}
+
+.create-button:hover {
+    border-color: #0099ff;
+    color: black;
+}
+
+/* Delete button styling */
+.delete-button {
+    color: #ff0066;
+}
+
+.delete-button:hover {
+    border-color: #ff0066;
+    color: black;
+}
+
+/* Compact mode for small resolutions */
+body.compact640 .slots-container {
+    gap: 15dp;
+}
+
+body.compact640 .save-slot {
+    width: 180dp;
+    padding: 15dp;
+    gap: 12dp;
+}
+
+body.compact640 .slot-header {
+    min-height: 50dp;
+}
+
+body.compact640 .slot-title {
+    font-size: 18dp;
+}
+
+body.compact640 .slot-info.empty {
+    font-size: 12dp;
+}
+
+body.compact640 .save-name {
+    font-size: 14dp;
+}
+
+body.compact640 .save-details {
+    font-size: 11dp;
+}
+
+body.compact640 .save-slot .menu-button {
+    min-height: 32dp;
+    line-height: 32dp;
+    font-size: 14dp;
+    padding: 0dp 12dp;
+}
