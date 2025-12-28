@@ -3,6 +3,7 @@
 
 int main(int argc, char *argv[]) {
 #ifdef CLIENT
+
     Application app;
     app.init();
     app.run();

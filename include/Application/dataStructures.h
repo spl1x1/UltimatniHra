@@ -10,4 +10,9 @@ struct Coordinates {
     float x = 0;
     float y = 0;
 };
+
+struct CollisionStatus{
+    bool colliding;
+    bool collisionDisabled;
+};
 #endif //ULTIMATNIHRA_DATASTRUCTURES_H

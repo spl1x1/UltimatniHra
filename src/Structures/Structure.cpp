@@ -38,18 +38,17 @@ void StructureRenderingComponent::Tick(float deltaTime) const {
 }
 
 void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const {
+    if (!sprite) return;
     if (dismisCorners(cameraRectangle)) return;
 
-    auto renderingContex = sprite->getFrame();
+    const auto renderingContex = sprite->getFrame();
 
     Rect->x = fourCorners[0].x - cameraRectangle.x;
     Rect->y = fourCorners[0].y - cameraRectangle.y;
     Rect->w = static_cast<float>(sprite->getWidth());
     Rect->h = static_cast<float>(sprite->getHeight());
 
-    std::string textureName = std::get<0>(renderingContex);
-    SDL_FRect* srcRect = std::get<1>(renderingContex);
-    SDL_RenderTexture(&windowRenderer, textures[textureName],srcRect, Rect.get());
+    SDL_RenderTexture(&windowRenderer, textures[std::get<0>(renderingContex)], std::get<1>(renderingContex), Rect.get());
 }
 
 //StructueHitbox methods
@@ -90,4 +89,8 @@ void StructureHitbox::addPoint(int posX, int posY){
 
 void StructureHitbox::finalize() const {
     updateCollisionMap(1);
+}
+
+void StructureHitbox::destroy() const {
+    updateCollisionMap(0);
 }

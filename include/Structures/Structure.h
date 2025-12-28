@@ -24,12 +24,13 @@ enum class structureType{
 };
 
 class IStructure {
+
 public:
     virtual ~IStructure() = default;
     [[nodiscard]] virtual structureType getType() const = 0;
     [[nodiscard]] virtual int getId() const = 0;
     virtual void Tick(float deltaTime) = 0;
-    virtual void render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
+    virtual void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
 };
 
 class StructureRenderingComponent {
@@ -88,6 +89,7 @@ public:
      * Finalizuje hitbox struktury a zapise ho do collision mapy
      */
     void finalize() const;
+    void destroy() const;
 
     //Constructor and Destructor
     explicit StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);

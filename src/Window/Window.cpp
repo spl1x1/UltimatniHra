@@ -8,9 +8,7 @@
 #include <ranges>
 #include <fstream>
 #include "../../include/Window/WorldRender.h"
-#include <RmlUi/Debugger.h>
 #include <SDL3_image/SDL_image.h>
-#include <RmlUi/Lua.h>
 
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
@@ -44,7 +42,7 @@ void Window::renderMainMenu() {
         data.uiComponent->HandleEvent(&e);
     }
 }
-void Window::saveConfig() {
+void Window::saveConfig() const {
     std::ofstream config("config.txt");
     if (config.is_open()) {
         config << "width=" << data.WINDOW_WIDTH << "\n";
@@ -119,11 +117,13 @@ void Window::handlePlayerInput() const {
         dx *= 0.7071f;
         dy *= 0.7071f;
     }
-    auto event = PlayerEvent{PlayerEvents::MOVE, dx, dy};
+    auto event = EventData{Event::MOVE};
+    event.data.move.dX = dx;
+    event.data.move.dY = dy;
     server->playerUpdate(event);
 }
 
-void Window::renderPlayer(ISprite &playerSprite) {
+void Window::renderPlayer() const {
 
     SDL_FRect rect;
     rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
@@ -131,13 +131,11 @@ void Window::renderPlayer(ISprite &playerSprite) {
     rect.w = PLAYER_WIDTH;
     rect.h = PLAYER_HEIGHT;
 
-    auto texture = playerSprite.getFrame();
-    auto textureName = std::get<0>(texture);
-    SDL_RenderTexture(data.Renderer, textures[std::get<0>(texture)], std::get<1>(texture), &rect);
+    server->getPlayer(0)->GetRenderingComponent()->Render(data.Renderer, server->getPlayer(0)->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
 
     if (data.uiComponent->getMenuData().debugOverlay) {
         if (server->isPlayerColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
-        else if (server->getPlayer(0)->collisionDisabled())
+        else if (server->getPlayer(0)->GetCollisionStatus().collisionDisabled)
             SDL_SetRenderDrawColor(data.Renderer, 0, 0, 255, 255);
         else
             SDL_SetRenderDrawColor(data.Renderer, 0, 255, 0, 255);
@@ -154,7 +152,7 @@ void Window::renderPlayer(ISprite &playerSprite) {
                        rect.x,
                        rect.y + 1);
 
-        Hitbox *hitbox = server->getPlayer(0)->GetHitbox();
+        auto *hitbox = server->getPlayer(0)->GetCollisionComponent()->GetHitbox();
 
         for (auto& corner : hitbox->corners) {
             Coordinates *end= &hitbox ->corners[0];
@@ -203,17 +201,17 @@ void Window::advanceFrame() {
         SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect.get(), nullptr);
 
 #ifdef DEBUG
-        data.playerAngle = server->getPlayer(0)->getAngle();
+        data.playerAngle = server->getPlayer(0)->GetAngle();
         SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect.get(), nullptr);
         dataModel.DirtyVariable("playerX");
         dataModel.DirtyVariable("playerY");
         dataModel.DirtyVariable("playerAngle");
 #endif
 
-        renderPlayer(*server->getPlayer(0)->sprite);
+        renderPlayer();
 
         for (const auto& structure : server->getStructures()) {
-            structure.second->render(*data.Renderer, *data.cameraRect, textures);
+            structure.second->Render(*data.Renderer, *data.cameraRect, textures);
             structure.second->Tick(server->getDeltaTime());
         }
     }
@@ -407,8 +405,7 @@ void Window::applyDisplayMode(DisplayMode mode) {
 
         case DisplayMode::FULLSCREEN: {
             SDL_DisplayID displayID = SDL_GetDisplayForWindow(data.Window);
-            const SDL_DisplayMode* displayMode = SDL_GetCurrentDisplayMode(displayID);
-            if (displayMode) {
+            if (const SDL_DisplayMode* displayMode = SDL_GetCurrentDisplayMode(displayID)) {
                 SDL_SetWindowBordered(data.Window, true);
                 SDL_SetWindowFullscreen(data.Window, true);
                 data.WINDOW_WIDTH = displayMode->w;
@@ -531,7 +528,7 @@ void Window::initGame() {
     if (data.wasLoaded) return;
     data.wasLoaded = true;
 
-    Player::ClientInit(server);
+    Player::Create(server.get());
     WaterSprite::Init();
     Coordinates coord = server->getEntityPos(0);
 

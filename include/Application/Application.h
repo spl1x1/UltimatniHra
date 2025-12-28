@@ -5,8 +5,8 @@
 #ifndef ULTIMATNIHRA_APPLICATION_H
 #define ULTIMATNIHRA_APPLICATION_H
 #include <memory>
+
 #include "../../include/Window/Window.h"
-#include "../../include/Server/Server.h"
 
 class Application {
     std::shared_ptr<Server> server = std::make_shared<Server>();
