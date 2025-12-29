@@ -11,6 +11,8 @@ file(GLOB SOURCES
 add_executable(UltimatniHra
         ${HEADERS}
         ${SOURCES}
+        Application/SaveGame.cpp
+        ../include/Application/SaveGame.h
 )
 
 target_link_libraries(ImguiDependency

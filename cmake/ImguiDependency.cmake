@@ -15,4 +15,6 @@ include_directories("imgui/backends")
 
 add_library(ImguiDependency STATIC
         ${SOURCES}
-        )
+        ../src/Application/SaveGame.cpp
+        ../include/Application/SaveGame.h
+)

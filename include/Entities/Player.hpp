@@ -22,8 +22,9 @@ public:
     void Tick() override;
     void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) override;
 
-    static void Create(Server* server) ;
-    static void Load(Server* server);
+    static void Create(Server* server, int slotId) ;
+    static void Load(Server* server, int slotId);
+    static void Save(Server* server);
 
     //Entity actions
     void Move(float dX, float dY) override;

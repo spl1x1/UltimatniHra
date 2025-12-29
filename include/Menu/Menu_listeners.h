@@ -181,6 +181,61 @@ public:
     void ProcessEvent(Rml::Event& event) override;
 };
 
+// ===================================================================
+// PLAY MENU LISTENERS
+// ===================================================================
+class CreateGameListener : public Rml::EventListener {
+public:
+    CreateGameListener(Window* window, UIComponent* uiComponent, int slotId);
+    void ProcessEvent(Rml::Event&) override;
+
+private:
+    Window* window;
+    UIComponent* uiComponent;
+    int slotId;
+};
+
+// --- Load Game ---
+class LoadGameListener : public Rml::EventListener {
+public:
+    LoadGameListener(Window* window, UIComponent* uiComponent, int slotId);
+    void ProcessEvent(Rml::Event&) override;
+
+private:
+    Window* window;
+    UIComponent* uiComponent;
+    int slotId;
+};
+
+// --- Delete Game ---
+class DeleteGameListener : public Rml::EventListener {
+public:
+    DeleteGameListener(Window* window, UIComponent* uiComponent, int slotId);
+    void ProcessEvent(Rml::Event&) override;
+
+private:
+    Window* window;
+    UIComponent* uiComponent;
+    int slotId;
+};
+
+// --- Play Menu Back ---
+class PlayMenuBackListener : public Rml::EventListener {
+public:
+    PlayMenuBackListener(Window* window, UIComponent* uiComponent);
+    void ProcessEvent(Rml::Event&) override;
+    void updateSlotDisplay(Rml::ElementDocument* document, int slotId, Window* window, UIComponent* uiComponent);
+    void updateAllSlots(Rml::ElementDocument* document, Window* window, UIComponent* uiComponent);
+private:
+    Window* window;
+    UIComponent* uiComponent;
+};
+
+
+// ===================================================================
+// CONSOLE LISTENERS
+// ===================================================================
+
 class ConsoleEventListener : public Rml::EventListener {
 private:
     Window* window = nullptr;

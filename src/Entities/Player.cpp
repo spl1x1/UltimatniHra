@@ -4,6 +4,7 @@
 
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Sprites/PlayerSprite.hpp"
+#include "../../include/Application/SaveGame.h"
 #include <memory>
 
 
@@ -26,13 +27,25 @@ void Player::Render(SDL_Renderer &windowRenderer, SDL_FRect &cameraRectangle,
     _entityRenderingComponent.Render(&windowRenderer,_entityLogicComponent.GetCoordinates(),cameraRectangle,textures);
 }
 
-void Player::Create(Server* server) {
+void Player::Create(Server* server, int slotId) {
     auto player = std::make_shared<Player>(server, server->getSpawnPoint());
     server->addPlayer(player);
+    SaveManager::getInstance().setCurrentSlot(slotId);
 }
 
-void Player::Load(Server* server) {
+void Player::Load(Server* server, int slotId) {
     // TODO: Load player data from save
+    auto player = std::make_shared<Player>(server, server->getSpawnPoint());
+    server->addPlayer(player);
+
+    // Load saved data into player
+    SaveManager::getInstance().loadGame(slotId, server);
+}
+void Player::Save(Server* server) {
+    int currentSlot = SaveManager::getInstance().getCurrentSlot();
+    if (currentSlot >= 0) {
+        SaveManager::getInstance().saveGame(currentSlot, server);
+    }
 }
 
 void Player::Move(float dX, float dY) {

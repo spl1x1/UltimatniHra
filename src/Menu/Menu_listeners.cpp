@@ -4,12 +4,17 @@
 
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Window/Window.h"
+#include "../../include/Application/SaveGame.h"
 #include <SDL3/SDL.h>
 #include <cstdio>
 
 inline UIComponent* getUI(Window* win) {
     return win->data.uiComponent.get();
 }
+
+// Forward declarations
+void updateSlotDisplay(Rml::ElementDocument* document, int slotId, Window* window, UIComponent* uiComponent);
+void updateAllSlots(Rml::ElementDocument* document, Window* window, UIComponent* uiComponent);
 
 // ===================================================================
 // PlayButtonListener
@@ -19,12 +24,25 @@ PlayButtonListener::PlayButtonListener(Window* win, UIComponent* ui) : window(wi
 
 void PlayButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Play clicked!");
+
     auto documents = uiComponent->getDocuments();
+
     if (documents->contains("main_menu")) {
         documents->at("main_menu")->Hide();
     }
-    window->server->setSeed(0);
-    window->initGame();
+
+    if (documents->contains("play_menu")) {
+        auto playDoc = documents->at("play_menu").get();
+
+        // Register back button listener
+        if (Rml::Element* backButton = playDoc->GetElementById("play_back_button")) {
+            backButton->AddEventListener(Rml::EventId::Click,
+                new PlayMenuBackListener(window, uiComponent));
+        }
+
+        updateAllSlots(playDoc, window, uiComponent);
+        playDoc->Show();
+    }
 }
 
 // ===================================================================
@@ -493,6 +511,18 @@ MainMenuButtonListener::MainMenuButtonListener(Window* win, UIComponent* ui) : w
 
 void MainMenuButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Returning to Main Menu!");
+
+    // Save the game before returning to main menu
+    SaveManager& sm = SaveManager::getInstance();
+    int currentSlot = sm.getCurrentSlot();
+    if (currentSlot >= 0 && window->server) {
+        if (sm.saveGame(currentSlot, window->server.get())) {
+            SDL_Log("Game saved to slot %d", currentSlot);
+        } else {
+            SDL_Log("Failed to save game to slot %d", currentSlot);
+        }
+    }
+
     auto documents = uiComponent->getDocuments();
 
     if (documents->contains("pause_menu")) {
@@ -520,8 +550,206 @@ QuitGameButtonListener::QuitGameButtonListener(Window* win, UIComponent* ui) : w
 
 void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Quit Game clicked!");
+
+    // Save the game before quitting
+    SaveManager& sm = SaveManager::getInstance();
+    int currentSlot = sm.getCurrentSlot();
+    if (currentSlot >= 0 && window->server) {
+        if (sm.saveGame(currentSlot, window->server.get())) {
+            SDL_Log("Game saved to slot %d", currentSlot);
+        } else {
+            SDL_Log("Failed to save game to slot %d", currentSlot);
+        }
+    }
+
     window->data.Running = false;
     window->data.inited = false;
+}
+
+// ===================================================================
+// PLAY MENU LISTENERS
+// ===================================================================
+
+// --------------------------------------------------
+// CreateGameListener
+// --------------------------------------------------
+CreateGameListener::CreateGameListener(Window* window, UIComponent* uiComponent, int slotId)
+    : window(window), uiComponent(uiComponent), slotId(slotId) {}
+
+void CreateGameListener::ProcessEvent(Rml::Event&) {
+    SDL_Log("Create game in slot %d", slotId);
+
+    SaveManager& sm = SaveManager::getInstance();
+
+    if (!sm.createNewSave(slotId, "New Adventure")) {
+        SDL_Log("Failed to create save in slot %d", slotId);
+        return;
+    }
+
+    // Set current slot so save works when quitting
+    sm.setCurrentSlot(slotId);
+
+    auto documents = uiComponent->getDocuments();
+    if (documents->contains("play_menu")) {
+        documents->at("play_menu")->Hide();
+    }
+
+    window->server->setSeed(std::rand());
+    window->initGame();
+
+    Player::Create(window->server.get(), slotId);
+}
+
+// --------------------------------------------------
+// LoadGameListener
+// --------------------------------------------------
+LoadGameListener::LoadGameListener(Window* window, UIComponent* uiComponent, int slotId)
+    : window(window), uiComponent(uiComponent), slotId(slotId) {}
+
+void LoadGameListener::ProcessEvent(Rml::Event&) {
+    SDL_Log("Load game from slot %d", slotId);
+
+    SaveManager& sm = SaveManager::getInstance();
+    SaveGame* save = sm.getSaveSlot(slotId);
+
+    if (!save || save->isEmpty()) {
+        SDL_Log("Slot %d is empty or invalid", slotId);
+        return;
+    }
+
+    // Set current slot so save works when quitting
+    sm.setCurrentSlot(slotId);
+
+    auto documents = uiComponent->getDocuments();
+    if (documents->contains("play_menu")) {
+        documents->at("play_menu")->Hide();
+    }
+
+    window->server->setSeed(save->worldData.seed);
+    window->initGame();
+
+    Player::Load(window->server.get(), slotId);
+}
+
+// --------------------------------------------------
+// DeleteGameListener
+// --------------------------------------------------
+DeleteGameListener::DeleteGameListener(Window* window, UIComponent* uiComponent, int slotId)
+    : window(window), uiComponent(uiComponent), slotId(slotId) {}
+
+void DeleteGameListener::ProcessEvent(Rml::Event&) {
+    SDL_Log("Delete game from slot %d", slotId);
+
+    SaveManager& sm = SaveManager::getInstance();
+
+    if (sm.deleteSave(slotId)) {
+        auto documents = uiComponent->getDocuments();
+        if (documents->contains("play_menu")) {
+            updateSlotDisplay(
+                documents->at("play_menu").get(),
+                slotId,
+                window,
+                uiComponent
+            );
+        }
+    }
+}
+
+// --------------------------------------------------
+// PlayMenuBackListener
+// --------------------------------------------------
+PlayMenuBackListener::PlayMenuBackListener(Window* window, UIComponent* uiComponent)
+    : window(window), uiComponent(uiComponent) {}
+
+void PlayMenuBackListener::ProcessEvent(Rml::Event&) {
+    SDL_Log("Back to main menu");
+
+    auto documents = uiComponent->getDocuments();
+
+    if (documents->contains("play_menu")) {
+        documents->at("play_menu")->Hide();
+    }
+
+    if (documents->contains("main_menu")) {
+        documents->at("main_menu")->Show();
+    }
+}
+
+
+void updateSlotDisplay(Rml::ElementDocument* document, int slotId, Window* window, UIComponent* uiComponent) {
+    if (!document) return;
+
+    SaveManager& sm = SaveManager::getInstance();
+    SaveGame* save = sm.getSaveSlot(slotId);
+    if (!save) return;
+
+    std::string infoId = "slot_" + std::to_string(slotId) + "_info";
+    std::string buttonsId = "slot_" + std::to_string(slotId) + "_buttons";
+
+    auto infoElement = document->GetElementById(infoId.c_str());
+    auto buttonsContainer = document->GetElementById(buttonsId.c_str());
+
+    if (!infoElement || !buttonsContainer) return;
+
+    if (save->isEmpty()) {
+        // Empty slot
+        infoElement->SetInnerRML("Empty");
+        infoElement->SetClass("empty", true);
+
+        // Clear and recreate buttons
+        buttonsContainer->SetInnerRML("");
+
+        auto createBtn = document->CreateElement("div");
+        createBtn->SetAttribute("class", "menu-button create-button");
+        createBtn->SetInnerRML("Create");
+        createBtn->AddEventListener(Rml::EventId::Click,
+            new CreateGameListener(window, uiComponent, slotId));
+        buttonsContainer->AppendChild(std::move(createBtn));
+
+    } else {
+        // Has save
+        std::string saveInfo = "<div class='save-name'>" + save->saveName + "</div>";
+
+        int hours = static_cast<int>(save->playTime) / 3600;
+        int minutes = (static_cast<int>(save->playTime) % 3600) / 60;
+        saveInfo += "<div class='save-details'>";
+        if (hours > 0) {
+            saveInfo += std::to_string(hours) + "h " + std::to_string(minutes) + "m";
+        } else {
+            saveInfo += std::to_string(minutes) + "m";
+        }
+        saveInfo += "</div>";
+
+        infoElement->SetInnerRML(saveInfo.c_str());
+        infoElement->SetClass("empty", false);
+
+        // Clear and recreate buttons
+        buttonsContainer->SetInnerRML("");
+
+        auto enterBtn = document->CreateElement("div");
+        enterBtn->SetAttribute("class", "menu-button enter-button");
+        enterBtn->SetInnerRML("Enter");
+        enterBtn->AddEventListener(Rml::EventId::Click,
+            new LoadGameListener(window, uiComponent, slotId));
+        buttonsContainer->AppendChild(std::move(enterBtn));
+
+        auto deleteBtn = document->CreateElement("div");
+        deleteBtn->SetAttribute("class", "menu-button delete-button");
+        deleteBtn->SetInnerRML("Delete");
+        deleteBtn->AddEventListener(Rml::EventId::Click,
+            new DeleteGameListener(window, uiComponent, slotId));
+        buttonsContainer->AppendChild(std::move(deleteBtn));
+    }
+}
+
+// Helper function to update all slots
+void updateAllSlots(Rml::ElementDocument* document, Window* window, UIComponent* uiComponent) {
+    SaveManager& sm = SaveManager::getInstance();
+    sm.loadAllSlots();
+
+    for (int i = 0; i < 3; i++) {
+        updateSlotDisplay(document, i, window, uiComponent);
+    }
 }
 
 // ===================================================================

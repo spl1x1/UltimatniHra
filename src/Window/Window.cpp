@@ -13,6 +13,7 @@
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Entities/Player.hpp"
+#include "../../include/Application/SaveGame.h"
 #include "../../include/Server/Server.h"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Menu/UIComponent.h"
@@ -528,7 +529,7 @@ void Window::initGame() {
     if (data.wasLoaded) return;
     data.wasLoaded = true;
 
-    Player::Create(server.get());
+    Player::Create(server.get(), SaveManager::getInstance().getCurrentSlot());
     WaterSprite::Init();
     Coordinates coord = server->getEntityPos(0);
 
