@@ -9,7 +9,7 @@
     <div id="menu">
         <h1>Save Select</h1>
 
-        <div class="slots-container">
+        <div class="section">
             <!-- Save Slot 1 -->
             <div class="save-slot" id="slot_0">
                 <div class="slot-header">
