@@ -261,9 +261,9 @@ void Server::generateTrees(){
     };
 
     std::vector<biomeTreeInfo> biomesWithTrees = {
-        {3,1.0}, //Grass
-        {5,1.5}, //Forest
-        {6,0.8}  //Snow
+        {3,0.5}, //Grass
+        {5,1.3}, //Forest
+        {6,0.3}  //Snow
     };
 
     std::mt19937 mt(_seed );

@@ -4,6 +4,7 @@
 
 #include "../../include/Window/Window.h"
 
+#include <cmath>
 #include <filesystem>
 #include <ranges>
 #include <fstream>
@@ -18,11 +19,6 @@
 #include "../../include/Menu/UIComponent.h"
 #include "../../include/Window/WorldRender.h"
 
-
-void Window::renderWaterLayer() {
-    const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
-    SDL_RenderTexture(data.Renderer, textures[texture], data.cameraWaterRect.get(), nullptr);
-}
 
 void Window::saveConfig() const {
     std::ofstream config("config.txt");
@@ -130,26 +126,27 @@ void Window::HandleEvent(const SDL_Event *e) const {
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
     if (!data.mainScreen) {
+        textures.at("FinalTexture");
         SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
-        SDL_RenderClear(data.Renderer);
         handlePlayerInput();
-        renderWaterLayer();
 
         Coordinates coords = server->getPlayerPos(0);
-        WaterSprite::Tick(server->getDeltaTime());
 
-        data.cameraWaterRect->x += coords.x - (data.cameraRect->x + data.cameraOffsetX);
-        data.cameraWaterRect->y += coords.y - (data.cameraRect->y + data.cameraOffsetY);
+        data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
+        data.cameraWaterRect->y += static_cast<float>(std::lround(coords.y - (data.cameraRect->y + cameraOffsetY)));
 
-        data.cameraRect->x = coords.x - data.cameraOffsetX;
-        data.cameraRect->y = coords.y - data.cameraOffsetY;
+        data.cameraRect->x = static_cast<float>(std::lround(coords.x - cameraOffsetX));
+        data.cameraRect->y = static_cast<float>(std::lround(coords.y - cameraOffsetY));
+
 
         if (data.cameraWaterRect->x > 96) data.cameraWaterRect->x -= 32;
         if (data.cameraWaterRect->x < 32) data.cameraWaterRect->x += 32;
         if (data.cameraWaterRect->y > 96) data.cameraWaterRect->y -= 32;
         if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
 
-        SDL_RenderTexture(data.Renderer, textures["WorldMap"], data.cameraRect.get(), nullptr);
+        const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
+        SDL_RenderTexture(data.Renderer, textures.at(texture), data.cameraWaterRect.get(), nullptr);
+        SDL_RenderTexture(data.Renderer, textures.at("WorldMap"), data.cameraRect.get(), nullptr);
 
 #ifdef DEBUG
         data.playerAngle = server->getPlayer(0)->GetAngle();
@@ -203,6 +200,7 @@ bool Window::LoadSurface(const std::string& Path, const std::string& SaveAs) {
 
 bool Window::LoadTexture(const std::string& Path) {
     SDL_Texture* texture = IMG_LoadTexture(data.Renderer,Path.c_str());
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     if (!texture) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
@@ -217,6 +215,7 @@ bool Window::LoadTexture(const std::string& Path) {
 
 bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
     SDL_Texture* texture = IMG_LoadTexture(data.Renderer,Path.c_str());
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     if (!texture) {
 
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
@@ -239,6 +238,7 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
         return false;
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(data.Renderer, it->second);
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     if (!texture) {
         SDL_Log("Failed to create texture from surface %s: %s", SurfacePath.c_str(), SDL_GetError());
         return false;
@@ -286,6 +286,7 @@ void Window::initDebugMenu() {
     SDL_Log("Debug menu initialized");
 }
 
+
 void Window::initPauseMenu() {
     SDL_Log("initPauseMenu called - pause menu is already initialized by UIComponent");
 }
@@ -309,7 +310,6 @@ void Window::applyResolution(int width, int height) {
                           SDL_WINDOWPOS_CENTERED,
                           SDL_WINDOWPOS_CENTERED);
 
-    updateOptionsMenuScale();
 
     SDL_Log("Window resolution applied: %dx%d (Rendering at %dx%d)",
             width, height, GAMERESW, GAMERESH);
@@ -366,8 +366,8 @@ void Window::applyDisplayMode(DisplayMode mode) {
             break;
         }
     }
-    updateOptionsMenuScale();
 }
+
 void Window::tick() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -397,103 +397,26 @@ void Window::tick() {
     }
 }
 
-void Window::updateOptionsMenuScale() {
-    SDL_Log("updateOptionsMenuScale called - not needed with logical presentation");
-}
-// void Window::getLetterboxTransform(int& offsetX, int& offsetY, float& scaleX, float& scaleY) {
-//     float windowAspect = (float)data.WINDOW_WIDTH / data.WINDOW_HEIGHT;
-//     float gameAspect = (float)GAMERESW / GAMERESH;
-//
-//     if (windowAspect > gameAspect) {
-//         int scaledWidth = (int)(data.WINDOW_HEIGHT * gameAspect);
-//         offsetX = (data.WINDOW_WIDTH - scaledWidth) / 2;
-//         offsetY = 0;
-//         scaleX = (float)GAMERESW / scaledWidth;
-//         scaleY = (float)GAMERESH / data.WINDOW_HEIGHT;
-//     } else {
-//         int scaledHeight = (int)(data.WINDOW_WIDTH / gameAspect);
-//         offsetX = 0;
-//         offsetY = (data.WINDOW_HEIGHT - scaledHeight) / 2;
-//         scaleX = (float)GAMERESW / data.WINDOW_WIDTH;
-//         scaleY = (float)GAMERESH / scaledHeight;
-//     }
-// }
-
-// void Window::transformMouseCoordinates(int& mouseX, int& mouseY) {
-//     int offsetX, offsetY;
-//     float scaleX, scaleY;
-//     getLetterboxTransform(offsetX, offsetY, scaleX, scaleY);
-//
-//     mouseX -= offsetX;
-//     mouseY -= offsetY;
-//
-//     mouseX = (int)(mouseX * scaleX);
-//     mouseY = (int)(mouseY * scaleY);
-//
-//     mouseX = std::max(0, std::min(mouseX, GAMERESW));
-//     mouseY = std::max(0, std::min(mouseY, GAMERESH));
-// }
-
-// void Window::handleEvent(SDL_Event& event) {
-//     switch(event.type) {
-//         case SDL_EVENT_MOUSE_MOTION: {
-//             int mouseX = (int)event.motion.x;
-//             int mouseY = (int)event.motion.y;
-//             transformMouseCoordinates(mouseX, mouseY);
-//
-//             event.motion.x = (float)mouseX;
-//             event.motion.y = (float)mouseY;
-//             break;
-//         }
-//         case SDL_EVENT_MOUSE_BUTTON_DOWN:
-//         case SDL_EVENT_MOUSE_BUTTON_UP: {
-//             int mouseX = (int)event.button.x;
-//             int mouseY = (int)event.button.y;
-//             transformMouseCoordinates(mouseX, mouseY);
-//
-//             event.button.x = (float)mouseX;
-//             event.button.y = (float)mouseY;
-//             break;
-//         }
-//         case SDL_EVENT_MOUSE_WHEEL: {
-//             int mouseX = (int)event.wheel.mouse_x;
-//             int mouseY = (int)event.wheel.mouse_y;
-//             transformMouseCoordinates(mouseX, mouseY);
-//
-//             event.wheel.mouse_x = (float)mouseX;
-//             event.wheel.mouse_y = (float)mouseY;
-//             break;
-//         }
-//     }
-//
-//     if (menuData.RmlContext) {
-//         RmlSDL::InputEventHandler(menuData.RmlContext, data.Window, event);
-//     }
-// }
 void Window::initGame() {
 
     data.mainScreen = false;
     data.last = SDL_GetPerformanceCounter();
-    if (data.wasLoaded) return;
+    if (data.wasLoaded) return; //TODO: Fix loading, rozdelit na load cast a init cast
     data.wasLoaded = true;
 
     WaterSprite::Init();
-    Coordinates coord = server->getEntityPos(0);
+    Coordinates coordinates = server->getEntityPos(0);
 
-    data.cameraRect->x = coord.x - data.cameraOffsetX;
-    data.cameraRect->y = coord.y * data.cameraOffsetY;
+    data.cameraRect->x = coordinates.x - cameraOffsetX;
+    data.cameraRect->y = coordinates.y * cameraOffsetY;
 
     data.cameraWaterRect->x = 64;
     data.cameraWaterRect->y = 64;
 
-    loadTexturesFromDirectory("assets/textures/entities/player");
-
+    server->generateWorld();
     WorldRender wr(*this);
     wr.GenerateTextures();
-
     server->generateTrees();
-
-    SDL_RenderClear(data.Renderer);
 
     #ifdef DEBUG
     initDebugMenu();
@@ -526,11 +449,11 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_SetRenderLogicalPresentation(data.Renderer,
                                      GAMERESW,
                                      GAMERESH,
-                                     SDL_LOGICAL_PRESENTATION_LETTERBOX);
+                                     SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
     SDL_SetRenderVSync(data.Renderer, true);
 
     LoadSurface("assets/textures/Icon.bmp", "Icon");
-    SDL_SetWindowIcon(data.Window, surfaces["Icon"]);
+    SDL_SetWindowIcon(data.Window, surfaces.at("Icon"));
 
     if (!data.Window || !data.Renderer) {
         SDL_Log("SDL_CreateWindow Error: %s", SDL_GetError());
@@ -563,7 +486,7 @@ void Window::init(const std::string& title, int width, int height) {
 
 void Window::Destroy() {
     data.Running = false;
-    data.inited = false;
+    data.initialized = false;
 
     for (const auto &val: textures | std::views::values) {
         SDL_DestroyTexture(val);

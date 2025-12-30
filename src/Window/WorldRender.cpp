@@ -13,9 +13,10 @@
 void WorldRender::GenerateTextures() const {
     window.loadTexturesFromDirectory("assets/textures/structures");
     window.loadSurfacesFromDirectory("assets/textures/world");
-    window.server->generateWorld();
+    window.loadTexturesFromDirectory("assets/textures/entities/player");
+    window.loadTexturesFromDirectory("assets/textures/world/waterframes");
     GenerateWorldTexture();
-    GenerateWaterTextures();
+    //GenerateWaterTextures(); // Generace vody, textury jsou predgenerovany a nahrany ze slozky
     ReleaseResources();
 }
 
@@ -70,7 +71,7 @@ void WorldRender::GenerateWaterTextures() const {
     }
 
     for (const auto& waterFrame : waterFrames) {
-        window.surfaces[waterFrame.textureName] = waterFrame.surface;
+        window.surfaces.insert_or_assign(waterFrame.textureName, waterFrame.surface);
         window.CreateTextureFromSurface(waterFrame.textureName,waterFrame.textureName);
         IMG_SavePNG(waterFrame.surface, ("assets/" + waterFrame.textureName + ".png").c_str());
     }

@@ -408,7 +408,7 @@ QuitButtonListener::QuitButtonListener(Window* win, UIComponent* ui) : window(wi
 void QuitButtonListener::ProcessEvent(Rml::Event&) {
     SDL_Log("Quit clicked!");
     window->data.Running = false;
-    window->data.inited = false;
+    window->data.initialized = false;
 }
 
 // ===================================================================
@@ -559,7 +559,7 @@ void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
     }
 
     window->data.Running = false;
-    window->data.inited = false;
+    window->data.initialized = false;
 }
 
 // ===================================================================

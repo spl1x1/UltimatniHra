@@ -18,8 +18,8 @@ void EntityRenderingComponent::Render(const SDL_Renderer* renderer, const Coordi
 
     const auto renderingContex = _sprite->getFrame();
 
-    _rect->x = entityCoordinates.x - cameraRectangle.x;
-    _rect->y = entityCoordinates.y - cameraRectangle.y;
+    _rect->x = static_cast<float>(std::lround(entityCoordinates.x - cameraRectangle.x));
+    _rect->y =  static_cast<float>(std::lround(entityCoordinates.y - cameraRectangle.y));
     _rect->w = static_cast<float>(_sprite->getWidth());
     _rect->h = static_cast<float>(_sprite->getHeight());
 

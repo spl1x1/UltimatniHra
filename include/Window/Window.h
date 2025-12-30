@@ -13,17 +13,16 @@
 
 #include "../Application/MACROS.h"
 #include "../Menu/UIComponent.h"
-#include "../Sprites/Sprite.hpp"
 #include "../Server/Server.h"
+
+constexpr float cameraOffsetX = (static_cast<float>(GAMERESW)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
+constexpr float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
 
 struct WindowData {
     std::unique_ptr<SDL_FRect> cameraRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
     std::unique_ptr<SDL_FRect> cameraWaterRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
 
     int playerAngle = 0;
-
-    float cameraOffsetX = (static_cast<float>(GAMERESW)/ 2.0f - static_cast<float>(PLAYER_WIDTH) / 2.0f);
-    float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cast<float>(PLAYER_WIDTH)/ 2.0f);
 
     SDL_Window* Window;
     SDL_Renderer* Renderer;
@@ -36,7 +35,6 @@ struct WindowData {
     bool wasLoaded{false};
     bool mainScreen{true};
     bool inMainMenu{true};
-    bool inited{false};
 
     std::string WINDOW_TITLE;
     int WINDOW_WIDTH;
@@ -103,8 +101,6 @@ public:
     void loadConfig();
 
     void tick();
-
-    static void updateOptionsMenuScale();
 
     void initGame();
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);

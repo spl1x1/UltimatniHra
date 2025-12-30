@@ -39,11 +39,11 @@ class Server : public std::enable_shared_from_this<Server> {
     int _nextPlayerId = 0; // 0 je vyhradeno pro lokalniho hrace
     int _nextStructureId = 0; // 0 zatim neni vyhrazeno
 
-    std::set<int> EntityIdCache; //Cache pro rychlejsi hledani entit v oblasti
+    std::set<int> EntityIdCache; //Cache pro rychlejsi hledani entit v oblasti, set protoze nechceme duplikaty
 
     struct cacheValidity {
         bool isCacheValid{false};
-        int rangeForCacheUpdate{160};
+        int rangeForCacheUpdate{320}; //Pokud se hrac pohnul o tuto vzdalenost, tak se cache invaliduje 320 = 10 tiles
         Coordinates lastPlayerPos{0.0f, 0.0f};
     } cacheValidityData;
 
