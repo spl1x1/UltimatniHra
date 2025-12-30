@@ -7,8 +7,8 @@
 #include <filesystem>
 #include <ranges>
 #include <fstream>
-#include "../../include/Window/WorldRender.h"
 #include <SDL3_image/SDL_image.h>
+#include <utility>
 
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
@@ -16,7 +16,7 @@
 #include "../../include/Server/Server.h"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Menu/UIComponent.h"
-
+#include "../../include/Window/WorldRender.h"
 
 
 void Window::renderWaterLayer() {
@@ -94,9 +94,8 @@ void Window::renderPlayer() const {
    player->GetRenderingComponent()->Render(data.Renderer, player->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
 
     if (data.uiComponent->getMenuData().debugOverlay) {
-
-        const float rectX = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
-        const float rectY = GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f;
+        constexpr float rectX = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
+        constexpr float rectY = GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f;
 
         if (server->isPlayerColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
         else if (player->GetCollisionStatus().collisionDisabled)
@@ -180,7 +179,11 @@ bool Window::LoadSurface(const std::string& Path) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
-    surfaces.insert_or_assign(Path, surface);
+    if (!surfaces.insert_or_assign(Path,surface).second) {
+        SDL_Log("Failed to load surface %s loaded as %s", Path.c_str(), Path.c_str());
+        return false;
+    };
+    SDL_Log("Surface %s loaded as %s", Path.c_str(), Path.c_str());
     return true;
 }
 
@@ -190,7 +193,11 @@ bool Window::LoadSurface(const std::string& Path, const std::string& SaveAs) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
-    surfaces.insert_or_assign(SaveAs, surface);
+    if (!surfaces.insert_or_assign(SaveAs,surface).second) {
+        SDL_Log("Failed to load surface %s loaded as %s", Path.c_str(), SaveAs.c_str());
+        return false;
+    };
+    SDL_Log("Surface %s loaded as %s", Path.c_str(), SaveAs.c_str());
     return true;
 }
 
@@ -200,7 +207,11 @@ bool Window::LoadTexture(const std::string& Path) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
-    textures.insert_or_assign(Path,texture);
+    if (!textures.insert_or_assign(Path,texture).second) {
+        SDL_Log("Failed to load texture %s loaded as %s", Path.c_str(), Path.c_str());
+        return false;
+    };
+    SDL_Log("Texture %s loaded as %s", Path.c_str(), Path.c_str());
     return true;
 }
 
@@ -211,8 +222,11 @@ bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
-    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
-    textures[SaveAs] = texture;
+    if (!textures.insert_or_assign(SaveAs,texture).second) {
+        SDL_Log("Failed to load texture %s loaded as %s", Path.c_str(), SaveAs.c_str());
+        return false;
+    };
+    SDL_Log("Texture %s loaded as %s", Path.c_str(), SaveAs.c_str());
     return true;
 }
 
@@ -229,8 +243,11 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
         SDL_Log("Failed to create texture from surface %s: %s", SurfacePath.c_str(), SDL_GetError());
         return false;
     }
-    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
-    textures[TexturePath] = texture;
+    if (!textures.insert_or_assign(TexturePath,texture).second) {
+        SDL_Log("Failed to load texture %s loaded as %s", SurfacePath.c_str(), TexturePath.c_str());
+        return false;
+    };
+    SDL_Log("Texture %s loaded as %s", SurfacePath.c_str(), TexturePath.c_str());
     return true;
 }
 
