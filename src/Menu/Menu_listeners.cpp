@@ -141,11 +141,6 @@ SetResolutionListener::SetResolutionListener(Window* win, UIComponent* ui, int w
     : window(win), uiComponent(ui), width(w), height(h) {}
 
 void SetResolutionListener::ProcessEvent(Rml::Event& event) {
-    auto data = uiComponent->getMenuData();
-    data.resolutionWidth = width;
-    data.resolutionHeight = height;
-    uiComponent->setMenuData(data);
-
     Rml::Element* target = event.GetTargetElement();
     Rml::ElementDocument* document = target ? target->GetOwnerDocument() : nullptr;
 
@@ -157,6 +152,7 @@ void SetResolutionListener::ProcessEvent(Rml::Event& event) {
 
     SDL_Log("Setting resolution to: %dx%d", width, height);
     window->applyResolution(width, height);
+    uiComponent->applyUiScaling(width / 640);
     window->saveConfig();
 
     if (document) {

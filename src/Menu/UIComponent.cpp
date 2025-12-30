@@ -283,7 +283,6 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
 void UIComponent::Render() {
     RmlContext->Update();
     RmlContext->Render();
-
 #ifdef DEBUG
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
@@ -322,6 +321,17 @@ void UIComponent::Render() {
     ImGui::Render();
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
 #endif
+}
+
+void UIComponent::applyUiScaling(int scale) {
+    menuData.resolutionWidth *= scale;
+    menuData.resolutionHeight *= scale;
+    RmlContext->SetDimensions(Rml::Vector2i(menuData.resolutionWidth, menuData.resolutionHeight));
+    RmlContext->SetDensityIndependentPixelRatio(static_cast<float>(scale));
+    SDL_SetRenderLogicalPresentation(renderer,
+                                     menuData.resolutionWidth,
+                                     menuData.resolutionHeight,
+                                     SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 }
 
 void UIComponent::RegisterButtonBindings(Window* window) {

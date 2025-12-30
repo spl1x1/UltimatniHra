@@ -130,8 +130,9 @@ void Window::HandleEvent(const SDL_Event *e) const {
 
 void Window::advanceFrame() {
     SDL_RenderClear(data.Renderer);
-
     if (!data.mainScreen) {
+        SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
+        SDL_RenderClear(data.Renderer);
         handlePlayerInput();
         renderWaterLayer();
 
@@ -166,8 +167,9 @@ void Window::advanceFrame() {
             struc->Render(*data.Renderer, *data.cameraRect, textures);
             struc->Tick(server->getDeltaTime());
         }
+        SDL_SetRenderTarget(data.Renderer, nullptr);
+        SDL_RenderTexture(data.Renderer, textures.at("FinalTexture"), nullptr, nullptr);
     }
-
     data.uiComponent->Render();
     SDL_RenderPresent(data.Renderer);
 }
@@ -370,6 +372,7 @@ void Window::tick() {
     float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
     server->setDeltaTime(deltaTime);
     server->Tick();
+    WaterSprite::Tick(deltaTime);
     data.last = current;
 
     if (data.Running) {
@@ -478,6 +481,12 @@ void Window::initGame() {
     #ifdef DEBUG
     initDebugMenu();
     #endif
+    textures.insert_or_assign("FinalTexture", SDL_CreateTexture(data.Renderer,
+                                                    SDL_PIXELFORMAT_RGBA8888,
+                                                    SDL_TEXTUREACCESS_TARGET,
+                                                    GAMERESW,
+                                                    GAMERESH));
+    SDL_SetTextureScaleMode(textures.at("FinalTexture"), SDL_SCALEMODE_PIXELART);
 }
 
 void Window::init(const std::string& title, int width, int height) {
