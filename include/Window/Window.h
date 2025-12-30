@@ -21,8 +21,11 @@ constexpr float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cas
 struct WindowData {
     std::unique_ptr<SDL_FRect> cameraRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
     std::unique_ptr<SDL_FRect> cameraWaterRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
-
+#ifdef DEBUG
     int playerAngle = 0;
+    float playerX = 0.0f;
+    float playerY = 0.0f;
+#endif
 
     SDL_Window* Window;
     SDL_Renderer* Renderer;
@@ -47,10 +50,8 @@ class Window {
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
-    void renderWaterLayer();
-
     void handlePlayerInput() const;
-    void renderPlayer() const;
+    void renderPlayer();
 
     void HandleEvent(const SDL_Event* e) const;
     void advanceFrame();

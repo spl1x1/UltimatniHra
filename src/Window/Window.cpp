@@ -85,10 +85,10 @@ void Window::handlePlayerInput() const {
     server->playerUpdate(event);
 }
 
-void Window::renderPlayer() const {
+void Window::renderPlayer() {
     auto player = server->getPlayer(0);
    player->GetRenderingComponent()->Render(data.Renderer, player->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
-
+#ifdef DEBUG
     if (data.uiComponent->getMenuData().debugOverlay) {
         constexpr float rectX = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
         constexpr float rectY = GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f;
@@ -116,7 +116,9 @@ void Window::renderPlayer() const {
         }
 
         SDL_SetRenderDrawColor(data.Renderer, 0, 0, 0, 255);
+        dataModel.DirtyAllVariables();
     }
+#endif
 }
 
 void Window::HandleEvent(const SDL_Event *e) const {
@@ -129,7 +131,6 @@ void Window::advanceFrame() {
         textures.at("FinalTexture");
         SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
         handlePlayerInput();
-
         Coordinates coords = server->getPlayerPos(0);
 
         data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
@@ -150,9 +151,8 @@ void Window::advanceFrame() {
 
 #ifdef DEBUG
         data.playerAngle = server->getPlayer(0)->GetAngle();
-        dataModel.DirtyVariable("playerX");
-        dataModel.DirtyVariable("playerY");
-        dataModel.DirtyVariable("playerAngle");
+        data.playerX = coords.x;
+        data.playerY = coords.y;
 #endif
 
         renderPlayer();
@@ -268,17 +268,10 @@ void Window::loadTexturesFromDirectory(const std::string& directoryPath){
 }
 
 void Window::initDebugMenu() {
-
-    if (!data.uiComponent->getDocuments()->contains("debug_menu")) {
-        SDL_Log("Debug menu document not found, cannot initialize debug menu.");
-        return;
-    }
     Rml::DataModelConstructor constructor = data.uiComponent->getRmlContext()->CreateDataModel("debugMenu");
-    if (!constructor)
-        return;
 
-    constructor.Bind("playerX", &data.cameraRect->x);
-    constructor.Bind("playerY", &data.cameraRect->y);
+    constructor.Bind("playerX", &data.playerX);
+    constructor.Bind("playerY", &data.playerY);
     constructor.Bind("playerAngle", &data.playerAngle);
 
     dataModel = constructor.GetModelHandle();
@@ -418,9 +411,6 @@ void Window::initGame() {
     wr.GenerateTextures();
     server->generateTrees();
 
-    #ifdef DEBUG
-    initDebugMenu();
-    #endif
     textures.insert_or_assign("FinalTexture", SDL_CreateTexture(data.Renderer,
                                                     SDL_PIXELFORMAT_RGBA8888,
                                                     SDL_TEXTUREACCESS_TARGET,
@@ -463,6 +453,10 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_SetWindowMinimumSize(data.Window, data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
 
     data.uiComponent = std::make_unique<UIComponent>(data.Renderer, data.Window, this);
+#ifdef DEBUG
+    initDebugMenu();
+#endif
+    data.uiComponent->Init();
 
     int bbwidth, bbheight;
     SDL_GetWindowSizeInPixels(data.Window, &bbwidth, &bbheight);

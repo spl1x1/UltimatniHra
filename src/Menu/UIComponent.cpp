@@ -32,7 +32,6 @@ UIComponent::UIComponent(SDL_Renderer* renderer, SDL_Window* window, Window* win
     Rml::SetSystemInterface(RmlSystem.get());
     Rml::Initialise();
 
-
     RmlContext = std::unique_ptr<Rml::Context>(Rml::CreateContext("RmlSDL", Rml::Vector2i(640, 360)));
     if (!RmlContext) {
         SDL_Log("Failed to create RmlSDL context.");
@@ -55,7 +54,6 @@ UIComponent::UIComponent(SDL_Renderer* renderer, SDL_Window* window, Window* win
     ImGui_ImplSDLRenderer3_Init(renderer);
     clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 #endif
-    Init();
 }
 
 UIComponent::~UIComponent() {
