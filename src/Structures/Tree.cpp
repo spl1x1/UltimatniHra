@@ -4,6 +4,9 @@
 
 #include "../../include/Structures/Tree.h"
 
+#include <random>
+
+#include "../../include/Application/MACROS.h"
 #include "../../include/Sprites/Sprite.hpp"
 #include "../../include/Sprites/TreeSprite.hpp"
 
@@ -15,6 +18,10 @@ int Tree::getId() const {
     return _id;
 }
 
+bool Tree::wasProperlyInitialized() {
+    return initialized;
+}
+
 void Tree::Tick(float deltaTime) {
     _renderingComponent.Tick(deltaTime);
 }
@@ -23,6 +30,7 @@ void Tree::Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std:
     _renderingComponent.renderSprite(windowRenderer, cameraRectangle, textures);
 }
 
+
 Tree::Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server)
     : _id(id),
       _renderingComponent(std::make_unique<TreeSprite>(), topLeftCorner),
@@ -30,9 +38,10 @@ Tree::Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &ser
 
 
     _hitboxComponent.addPoint(1,1);
-    _hitboxComponent.finalize();
+    initialized = _hitboxComponent.finalize(id);
 }
 
 Tree::~Tree() {
-    _hitboxComponent.destroy();
+    if (!initialized) return;
+    _hitboxComponent.destroy(_id);
 };

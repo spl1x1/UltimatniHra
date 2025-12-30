@@ -21,17 +21,6 @@ StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<ISprite
     this->fourCorners[3] = {topLeftCorner.x + width, topLeftCorner.y + height}; //Bottom-right
 }
 
-bool StructureRenderingComponent::dismisCorners(const SDL_FRect& windowRectangle) const {
-    for (const Coordinates& corner : fourCorners) {
-        if (corner.x >= windowRectangle.x &&
-            corner.x <= windowRectangle.x + GAMERESW &&
-            corner.y >= windowRectangle.y &&
-            corner.y <= windowRectangle.y + GAMERESH
-        )  return false;
-    }
-    return true;
-}
-
 void StructureRenderingComponent::Tick(float deltaTime) const {
     if (!sprite) return;
     sprite->Tick(deltaTime);
@@ -39,8 +28,6 @@ void StructureRenderingComponent::Tick(float deltaTime) const {
 
 void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const {
     if (!sprite) return;
-    if (dismisCorners(cameraRectangle)) return;
-
     const auto renderingContex = sprite->getFrame();
 
     Rect->x = fourCorners[0].x - cameraRectangle.x;
@@ -52,21 +39,33 @@ void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL
 }
 
 //StructueHitbox methods
-StructureHitbox::StructureHitbox(const std::shared_ptr<Server> &server, Coordinates topLeftCorner) : server(server) {
+StructureHitbox::StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner) : server(server) {
     const Coordinates topLeft = {(std::floor(topLeftCorner.x/32))*32, (std::floor(topLeftCorner.y/32))*32};
     this->topLeftCorner = topLeft;
     this->server = server;
 }
 
-StructureHitbox::~StructureHitbox() {
-    updateCollisionMap(0);
-}
 
-void StructureHitbox::updateCollisionMap(int value) const {
+void StructureHitbox::updateCollisionMap(int value, int checkValue) const {
     for (const TrueCoordinates& point : hitboxPoints) {
+        if (checkValue != -2) {
+            if (server->getMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != checkValue) {
+                continue; // Skip updating this point if it's already occupied
+            }
+        }
         server->setMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP, value);
     }
 }
+
+bool StructureHitbox::checkCollisionMap() const {
+    for (const TrueCoordinates& point : hitboxPoints) {
+        if (server->getMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != 0) {
+            return true; // Collision detected
+        }
+    }
+    return false; // No collision
+}
+
 
 void StructureHitbox::addRowOfPoints(int posX, int posY, int length) {
     for (int i = 0; i < length; i++) {
@@ -87,10 +86,12 @@ void StructureHitbox::addPoint(int posX, int posY){
     hitboxPoints.push_back(point);
 }
 
-void StructureHitbox::finalize() const {
-    updateCollisionMap(1);
+bool StructureHitbox::finalize(int id) const {
+    if (checkCollisionMap()) return false; // Collision detected, cannot finalize hitbox
+    updateCollisionMap(id);
+    return true;
 }
 
-void StructureHitbox::destroy() const {
-    updateCollisionMap(0);
+void StructureHitbox::destroy(int id) const {
+    updateCollisionMap(0, id); //Reset collision map points to 0
 }

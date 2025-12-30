@@ -68,6 +68,7 @@ public:
     void LoadFaceFromDirectory() const; // Loads all font faces from the set font directory
     void HandleEvent(const SDL_Event *e);
     void Render();
+    void applyUiScaling(int scaleX, int scaleY);
 
     static void LoadFontFace(const std::string& fontPath);
     void LoadDocument(const std::string &docPath);

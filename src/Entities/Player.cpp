@@ -136,10 +136,10 @@ Player::Player(Server* server, const Coordinates& coordinates):
 
     EntityCollisionComponent::HitboxData playerHitboxData = {
         {
-            {32, 32}, // TOP_LEFT
-            {64, 32}, // TOP_RIGHT
-            {64, 65}, // BOTTOM_RIGHT
-            {32, 65} // BOTTOM_LEFT
+            {41, 34}, // TOP_LEFT
+            {55, 34}, // TOP_RIGHT
+            {55, 60}, // BOTTOM_RIGHT
+            {41, 60} // BOTTOM_LEFT
         },
         false, // disableCollision
         false // colliding

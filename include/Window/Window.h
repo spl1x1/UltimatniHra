@@ -51,10 +51,6 @@ class Window {
 
     void renderWaterLayer();
 
-    void renderMainMenu();
-
-    void loadMarkerSurface();
-    void markOnMap(float x, float y);
     void handlePlayerInput() const;
     void renderPlayer() const;
 
@@ -86,13 +82,6 @@ public:
         DisplayMode currentDisplayMode{DisplayMode::WINDOWED};  // Use the shared enum
     } menuData;
 
-    // void transformMouseCoordinates(int& mouseX, int& mouseY);
-    // void getLetterboxTransform(int& offsetX, int& offsetY,float& scaleX, float& scaleY);
-    void handleEvent(SDL_Event& event);
-
-
-    //parseToRenderer() momentalne nepouzivane
-    void parseToRenderer(const std::string& sprite = "", const SDL_FRect* destRect = nullptr, const SDL_FRect *srcRect = nullptr);
     bool LoadSurface(const std::string& Path);
     bool LoadSurface(const std::string& Path, const std::string& SaveAs);
     bool LoadTexture(const std::string& Path);

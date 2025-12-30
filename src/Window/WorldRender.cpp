@@ -10,13 +10,13 @@
 #include <SDL3_image/SDL_image.h>
 
 
-void WorldRender::GenerateTextures() {
-    window.server->generateWorld();
+void WorldRender::GenerateTextures() const {
+    window.loadTexturesFromDirectory("assets/textures/structures");
     window.loadSurfacesFromDirectory("assets/textures/world");
+    window.server->generateWorld();
     GenerateWorldTexture();
     GenerateWaterTextures();
     ReleaseResources();
-    window.loadTexturesFromDirectory("assets/textures/structures");
 }
 
 void WorldRender::GenerateStructureTextures() const {

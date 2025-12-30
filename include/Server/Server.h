@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include <shared_mutex>
+#include <set>
 
 #include "../Application/dataStructures.h"
 #include "../Window/WorldStructs.h"
@@ -38,9 +39,17 @@ class Server : public std::enable_shared_from_this<Server> {
     int _nextPlayerId = 0; // 0 je vyhradeno pro lokalniho hrace
     int _nextStructureId = 0; // 0 zatim neni vyhrazeno
 
+    std::set<int> EntityIdCache; //Cache pro rychlejsi hledani entit v oblasti
+
+    struct cacheValidity {
+        bool isCacheValid{false};
+        int rangeForCacheUpdate{160};
+        Coordinates lastPlayerPos{0.0f, 0.0f};
+    } cacheValidityData;
+
     int getNextEntityId() {return _nextEntityId++;}; //Vraci dalsi volne ID entity, neni thread safe, vola se jen v addEntity
     int getNextPlayerId() {return _nextPlayerId++;};
-    int getNextStructureId() {return _nextStructureId++;};
+    int getNextStructureId() {return ++_nextStructureId;};
 
 public:
 
@@ -75,9 +84,12 @@ public:
 
 
     //Methods
+    void generateTrees(); //Generuje stromy na mape sveta pro jistotu lockuje mutex serveru, volat při prvním vytvoreni jinak load
     void generateWorld(); //Generuje mapy sveta pro jistotu lockuje mutex serveru
     void Tick(); //Tick serveru, zatim tickuje sprity TODO: implementovat, nezapomenout na thread safety
     void playerUpdate(EventData e); //Tick pro hrace TODO: implementovat, nezapomenout na thread safety
+    std::set<int> getStructuresInArea(Coordinates topLeft, Coordinates bootomLeft); //Vraci ID vsech entit v dane oblasti TODO: implementovat, nezapomenout na thread safety
+
 
     void addEntity(Coordinates coordinates, EntityType type); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
     void addEntity(const std::shared_ptr<IEntity>& entity); //Prida na server entitu
@@ -85,7 +97,9 @@ public:
     void addPlayer(const std::shared_ptr<IEntity>& player); //Prida na server entitu
 
     void addStructure(Coordinates coordinates,  structureType type); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
+    void addStructure_unprotected(Coordinates coordinates, structureType type);
     void addStructure(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
+    void addStructure_unprotected(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 
     void removeEntity(int entityId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety
     void removeStructure(int structureId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety

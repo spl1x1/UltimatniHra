@@ -13,7 +13,6 @@
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Entities/Player.hpp"
-#include "../../include/Application/SaveGame.h"
 #include "../../include/Server/Server.h"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Menu/UIComponent.h"
@@ -25,24 +24,6 @@ void Window::renderWaterLayer() {
     SDL_RenderTexture(data.Renderer, textures[texture], data.cameraWaterRect.get(), nullptr);
 }
 
-
-void Window::renderMainMenu() {
-    SDL_RenderClear(data.Renderer);
-    SDL_RenderTexture(data.Renderer, textures["MainMenuBackground"], nullptr, nullptr);
-    data.uiComponent->Render();  // Use UIComponent's Render instead
-    SDL_RenderPresent(data.Renderer);
-
-    SDL_Event e;
-    if (SDL_PollEvent(&e)) {
-        if (e.type == SDL_EVENT_MOUSE_MOTION ||
-            e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
-            e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
-            e.type == SDL_EVENT_MOUSE_WHEEL) {
-            SDL_ConvertEventToRenderCoordinates(data.Renderer, &e);
-        }
-        data.uiComponent->HandleEvent(&e);
-    }
-}
 void Window::saveConfig() const {
     std::ofstream config("config.txt");
     if (config.is_open()) {
@@ -78,29 +59,6 @@ void Window::loadConfig() {
     }
 }
 
-void Window::loadMarkerSurface() {
-    surfaces["marker"]= SDL_CreateSurface(MAPSIZE*32, MAPSIZE*32, SDL_PIXELFORMAT_ABGR8888);
-}
-
-void Window::markOnMap(float x, float y) {
-
-    //TODO: coords ukazuji levy horni roh, je nutné pricist 32 na 32 rectangle
-    SDL_Rect rect = {
-        static_cast<int>(x+32),
-        static_cast<int>(y+32),
-        32,
-        32
-    };
-    SDL_Surface* markerSurface = surfaces["marker"];
-
-    SDL_Color color = {0, 0, 255, 255};
-    SDL_FillSurfaceRect(markerSurface, &rect, SDL_MapSurfaceRGB(markerSurface, color.r, color.g, color.b));
-    SDL_BlitSurface(markerSurface, nullptr, markerSurface, nullptr);
-
-    textures["marker"] = SDL_CreateTextureFromSurface(data.Renderer, markerSurface);
-}
-
-
 void Window::handlePlayerInput() const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
@@ -111,7 +69,14 @@ void Window::handlePlayerInput() const {
     if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])  {dy += 1.0f;}
     if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])  {dx -= 1.0f;}
     if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT]) {dx += 1.0f;}
-
+    if (keystates[SDL_SCANCODE_LCTRL] || keystates[SDL_SCANCODE_RCTRL]) {
+        dx *= 0.5f;
+        dy *= 0.5f;
+    }
+    if (keystates[SDL_SCANCODE_LSHIFT] || keystates[SDL_SCANCODE_RSHIFT]) {
+        dx *= 1.25f;
+        dy *= 1.25f;
+    }
 
     // Normalize diagonal movement
     if (dx != 0 && dy != 0) {
@@ -125,35 +90,21 @@ void Window::handlePlayerInput() const {
 }
 
 void Window::renderPlayer() const {
-
-    SDL_FRect rect;
-    rect.x = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
-    rect.y = GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f;
-    rect.w = PLAYER_WIDTH;
-    rect.h = PLAYER_HEIGHT;
-
-    server->getPlayer(0)->GetRenderingComponent()->Render(data.Renderer, server->getPlayer(0)->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
+    auto player = server->getPlayer(0);
+   player->GetRenderingComponent()->Render(data.Renderer, player->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
 
     if (data.uiComponent->getMenuData().debugOverlay) {
+
+        const float rectX = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
+        const float rectY = GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f;
+
         if (server->isPlayerColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
-        else if (server->getPlayer(0)->GetCollisionStatus().collisionDisabled)
+        else if (player->GetCollisionStatus().collisionDisabled)
             SDL_SetRenderDrawColor(data.Renderer, 0, 0, 255, 255);
         else
             SDL_SetRenderDrawColor(data.Renderer, 0, 255, 0, 255);
 
-        SDL_RenderLine(data.Renderer,
-                       rect.x -1,
-                       rect.y,
-                       rect.x + 1,
-                       rect.y);
-
-        SDL_RenderLine(data.Renderer,
-                       rect.x,
-                       rect.y -1,
-                       rect.x,
-                       rect.y + 1);
-
-        auto *hitbox = server->getPlayer(0)->GetCollisionComponent()->GetHitbox();
+        auto *hitbox = player->GetCollisionComponent()->GetHitbox();
 
         for (auto& corner : hitbox->corners) {
             Coordinates *end= &hitbox ->corners[0];
@@ -162,15 +113,14 @@ void Window::renderPlayer() const {
             }
 
             SDL_RenderLine(data.Renderer,
-                           rect.x + corner.x,
-                           rect.y + corner.y,
-                           rect.x + end->x,
-                           rect.y + end->y);
+                           rectX + corner.x,
+                           rectY + corner.y,
+                           rectX + end->x,
+                           rectY + end->y);
 
         }
 
         SDL_SetRenderDrawColor(data.Renderer, 0, 0, 0, 255);
-
     }
 }
 
@@ -203,45 +153,23 @@ void Window::advanceFrame() {
 
 #ifdef DEBUG
         data.playerAngle = server->getPlayer(0)->GetAngle();
-        SDL_RenderTexture(data.Renderer, textures["marker"], data.cameraRect.get(), nullptr);
         dataModel.DirtyVariable("playerX");
         dataModel.DirtyVariable("playerY");
         dataModel.DirtyVariable("playerAngle");
 #endif
 
         renderPlayer();
-
-        for (const auto& structure : server->getStructures()) {
-            structure.second->Render(*data.Renderer, *data.cameraRect, textures);
-            structure.second->Tick(server->getDeltaTime());
+        const auto structures = server->getStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH});
+        for (const auto& structure : structures) {
+            IStructure *struc = server->getStructure(structure);
+            if (!struc) continue;
+            struc->Render(*data.Renderer, *data.cameraRect, textures);
+            struc->Tick(server->getDeltaTime());
         }
     }
 
     data.uiComponent->Render();
     SDL_RenderPresent(data.Renderer);
-
-    SDL_Event e;
-    if (SDL_PollEvent(&e)) {
-        if (e.type == SDL_EVENT_MOUSE_MOTION ||
-            e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
-            e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
-            e.type == SDL_EVENT_MOUSE_WHEEL) {
-            SDL_ConvertEventToRenderCoordinates(data.Renderer, &e);
-        }
-        data.uiComponent->HandleEvent(&e);
-    }
-}
-void Window::parseToRenderer(const std::string& sprite, const SDL_FRect *destRect, const SDL_FRect *srcRect) {
-    if (sprite.empty()) {
-#ifdef DEBUG
-        SDL_Log("Called parseToRenderer(), without valid arguments");
-#endif
-        return;
-    }
-    if (surfaces.contains(sprite)) {
-        CreateTextureFromSurface(sprite, sprite);
-        SDL_RenderTexture(data.Renderer, textures["sprite"], srcRect, destRect);
-    }
 }
 
 bool Window::LoadSurface(const std::string& Path) {
@@ -529,7 +457,6 @@ void Window::initGame() {
     if (data.wasLoaded) return;
     data.wasLoaded = true;
 
-    Player::Create(server.get(), SaveManager::getInstance().getCurrentSlot());
     WaterSprite::Init();
     Coordinates coord = server->getEntityPos(0);
 
@@ -544,13 +471,11 @@ void Window::initGame() {
     WorldRender wr(*this);
     wr.GenerateTextures();
 
-    server->addStructure({5000,5000},structureType::TREE);
-    server->addStructure({5050,5010},structureType::TREE);
-    server->addStructure({5080,5030},structureType::TREE);
+    server->generateTrees();
+
     SDL_RenderClear(data.Renderer);
 
     #ifdef DEBUG
-    loadMarkerSurface();
     initDebugMenu();
     #endif
 }

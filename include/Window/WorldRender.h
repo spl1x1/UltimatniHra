@@ -31,7 +31,7 @@ class WorldRender {
 
     public:
     explicit WorldRender(Window& window) : window(window) {};
-    void GenerateTextures();
+    void GenerateTextures() const;
 
 };
 

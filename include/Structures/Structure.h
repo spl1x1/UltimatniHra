@@ -29,6 +29,7 @@ public:
     virtual ~IStructure() = default;
     [[nodiscard]] virtual structureType getType() const = 0;
     [[nodiscard]] virtual int getId() const = 0;
+    virtual bool wasProperlyInitialized() = 0;
     virtual void Tick(float deltaTime) = 0;
     virtual void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
 };
@@ -60,7 +61,8 @@ class StructureHitbox {
     std::shared_ptr<Server> server;
     std::list<TrueCoordinates> hitboxPoints{};
 
-    void updateCollisionMap(int value) const;
+    void updateCollisionMap(int value, int checkValue = -2) const;
+    bool checkCollisionMap() const;
 
 public:
     //Methods
@@ -88,12 +90,11 @@ public:
     /*
      * Finalizuje hitbox struktury a zapise ho do collision mapy
      */
-    void finalize() const;
-    void destroy() const;
+    [[nodiscard]] bool finalize(int id) const;
+    void destroy(int id) const;
 
     //Constructor and Destructor
     explicit StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);
-    ~StructureHitbox();
 };
 
 

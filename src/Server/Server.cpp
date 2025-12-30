@@ -100,22 +100,50 @@ void Server::addEntity(const std::shared_ptr<IEntity>& entity) {
     _entities[newId] = entity;
 }
 
+
 void Server::addStructure(Coordinates coordinates, structureType type) {
     std::lock_guard lock(serverMutex);
     int newId = getNextStructureId();
 
+    std::shared_ptr<IStructure> newStructure;
     switch (type) {
-        case structureType::TREE: {;
-            auto newTree = std::make_shared<Tree>(newId, coordinates, getSharedPtr());
-            _structures[newId] = newTree;
+        case structureType::TREE: {
+            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr());
             break;
         }
         default:
             break;
     }
+
+    if (!newStructure->wasProperlyInitialized()) {
+        SDL_Log("Failed to create Tree structure at (%f, %f)", coordinates.x, coordinates.y);
+        _nextStructureId--; //Rollback ID pokud se nepovede vytvorit struktura
+        return;
+    }
+    _structures[newId] =newStructure;
 }
 
+void Server::addStructure_unprotected(Coordinates coordinates, structureType type) {
+    int newId = getNextStructureId();
 
+    std::shared_ptr<IStructure> newStructure;
+    switch (type) {
+        case structureType::TREE: {
+            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr());
+            break;
+        }
+        default:
+            break;
+    }
+
+    if (!newStructure->wasProperlyInitialized()) {
+        SDL_Log("Failed to create Tree structure at (%f, %f)", coordinates.x, coordinates.y);
+        _nextStructureId--; //Rollback ID pokud se nepovede vytvorit struktura
+        return;
+    }
+    _structures[newId] =newStructure;
+
+}
 
 void Server::playerUpdate(EventData e) {
     std::lock_guard lock(serverMutex);
@@ -123,6 +151,36 @@ void Server::playerUpdate(EventData e) {
     if (const auto playerEntity = dynamic_cast<Player*>(_players[0].get())) {
         playerEntity->AddEvent(e);
     }
+}
+
+std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates bottomRight) {
+    std::lock_guard lock(serverMutex);
+    if (std::abs(topLeft.x - cacheValidityData.lastPlayerPos.x) >= static_cast<float>(cacheValidityData.rangeForCacheUpdate)
+        ||std::abs(topLeft.y - cacheValidityData.lastPlayerPos.y) >= static_cast<float>(cacheValidityData.rangeForCacheUpdate))
+        cacheValidityData.isCacheValid = false;
+
+
+    if (cacheValidityData.isCacheValid) {
+        return EntityIdCache;
+    }
+
+    SDL_Log("Refreshing structure ID cache");
+    cacheValidityData.lastPlayerPos = topLeft;
+    EntityIdCache.clear();
+    const int rangeXMin = static_cast<int>(std::floor((topLeft.x) / 32.0f)) - cacheValidityData.rangeForCacheUpdate/32;
+    const int rangeYMin = static_cast<int>(std::floor((topLeft.y) / 32.0f)) - cacheValidityData.rangeForCacheUpdate/32;
+    const int rangeXMax = static_cast<int>(std::ceil((bottomRight.x) / 32.0f)) + cacheValidityData.rangeForCacheUpdate/32;
+    const int rangeYMax = static_cast<int>(std::ceil((bottomRight.y) / 32.0f)) + cacheValidityData.rangeForCacheUpdate/32;
+
+    for (int x = rangeXMin; x <= rangeXMax; x++) {
+        if (x < 0 || x >= MAPSIZE) continue;
+        for (int y = rangeYMin; y <= rangeYMax; y++) {
+            if (y < 0 || y >= MAPSIZE) continue;
+            if (int id = getMapValue_unprotected(x, y, WorldData::COLLISION_MAP); id > 0)  EntityIdCache.emplace(id);
+        }
+    }
+    cacheValidityData.isCacheValid = true;
+    return EntityIdCache;
 }
 
 void Server::Tick() {
@@ -196,6 +254,42 @@ IStructure* Server::getStructure(int structureId) {
     return nullptr; // Return nullptr if entity not found
 }
 
+void Server::generateTrees(){
+    struct biomeTreeInfo {
+        int biomeId;
+        double densityModifier;
+    };
+
+    std::vector<biomeTreeInfo> biomesWithTrees = {
+        {3,1.0}, //Grass
+        {5,1.5}, //Forest
+        {6,0.8}  //Snow
+    };
+
+    std::mt19937 mt(_seed );
+    std::uniform_int_distribution dist(1,100);
+
+    std::lock_guard lock(serverMutex);
+    for (int x = 0; x < MAPSIZE; x++) {
+        for (int y = 0; y < MAPSIZE; y++) {
+
+            double biomeModifier = 0.0;
+            int biomeValue = getMapValue_unprotected(x, y, WorldData::BIOME_MAP);
+            for (const auto& biomeInfo : biomesWithTrees) {
+                if (biomeInfo.biomeId == biomeValue) {
+                    biomeModifier = biomeInfo.densityModifier;
+                    break;
+                }
+            }
+            if (biomeModifier == 0.0) continue; //Pokud neni v biomu povoleno generovat stromy, pokracuj dale
+
+            int roll = dist(mt);
+            if (roll > TREEDENSITY* biomeModifier) continue;
+            Coordinates position = {static_cast<float>(x*32),static_cast<float>(y*32)};
+            addStructure_unprotected(position, structureType::TREE);
+        }
+    }
+}
 
 void Server::generateWorld(){
     std::lock_guard lock(serverMutex);

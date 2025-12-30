@@ -11,11 +11,12 @@ class Tree: public IStructure {
     int _id;
     StructureRenderingComponent _renderingComponent;
     StructureHitbox _hitboxComponent;
-
+    bool initialized{false};
 public:
     //Interface implementation
     [[nodiscard]] structureType getType() const override;
     [[nodiscard]] int getId() const override;
+    bool wasProperlyInitialized() override;
     void Tick(float deltaTime) override;
     void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const override;
 
