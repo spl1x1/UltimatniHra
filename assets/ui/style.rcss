@@ -6,7 +6,7 @@
 body {
     margin: 0;
     background-color: #203a43;
-    font-family: "Poppins";
+    font-family: "Andy";
     display: flex;
     justify-content: center;
     align-items: center;

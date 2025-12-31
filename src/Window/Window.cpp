@@ -160,8 +160,8 @@ void Window::advanceFrame() {
 
 #ifdef DEBUG
         if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer(0)->GetHitboxRenderingContext());
-        data.playerX = coords.x;
-        data.playerY = coords.y;
+        data.playerX = std::floor(coords.x);
+        data.playerY = std::floor(coords.y);
         data.playerAngle = server->getPlayer(0)->GetLogicComponent()->GetAngle();
         dataModel.DirtyAllVariables();
 #endif

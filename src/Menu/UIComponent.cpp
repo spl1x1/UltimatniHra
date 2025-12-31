@@ -46,9 +46,6 @@ UIComponent::UIComponent(SDL_Renderer* renderer, SDL_Window* window, Window* win
 
     ImGui::StyleColorsDark();
 
-    // Setup scaling
-    ImGuiStyle& style = ImGui::GetStyle();
-
     // Setup Platform/Renderer backends
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer3_Init(renderer);
@@ -145,7 +142,7 @@ void UIComponent::LoadDocument(const std::string& docPath) {
 
 void UIComponent::LoadFontFace(const std::string& fontDirectory) {
     if (fontDirectory.empty()) return;
-    if (!Rml::LoadFontFace("assets/fonts/Poppins-Regular.ttf")) SDL_Log("Failed to load font face: %s", fontDirectory.c_str());
+    if (!Rml::LoadFontFace(fontDirectory)) SDL_Log("Failed to load font face: %s", fontDirectory.c_str());
 }
 
 void UIComponent::ReloadDocument(const std::string &docPath) {

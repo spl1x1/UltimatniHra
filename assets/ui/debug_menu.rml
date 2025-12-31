@@ -1,22 +1,13 @@
 <rml>
     <head>
         <title>Debug Menu</title>
-        <style>
-            body {
-                margin: 0;
-                font-family: "Poppins";
-            }
-            h1, h2 {
-                display: block;
-                margin: 10px;
-            }
-        </style>
+        <link type="text/rcss" href="debug_menu.rcss" />
     </head>
     <body>
-        <div data-model="debugMenu">
-	        <h1>Player X: {{playerX}}</h1>
-	        <h1>Player Y: {{playerY}}</h1>
-	        <h1>Player Angle: {{playerAngle}}</h1>
+        <div id ="dbm" data-model="debugMenu">
+            <div id="Xc" class="label">Player X: {{playerX}}</div>
+            <div id="Yc" class="label">Player X: {{playerY}}</div>
+            <div id="Angle" class="label">Player X: {{playerAngle}}</div>
         </div>
     </body>
 </rml>

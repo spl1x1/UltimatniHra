@@ -22,9 +22,9 @@ struct WindowData {
     std::unique_ptr<SDL_FRect> cameraRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
     std::unique_ptr<SDL_FRect> cameraWaterRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
 #ifdef DEBUG
-    int playerAngle = 0;
-    float playerX = 0.0f;
-    float playerY = 0.0f;
+    int playerAngle{0};
+    int playerX{0};
+    int playerY{0};
 #endif
 
     SDL_Window* Window;
