@@ -22,9 +22,10 @@ void Player::Tick() {
         _entityRenderingComponent.SetAnimation(AnimationType::RUNNING);
 }
 
-void Player::Render(SDL_Renderer &windowRenderer, SDL_FRect &cameraRectangle,
-    std::unordered_map<std::string, SDL_Texture *> &textures) {
-    _entityRenderingComponent.Render(&windowRenderer,_entityLogicComponent.GetCoordinates(),cameraRectangle,textures);
+RenderingContext Player::GetRenderingContext() {
+    auto context = _entityRenderingComponent.GetRenderingContext();
+    context.coordinates = _entityLogicComponent.GetCoordinates();
+    return context;
 }
 
 void Player::Create(Server* server, int slotId) {
@@ -101,6 +102,12 @@ CollisionStatus Player::GetCollisionStatus() const {
 
 int Player::GetAngle() const {
     return _entityLogicComponent.GetAngle();
+}
+
+HitboxContext Player::GetHitboxRenderingContext() const {
+    auto context = _entityCollisionComponent.GetHitboxContext();
+    context.coordinates = _entityLogicComponent.GetCoordinates();
+    return context;
 }
 
 EntityCollisionComponent * Player::GetCollisionComponent() {

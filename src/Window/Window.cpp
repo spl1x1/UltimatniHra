@@ -87,38 +87,44 @@ void Window::handlePlayerInput() const {
 
 void Window::renderPlayer() {
     auto player = server->getPlayer(0);
-   player->GetRenderingComponent()->Render(data.Renderer, player->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
+    //player->GetRenderingComponent()->Render(data.Renderer, player->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
+    renderAt(player->GetRenderingContext());
+    drawHitbox(player->GetHitboxRenderingContext());
+
 #ifdef DEBUG
     if (data.uiComponent->getMenuData().debugOverlay) {
-        constexpr float rectX = GAMERESW / 2.0f - PLAYER_WIDTH / 2.0f;
-        constexpr float rectY = GAMERESH / 2.0f - PLAYER_HEIGHT / 2.0f;
-
-        if (server->isPlayerColliding(0)) SDL_SetRenderDrawColor(data.Renderer, 255, 0, 0, 255);
-        else if (player->GetCollisionStatus().collisionDisabled)
-            SDL_SetRenderDrawColor(data.Renderer, 0, 0, 255, 255);
-        else
-            SDL_SetRenderDrawColor(data.Renderer, 0, 255, 0, 255);
-
-        auto *hitbox = player->GetCollisionComponent()->GetHitbox();
-
-        for (auto& corner : hitbox->corners) {
-            Coordinates *end= &hitbox ->corners[0];
-            if (&corner != &hitbox->corners[3]) {
-                end= &corner + 1;
-            }
-
-            SDL_RenderLine(data.Renderer,
-                           rectX + corner.x,
-                           rectY + corner.y,
-                           rectX + end->x,
-                           rectY + end->y);
-
-        }
-
-        SDL_SetRenderDrawColor(data.Renderer, 0, 0, 0, 255);
         dataModel.DirtyAllVariables();
     }
 #endif
+}
+
+void Window::renderAt(const RenderingContext& context) const {
+    if (!textures.contains(context.textureName) || !context.rect) return;
+    SDL_FRect rect;
+    rect.x = static_cast<float>(std::lround(context.coordinates.x - data.cameraRect->x));
+    rect.y =  static_cast<float>(std::lround(context.coordinates.y - data.cameraRect->y));
+    rect.w = context.rect->w;
+    rect.h = context.rect->h;
+
+    SDL_RenderTexture(data.Renderer, textures.at(context.textureName), context.rect, &rect);
+}
+
+void Window::drawHitbox(const HitboxContext& context) const {
+    if (context.corners.empty()) return;
+    SDL_SetRenderDrawColor(data.Renderer, context.r, context.g, context.b, context.a);
+
+    for (size_t i = 0; i < context.corners.size(); ++i) {
+        const auto& start = context.corners[i];
+        const auto& end = context.corners[(i + 1) % context.corners.size()];
+
+        SDL_RenderLine(data.Renderer,
+                       static_cast<float>(std::lround(start.x + context.coordinates.x - data.cameraRect->x)),
+                       static_cast<float>(std::lround(start.y + context.coordinates.y - data.cameraRect->y)),
+                       static_cast<float>(std::lround(end.x + context.coordinates.x - data.cameraRect->x)),
+                       static_cast<float>(std::lround(end.y + context.coordinates.y - data.cameraRect->y)));
+    }
+
+    SDL_SetRenderDrawColor(data.Renderer, 0, 0 , 0, 255);
 }
 
 void Window::HandleEvent(const SDL_Event *e) const {
@@ -149,23 +155,32 @@ void Window::advanceFrame() {
         SDL_RenderTexture(data.Renderer, textures.at(texture), data.cameraWaterRect.get(), nullptr);
         SDL_RenderTexture(data.Renderer, textures.at("WorldMap"), data.cameraRect.get(), nullptr);
 
+
+        renderAt(server->getPlayer(0)->GetRenderingContext());
+
 #ifdef DEBUG
-        data.playerAngle = server->getPlayer(0)->GetAngle();
+        if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer(0)->GetHitboxRenderingContext());
         data.playerX = coords.x;
         data.playerY = coords.y;
+        data.playerAngle = server->getPlayer(0)->GetLogicComponent()->GetAngle();
+        dataModel.DirtyAllVariables();
 #endif
 
-        renderPlayer();
         const auto structures = server->getStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH});
         for (const auto& structure : structures) {
             IStructure *struc = server->getStructure(structure);
             if (!struc) continue;
-            struc->Render(*data.Renderer, *data.cameraRect, textures);
+            renderAt(struc->GetRenderingContext());
             struc->Tick(server->getDeltaTime());
+#ifdef DEBUG
+            if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(struc->GetHitboxContext());
+#endif
         }
+
         SDL_SetRenderTarget(data.Renderer, nullptr);
         SDL_RenderTexture(data.Renderer, textures.at("FinalTexture"), nullptr, nullptr);
     }
+
     data.uiComponent->Render();
     SDL_RenderPresent(data.Renderer);
 }

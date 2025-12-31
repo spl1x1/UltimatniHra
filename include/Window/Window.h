@@ -52,6 +52,8 @@ class Window {
 
     void handlePlayerInput() const;
     void renderPlayer();
+    void renderAt(const RenderingContext& context) const;
+    void drawHitbox(const HitboxContext& context) const;
 
     void HandleEvent(const SDL_Event* e) const;
     void advanceFrame();

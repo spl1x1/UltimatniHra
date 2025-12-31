@@ -16,6 +16,7 @@ public:
     void setAnimation(AnimationType newAnimation) override {};
 
     std::tuple<std::string,SDL_FRect*> getFrame() override;
+    RenderingContext getRenderingContext() override;
     [[nodiscard]] int getWidth() const override;
     [[nodiscard]] int getHeight() const override;
 };

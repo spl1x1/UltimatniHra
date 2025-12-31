@@ -9,6 +9,13 @@ std::tuple<std::string, SDL_FRect*> TreeSprite::getFrame() {
     return {renderingContext.getTexture(), renderingContext.getFrameRect()};
 }
 
+RenderingContext TreeSprite::getRenderingContext() {
+    RenderingContext context;
+    context.textureName = renderingContext.getTexture();
+    context.rect = renderingContext.getFrameRect();
+    return context;
+}
+
 void TreeSprite::Tick(float deltaTime) {
     renderingContext.Tick(deltaTime);
 }

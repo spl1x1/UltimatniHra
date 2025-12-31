@@ -30,4 +30,13 @@ int PlayerSprite::getHeight() const {
     return renderingContext.getHeight();
 }
 
+RenderingContext PlayerSprite::getRenderingContext() {
+    RenderingContext context;
+
+    auto frame  = getFrame();
+    context.textureName = std::get<0>(frame);
+    context.rect = std::get<1>(frame);
+
+    return context;
+}
 

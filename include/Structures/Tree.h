@@ -18,7 +18,8 @@ public:
     [[nodiscard]] int getId() const override;
     bool wasProperlyInitialized() override;
     void Tick(float deltaTime) override;
-    void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const override;
+    [[nodiscard]] RenderingContext GetRenderingContext() const override;
+    [[nodiscard]] HitboxContext GetHitboxContext() override;
 
     //Constructor
     Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server);

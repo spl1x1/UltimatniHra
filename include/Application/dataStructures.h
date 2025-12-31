@@ -4,6 +4,8 @@
 
 #ifndef ULTIMATNIHRA_DATASTRUCTURES_H
 #define ULTIMATNIHRA_DATASTRUCTURES_H
+#include <vector>
+#include <SDL3/SDL_rect.h>
 
 //Defines a 2D coordinate
 struct Coordinates {
@@ -14,5 +16,20 @@ struct Coordinates {
 struct CollisionStatus{
     bool colliding;
     bool collisionDisabled;
+};
+
+struct RenderingContext {
+    std::string textureName;
+    Coordinates coordinates;
+    SDL_FRect* rect = nullptr;
+};
+
+struct HitboxContext {
+    std::vector<Coordinates> corners;
+    Coordinates coordinates; //Top-left coordinate for rendering
+    int  r = 0;
+    int  g = 0;
+    int  b = 0;
+    int  a = 255;
 };
 #endif //ULTIMATNIHRA_DATASTRUCTURES_H

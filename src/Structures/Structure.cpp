@@ -6,7 +6,6 @@
 
 #include <cmath>
 
-#include "../../include/Application/MACROS.h"
 #include "../../include/Sprites/Sprite.hpp"
 
 //StructureRenderingComponent methods
@@ -26,16 +25,11 @@ void StructureRenderingComponent::Tick(float deltaTime) const {
     sprite->Tick(deltaTime);
 }
 
-void StructureRenderingComponent::renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const {
-    if (!sprite) return;
-    const auto renderingContex = sprite->getFrame();
+RenderingContext StructureRenderingComponent::getRenderingContext() const {
+    if (!sprite) return RenderingContext{};
 
-    Rect->x = fourCorners[0].x - cameraRectangle.x;
-    Rect->y = fourCorners[0].y - cameraRectangle.y;
-    Rect->w = static_cast<float>(sprite->getWidth());
-    Rect->h = static_cast<float>(sprite->getHeight());
-
-    SDL_RenderTexture(&windowRenderer, textures[std::get<0>(renderingContex)], std::get<1>(renderingContex), Rect.get());
+    auto renderingContext = sprite->getRenderingContext();
+    return renderingContext;
 }
 
 //StructueHitbox methods
@@ -58,14 +52,14 @@ void StructureHitbox::updateCollisionMap(int value, int checkValue) const {
 }
 
 bool StructureHitbox::checkCollisionMap() const {
-    for (const TrueCoordinates& point : hitboxPoints) {
-        if (server->getMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != 0) {
-            return true; // Collision detected
-        }
-    }
-    return false; // No collision
+     return std::ranges::any_of(hitboxPoints, [this](const TrueCoordinates& point) {
+        return server->getMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != 0;
+    });
 }
 
+Coordinates StructureHitbox::getTopLeftCorner() const {
+    return topLeftCorner;
+}
 
 void StructureHitbox::addRowOfPoints(int posX, int posY, int length) {
     for (int i = 0; i < length; i++) {
@@ -84,6 +78,48 @@ void StructureHitbox::addPoint(int posX, int posY){
     point.x = static_cast<int>(topLeftCorner.x)/32 + posX;
     point.y = static_cast<int>(topLeftCorner.y)/32 + posY;
     hitboxPoints.push_back(point);
+}
+
+HitboxContext StructureHitbox::getHitboxContext() {
+    if (!hitboxContext.corners.empty()) {
+        return hitboxContext; // Return cached context if already computed
+    }
+
+    HitboxContext context{};
+    context.coordinates = topLeftCorner;
+    context.r = 255;
+    context.g = 255;
+    context.b = 0;
+    context.a = 255;
+
+    if (hitboxPoints.empty()) return context;
+
+    auto it = hitboxPoints.begin();
+    int minX{it->x};
+    int minY{it->y};
+    int maxX{it->x};
+    int maxY{it->y};
+
+    ++it;
+    for (;it != hitboxPoints.end(); ++it) {
+        if (it->x < minX) minX = it->x;
+        if (it->y < minY) minY = it->y;
+        if (it->x > maxX) maxX = it->x;
+        if (it->y > maxY) maxY = it->y;
+    }
+
+    const auto left{static_cast<float>(minX * 32 - static_cast<int>(topLeftCorner.x))};
+    const auto top{ static_cast<float>(minY * 32 - static_cast<int>(topLeftCorner.y))};
+    const auto right{static_cast<float>((maxX + 1) * 32 - static_cast<int>(topLeftCorner.x))};
+    const auto bottom{static_cast<float>((maxY + 1) * 32 - static_cast<int>(topLeftCorner.y))};
+
+    context.corners.push_back({left, top});
+    context.corners.push_back({right, top});
+    context.corners.push_back({right, bottom});
+    context.corners.push_back({left, bottom});
+
+    hitboxContext = context; // Cache the computed context
+    return context;
 }
 
 bool StructureHitbox::finalize(int id) const {

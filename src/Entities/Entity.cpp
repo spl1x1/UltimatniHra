@@ -13,21 +13,16 @@
 #include <algorithm>
 
 //EntityRenderingComponent methods
-void EntityRenderingComponent::Render(const SDL_Renderer* renderer, const Coordinates &entityCoordinates, const SDL_FRect &cameraRectangle, std::unordered_map<std::string, SDL_Texture*> texturePool) const {
-    if (!_sprite) return;
-
-    const auto renderingContex = _sprite->getFrame();
-
-    _rect->x = static_cast<float>(std::lround(entityCoordinates.x - cameraRectangle.x));
-    _rect->y =  static_cast<float>(std::lround(entityCoordinates.y - cameraRectangle.y));
-    _rect->w = static_cast<float>(_sprite->getWidth());
-    _rect->h = static_cast<float>(_sprite->getHeight());
-
-    SDL_RenderTexture(const_cast<SDL_Renderer*>(renderer), texturePool[std::get<0>(renderingContex)], std::get<1>(renderingContex), _rect.get());
-}
 void EntityRenderingComponent::Tick(const float deltaTime) const {
     if (!_sprite) return;
     _sprite->Tick(deltaTime);
+}
+
+RenderingContext EntityRenderingComponent::GetRenderingContext() const {
+    if (!_sprite) return RenderingContext{};
+
+    auto renderingContext = _sprite->getRenderingContext();
+    return renderingContext;
 }
 
 void EntityRenderingComponent::SetDirectionBaseOnAngle(const int angle) const {
@@ -67,6 +62,24 @@ CollisionStatus EntityCollisionComponent::GetCollisionStatus() const {
             .colliding = _hitbox.colliding,
             .collisionDisabled = _hitbox.disableCollision
     };
+}
+
+HitboxContext EntityCollisionComponent::GetHitboxContext() const {
+    HitboxContext context{};
+    //To be implemented
+    context.corners = std::vector<Coordinates>(_hitbox.corners, _hitbox.corners + 4);
+
+    if (_hitbox.colliding) {
+        context.r = 255;
+        context.g = 0;
+        context.b = 0;
+    } else {
+        context.r = 0;
+        context.g = 255;
+        context.b = 0;
+    }
+
+    return context;
 }
 
 void EntityCollisionComponent::SetHitbox(const HitboxData &hitbox){
@@ -184,6 +197,8 @@ void EntityLogicComponent::SetCoordinates(const Coordinates &newCoordinates) {
 Coordinates EntityLogicComponent::GetCoordinates() const {
     return _coordinates;
 }
+
+
 void EntityLogicComponent::Tick(const float deltaTime,const Server* server, EntityCollisionComponent &collisionComponent, IEntity* entity) {
     if (!_tasks.empty()) HandleTask(server, collisionComponent, entity);
     if (!_events.empty()) HandleEvent(server, collisionComponent);

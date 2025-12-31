@@ -26,8 +26,15 @@ void Tree::Tick(float deltaTime) {
     _renderingComponent.Tick(deltaTime);
 }
 
-void Tree::Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const {
-    _renderingComponent.renderSprite(windowRenderer, cameraRectangle, textures);
+
+RenderingContext Tree::GetRenderingContext() const {
+    auto context = _renderingComponent.getRenderingContext();
+    context.coordinates = _hitboxComponent.getTopLeftCorner();
+    return context;
+}
+
+HitboxContext Tree::GetHitboxContext() {
+    return _hitboxComponent.getHitboxContext();
 }
 
 

@@ -15,6 +15,7 @@ public:
     //Interface Methods
     void Tick(float deltaTime) override;
 
+
     //Setters
     void setDirection(Direction newDirection) override;
     void setAnimation(AnimationType newAnimation) override;
@@ -23,6 +24,7 @@ public:
     std::tuple<std::string,SDL_FRect*> getFrame() override;
     [[nodiscard]] int getWidth() const override;
     [[nodiscard]] int getHeight() const override;
+    RenderingContext getRenderingContext() override;
 };
 
 

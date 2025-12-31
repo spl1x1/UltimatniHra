@@ -31,7 +31,8 @@ public:
     [[nodiscard]] virtual int getId() const = 0;
     virtual bool wasProperlyInitialized() = 0;
     virtual void Tick(float deltaTime) = 0;
-    virtual void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const = 0;
+    [[nodiscard]] virtual RenderingContext GetRenderingContext() const = 0;
+    [[nodiscard]] virtual HitboxContext GetHitboxContext() = 0;
 };
 
 class StructureRenderingComponent {
@@ -39,12 +40,10 @@ class StructureRenderingComponent {
     std::unique_ptr<ISprite> sprite;
     std::unique_ptr<SDL_FRect> Rect = std::make_unique<SDL_FRect>();
 
-
-    [[nodiscard]] bool dismisCorners(const SDL_FRect& windowRectangle) const;
     public:
 
     //Methods
-    void renderSprite(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) const;
+    [[nodiscard]] RenderingContext getRenderingContext() const;
     void Tick(float deltaTime) const;
 
     explicit StructureRenderingComponent(std::unique_ptr<ISprite> sprite, Coordinates topLeft);
@@ -60,12 +59,14 @@ class StructureHitbox {
     Coordinates topLeftCorner;
     std::shared_ptr<Server> server;
     std::list<TrueCoordinates> hitboxPoints{};
+    HitboxContext hitboxContext;
 
     void updateCollisionMap(int value, int checkValue = -2) const;
     bool checkCollisionMap() const;
 
 public:
     //Methods
+    Coordinates getTopLeftCorner() const;
 
     /*
         * Prida radek bodu do hitboxu struktury
@@ -90,6 +91,9 @@ public:
     /*
      * Finalizuje hitbox struktury a zapise ho do collision mapy
      */
+
+    [[nodiscard]] HitboxContext getHitboxContext();
+
     [[nodiscard]] bool finalize(int id) const;
     void destroy(int id) const;
 

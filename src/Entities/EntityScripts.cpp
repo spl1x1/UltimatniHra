@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <queue>
 
 #include "../../include/Entities/Entity.h"
 #include "../../include/Application/MACROS.h"

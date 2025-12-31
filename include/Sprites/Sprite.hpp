@@ -8,6 +8,8 @@
 #include <string>
 #include <SDL3/SDL_rect.h>
 
+#include "../Application/dataStructures.h"
+
 class Server;
 
 enum class AnimationType {
@@ -41,6 +43,7 @@ public:
 
     //Getters
     virtual std::tuple<std::string,SDL_FRect*> getFrame() = 0;
+    virtual RenderingContext getRenderingContext() = 0;
     [[nodiscard]] virtual int getWidth() const = 0;
     [[nodiscard]] virtual int getHeight() const = 0;
 };

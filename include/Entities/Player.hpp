@@ -20,7 +20,7 @@ class Player final : public IEntity {
 public:
     //Interface methods implementation
     void Tick() override;
-    void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) override;
+    RenderingContext GetRenderingContext() override;
 
     static void Create(Server* server, int slotId) ;
     static void Load(Server* server, int slotId);
@@ -49,6 +49,7 @@ public:
     //Returns entity collision status
     [[nodiscard]] CollisionStatus GetCollisionStatus() const override;
     [[nodiscard]] int GetAngle() const override;
+    [[nodiscard]] HitboxContext GetHitboxRenderingContext() const override;
 
 
     EntityCollisionComponent* GetCollisionComponent() override;

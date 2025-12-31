@@ -38,6 +38,7 @@ std::string SpriteRenderingContext::getTexture() const {
     return textureName;
 }
 
+
 void SpriteRenderingContext::setFrameCount(int newFrameCount) {
     frameCount = newFrameCount;
     if (currentFrame > frameCount) {

@@ -11,7 +11,6 @@
 #define ENTITY_H
 #include <functional>
 #include <memory>
-#include <queue>
 #include <unordered_map>
 #include <vector>
 #include <SDL3/SDL_render.h>
@@ -82,13 +81,16 @@ class EntityRenderingComponent {
     std::unique_ptr<SDL_FRect> _rect;
 
 public:
-    void Render(const SDL_Renderer* renderer, const Coordinates &entityCoordinates, const SDL_FRect &cameraRectangle, std::unordered_map<std::string, SDL_Texture*> texturePool) const;
     void Tick(float deltaTime) const;
 
     //Setters
     void SetDirectionBaseOnAngle(int angle) const;
     void SetAnimation(AnimationType animation) const;
     void SetSprite(std::unique_ptr<ISprite> sprite);
+
+    //Getters
+    [[nodiscard]] RenderingContext GetRenderingContext() const;
+
 
     //Constructor
     explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite);
@@ -122,6 +124,7 @@ public:
     //Getters
     [[nodiscard]] HitboxData* GetHitbox();
     [[nodiscard]] CollisionStatus GetCollisionStatus() const;
+    [[nodiscard]]  HitboxContext GetHitboxContext() const;
 
     //Constructor
     explicit EntityCollisionComponent(const HitboxData &hitbox): _hitbox(hitbox){}
@@ -218,7 +221,7 @@ class IEntity {
 public:
     //Interface methods
     virtual void Tick() = 0;
-    virtual void Render(SDL_Renderer& windowRenderer, SDL_FRect& cameraRectangle, std::unordered_map<std::string, SDL_Texture*>& textures) = 0;
+    virtual RenderingContext GetRenderingContext() = 0;
 
     //Entity actions
     virtual void Move(float dX, float dY) = 0;
@@ -243,7 +246,7 @@ public:
     //Returns entity collision status
     [[nodiscard]] virtual CollisionStatus GetCollisionStatus() const = 0;
     [[nodiscard]] virtual int GetAngle() const = 0;
-    //Returns current task and task data
+    [[nodiscard]] virtual HitboxContext GetHitboxRenderingContext() const = 0;
 
     //Entity component getters
 
