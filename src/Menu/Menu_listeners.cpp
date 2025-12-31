@@ -5,6 +5,8 @@
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Window/Window.h"
 #include "../../include/Application/SaveGame.h"
+#include "../../include/Items/inventory.h"
+#include "../../include/Items/Item.h"
 #include <SDL3/SDL.h>
 #include <cstdio>
 
@@ -834,11 +836,31 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
             }
         }
     }
+    else if (commandName == "itemshow") {
+        if (window) {
+            auto* inventory = window->data.uiComponent->getInventoryController();
+            if (inventory) {
+                // Create a test wooden sword with icon
+                auto sword = ItemFactory::createSword(MaterialType::WOOD);
+                if (sword) {
+                    sword->setIconPath("textures/items/wooden_sword.png");
+                    inventory->addItem(std::move(sword));
+                    printf("Added Wooden Sword to inventory\n");
+                }
+
+                // Also show the inventory
+                inventory->show();
+            } else {
+                printf("Error: Inventory controller not found\n");
+            }
+        }
+    }
     else if (commandName == "help") {
         printf("Available commands:\n");
         printf("  /rmlshow <name>  - Show an RML document\n");
         printf("  /rmlhide <name>  - Hide an RML document\n");
         printf("  /rmllist         - List all loaded documents\n");
+        printf("  /itemshow        - Add test item to inventory\n");
         printf("  /help            - Show this help message\n");
     }
     else {

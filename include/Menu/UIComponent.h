@@ -15,6 +15,7 @@
 
 
 class Window;
+class InventoryController;
 
 enum class DisplayMode {
     WINDOWED,
@@ -50,6 +51,8 @@ private:
     MenuData menuData{};
     ImVec4 clear_color;
     Uint64 DeltaTime{0};
+
+    std::unique_ptr<InventoryController> inventoryController{};
 
     void RegisterButtonBindings(Window *window);
 
@@ -93,6 +96,9 @@ public:
     void setDocDirectory(const std::string& directory);
     void setMenuData(const MenuData& menuData);
     void setFontDirectory(const std::string& fontDirectory);
+
+    //Inventory
+    InventoryController* getInventoryController() const;
 };
 
 #endif //UICOMPONENT_H
