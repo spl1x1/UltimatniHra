@@ -29,6 +29,7 @@ enum class ArmourType {
 };
 enum class MaterialType {
     NONE,
+    WOOD,
     STONE,
     LEATHER,
     IRON,
@@ -45,6 +46,7 @@ class Item {
 protected:
     std::string name;
     std::string description;
+    std::string iconPath;
     ItemType type;
     int value;
     bool stackable;
@@ -55,12 +57,14 @@ public:
     virtual ~Item() = default;
     [[nodiscard]] std::string getName() const;
     [[nodiscard]] std::string getDesription() const;
+    [[nodiscard]] std::string getIconPath() const { return iconPath; }
     [[nodiscard]] ItemType getType() const {return type;};
     [[nodiscard]] int getValue() const { return value; }
     [[nodiscard]] bool isStackable() const { return stackable; }
     [[nodiscard]] int getStackSize() const { return stackSize; }
     [[nodiscard]] int getMaxStackSize() const { return maxStackSize; }
 
+    void setIconPath(const std::string& path) { iconPath = path; }
     void addToStack(int amount);
     bool removeFromStack(int amount);
 

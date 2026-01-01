@@ -1,0 +1,47 @@
+﻿<rml>
+    <head>
+        <title>Inventory</title>
+        <link type="text/rcss" href="inventory.rcss"/>
+    </head>
+    <body>
+    <h1>Inventory</h1>
+    <div id="inventory-container">
+        <div class="inventory-header">
+
+            <div class="close-button" id="inventory_close">×</div>
+        </div>
+
+        <div class="inventory-grid" id="inventory_grid">
+            <div class="inventory-slot" id="slot_0"></div>
+            <div class="inventory-slot" id="slot_1"></div>
+            <div class="inventory-slot" id="slot_2"></div>
+            <div class="inventory-slot" id="slot_3"></div>
+            <div class="inventory-slot" id="slot_4"></div>
+
+            <div class="inventory-slot" id="slot_5"></div>
+            <div class="inventory-slot" id="slot_6"></div>
+            <div class="inventory-slot" id="slot_7"></div>
+            <div class="inventory-slot" id="slot_8"></div>
+            <div class="inventory-slot" id="slot_9"></div>
+
+            <div class="inventory-slot" id="slot_10"></div>
+            <div class="inventory-slot" id="slot_11"></div>
+            <div class="inventory-slot" id="slot_12"></div>
+            <div class="inventory-slot" id="slot_13"></div>
+            <div class="inventory-slot" id="slot_14"></div>
+
+            <div class="inventory-slot" id="slot_15"></div>
+            <div class="inventory-slot" id="slot_16"></div>
+            <div class="inventory-slot" id="slot_17"></div>
+            <div class="inventory-slot" id="slot_18"></div>
+            <div class="inventory-slot" id="slot_19"></div>
+        </div>
+
+        <div class="inventory-info">
+            <p id="selected_item_name">Select an item</p>
+            <p id="selected_item_desc"></p>
+        </div>
+    </div>
+
+    </body>
+</rml>

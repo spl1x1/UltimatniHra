@@ -11,6 +11,14 @@
 Item::Item(std::string  name, std::string  desc, ItemType type, int value, bool stackable, int maxStack)
     : name(std::move(name)), description(std::move(desc)), type(type), value(value), stackable(stackable), stackSize(1), maxStackSize(maxStack) {}
 
+std::string Item::getName() const {
+    return name;
+}
+
+std::string Item::getDesription() const {
+    return description;
+}
+
 void Item::addToStack(int amount) {
     if (stackable) {
         stackSize = std::min(stackSize + amount, maxStackSize);
@@ -142,6 +150,7 @@ namespace ItemFactory {
 
     std::string getMaterialName(const MaterialType tier) {
         switch (tier) {
+            case MaterialType::WOOD: return "Wooden";
             case MaterialType::STONE: return "Stone";
             case MaterialType::LEATHER: return "Leather";
             case MaterialType::IRON: return "Iron";
@@ -157,6 +166,7 @@ namespace ItemFactory {
         float atkSpd = 1.0f;
 
         switch (material) {
+            case MaterialType::WOOD: baseDmg = 5; dur = 50; atkSpd = 0.8f; break;
             case MaterialType::STONE: baseDmg = 8; dur = 80; atkSpd = 0.9f; break;
             case MaterialType::IRON: baseDmg = 12; dur = 150; atkSpd = 1.0f; break;
             case MaterialType::STEEL: baseDmg = 18; dur = 250; atkSpd = 1.1f; break;
@@ -172,6 +182,7 @@ namespace ItemFactory {
         float atkSpd = 0.8f;
 
         switch (material) {
+            case MaterialType::WOOD: baseDmg = 4; dur = 60; atkSpd = 0.7f; break;
             case MaterialType::STONE: baseDmg = 6; dur = 100; atkSpd = 0.8f; break;
             case MaterialType::IRON: baseDmg = 10; dur = 200; atkSpd = 0.9f; break;
             case MaterialType::STEEL: baseDmg = 15; dur = 350; atkSpd = 1.0f; break;
@@ -187,6 +198,7 @@ namespace ItemFactory {
         float atkSpd = 1.5f;
 
         switch (material) {
+            case MaterialType::WOOD: baseDmg = 6; dur = 50; atkSpd = 1.2f; break;
             case MaterialType::STONE: baseDmg = 10; dur = 90; atkSpd = 1.3f; break;
             case MaterialType::IRON: baseDmg = 15; dur = 180; atkSpd = 1.5f; break;
             case MaterialType::STEEL: baseDmg = 22; dur = 300; atkSpd = 1.7f; break;
@@ -202,6 +214,7 @@ namespace ItemFactory {
         float atkSpd = 2.0f;
 
         switch (material) {
+            case MaterialType::WOOD: baseDmg = 8; dur = 40; atkSpd = 1.5f; break;
             case MaterialType::STONE: baseDmg = 12; dur = 70; atkSpd = 1.8f; break;
             case MaterialType::IRON: baseDmg = 18; dur = 140; atkSpd = 2.0f; break;
             case MaterialType::STEEL: baseDmg = 25; dur = 220; atkSpd = 2.2f; break;

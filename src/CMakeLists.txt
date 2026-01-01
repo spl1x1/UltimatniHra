@@ -13,6 +13,9 @@ add_executable(UltimatniHra
         ${SOURCES}
         Application/SaveGame.cpp
         ../include/Application/SaveGame.h
+        Items/inventory.cpp
+        ../include/Items/inventory.h
+        ../include/Items/inventory.h
 )
 
 target_link_libraries(ImguiDependency

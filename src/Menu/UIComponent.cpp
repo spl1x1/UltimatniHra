@@ -11,6 +11,7 @@
 #include  "../../include/Menu/RmlUi_Renderer_SDL.h"
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Window/Window.h"
+#include "../../include/Items/inventory.h"
 
 #include <RmlUi/Core/Core.h>
 #include <RmlUi/Core/ElementDocument.h>
@@ -101,6 +102,10 @@ void UIComponent::setFontDirectory(const std::string& fontDirectory) {
     this->fontDirectory = fontDirectory;
 }
 
+InventoryController* UIComponent::getInventoryController() const {
+    return inventoryController.get();
+}
+
 void UIComponent::LoadDocumentsFromDirectory(const std::string& docDirectory) {
         if (docDirectory.empty()) {
             SDL_Log("Document directory is empty.");
@@ -161,6 +166,9 @@ void UIComponent::Init() {
 #endif
 
     RegisterButtonBindings(windowClass);
+
+    // Initialize inventory controller
+    inventoryController = std::make_unique<InventoryController>(windowClass, this);
 }
 
 void UIComponent::HandleEvent(const SDL_Event *e) {
@@ -265,6 +273,15 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     break;
             }
 #endif
+            if (keycode == SDLK_Q) {
+                bool inGame = !documents.at("main_menu")->IsVisible() &&
+                              !documents.at("pause_menu")->IsVisible() &&
+                              !blockInput;
+                if (inventoryController && inGame) {
+                    inventoryController->toggle();
+                    SDL_Log("Inventory toggled");
+                }
+            }
             break;
         }
 
