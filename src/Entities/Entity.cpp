@@ -60,24 +60,18 @@ EntityCollisionComponent::HitboxData* EntityCollisionComponent::GetHitbox() {
 CollisionStatus EntityCollisionComponent::GetCollisionStatus() const {
     return CollisionStatus{
             .colliding = _hitbox.colliding,
-            .collisionDisabled = _hitbox.disableCollision
+            .collisionDisabled = _hitbox.disabledCollision
     };
 }
 
 HitboxContext EntityCollisionComponent::GetHitboxContext() const {
     HitboxContext context{};
     //To be implemented
-    context.corners = std::vector<Coordinates>(_hitbox.corners, _hitbox.corners + 4);
+    context.corners = std::vector(_hitbox.corners, _hitbox.corners + 4);
 
-    if (_hitbox.colliding) {
-        context.r = 255;
-        context.g = 0;
-        context.b = 0;
-    } else {
-        context.r = 0;
-        context.g = 255;
-        context.b = 0;
-    }
+    if (_hitbox.colliding) context.r = 255;
+    else context.g = 255;
+    if (_hitbox.disabledCollision) context.b = 255;
 
     return context;
 }
@@ -87,9 +81,12 @@ void EntityCollisionComponent::SetHitbox(const HitboxData &hitbox){
 }
 
 void EntityCollisionComponent::DisableCollision(const bool Switch){
-    _hitbox.disableCollision = Switch;
+    _hitbox.disabledCollision = Switch;
 }
 
+void EntityCollisionComponent::SwitchCollision(){
+    _hitbox.disabledCollision = !_hitbox.disabledCollision;
+}
 
 bool EntityCollisionComponent::CheckCollision(const float newX, const float newY, const Server* server) {
     _hitbox.colliding = false;
@@ -200,8 +197,13 @@ Coordinates EntityLogicComponent::GetCoordinates() const {
 
 
 void EntityLogicComponent::Tick(const float deltaTime,const Server* server, EntityCollisionComponent &collisionComponent, IEntity* entity) {
+    for (auto &task : _tasks) {
     if (!_tasks.empty()) HandleTask(server, collisionComponent, entity);
-    if (!_events.empty()) HandleEvent(server, collisionComponent);
+    }
+
+    for (auto &event : _events) {
+        if (!_events.empty()) HandleEvent(server, collisionComponent);
+    }
 }
 
 void EntityLogicComponent::AddEvent(const EventData &eventData) {
@@ -229,7 +231,7 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
     collisionComponent.CheckCollision(newX, newY, server);
     const EntityCollisionComponent::HitboxData hitbox{*collisionComponent.GetHitbox()};
 
-    if (hitbox.colliding && !hitbox.disableCollision) return false;
+    if (hitbox.colliding && !hitbox.disabledCollision) return false;
     this->_coordinates.x = newX;
     this->_coordinates.y = newY;
     SetAngleBasedOnMovement(dX, dY);
@@ -241,7 +243,9 @@ void EntityLogicComponent::HandleEvent(const Server* server, EntityCollisionComp
     switch (data.type) {
         case Event::MOVE:
             Move(data.dt, data.data.move.dX, data.data.move.dY, collisionComponent, server);
-
+            break;
+        case Event::CHANGE_COLLISION:
+            collisionComponent.SwitchCollision();
             break;
         default:
             break;

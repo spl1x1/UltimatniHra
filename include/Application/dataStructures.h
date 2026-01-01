@@ -32,4 +32,9 @@ struct HitboxContext {
     int  b = 0;
     int  a = 255;
 };
+
+struct MousePosition {
+    float x{0.0f};
+    float y{0.0f};
+};
 #endif //ULTIMATNIHRA_DATASTRUCTURES_H

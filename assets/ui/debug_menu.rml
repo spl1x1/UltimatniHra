@@ -7,7 +7,7 @@
         <div id ="dbm" data-model="debugMenu">
             <div id="Xc" class="label">Player X: {{playerX}}</div>
             <div id="Yc" class="label">Player X: {{playerY}}</div>
-            <div id="Angle" class="label">Player X: {{playerAngle}}</div>
+            <div id="Angle" class="label">Player Angle: {{playerAngle}}</div>
         </div>
     </body>
 </rml>

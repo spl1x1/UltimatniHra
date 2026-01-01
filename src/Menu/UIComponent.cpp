@@ -252,9 +252,12 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     if (blockInput) {
                         SDL_Log("Game paused, input blocked.");
                         documents.at("pause_menu")->Show();
+                        windowClass->data.inMenu = true;
+                        SDL_ShowCursor();
                     } else {
                         SDL_Log("Game unpaused, input unblocked.");
                         documents.at("pause_menu")->Hide();
+                        windowClass->data.inMenu = false;
                     }
                     break;
                 }
@@ -311,6 +314,10 @@ void UIComponent::Render() {
                 document.second->UpdateDocument();
             }
         }
+        ImGui::Checkbox("Player collision", &windowClass->data.collisionState);
+        ImGui::Checkbox("Mouse preview", &windowClass->data.drawMousePreview);
+        ImGui::Text("Mouse Position: (%f, %f)", windowClass->data.mousePosition.x, windowClass->data.mousePosition.y);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
     }
     ImGui::Render();
@@ -318,7 +325,7 @@ void UIComponent::Render() {
 #endif
 }
 
-void UIComponent::applyUiScaling(int scale) {
+void UIComponent::applyUiScaling(const int scale) {
     menuData.resolutionWidth *= scale;
     menuData.resolutionHeight *= scale;
     RmlContext->SetDimensions(Rml::Vector2i(menuData.resolutionWidth, menuData.resolutionHeight));
@@ -327,6 +334,7 @@ void UIComponent::applyUiScaling(int scale) {
                                      menuData.resolutionWidth,
                                      menuData.resolutionHeight,
                                      SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+    windowClass->data.scale = static_cast<float>(scale);
 }
 
 void UIComponent::RegisterButtonBindings(Window* window) {

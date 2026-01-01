@@ -21,10 +21,13 @@ constexpr float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cas
 struct WindowData {
     std::unique_ptr<SDL_FRect> cameraRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
     std::unique_ptr<SDL_FRect> cameraWaterRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
+    std::unique_ptr<SDL_FRect> mousePreviewRect = std::make_unique<SDL_FRect>(0.0f,0.0f,32.0f,32.0f);
 #ifdef DEBUG
     int playerAngle{0};
     int playerX{0};
     int playerY{0};
+    bool collisionState{false};
+    bool lastCollisionState{false};
 #endif
 
     SDL_Window* Window;
@@ -32,16 +35,19 @@ struct WindowData {
     SDL_Event event;
 
     std::unique_ptr<UIComponent> uiComponent = nullptr;
+    MousePosition mousePosition;
 
     bool initialized{false};
     bool Running{false};
     bool wasLoaded{false};
     bool mainScreen{true};
-    bool inMainMenu{true};
+    bool inMenu{true}; // True if in any menu or inventory
+    bool drawMousePreview{false};
 
     std::string WINDOW_TITLE;
     int WINDOW_WIDTH;
     int WINDOW_HEIGHT;
+    float scale{1.0f};
 
     Uint64 last;
 };
@@ -51,7 +57,6 @@ class Window {
     float offsetY = 0.0f;
 
     void handlePlayerInput() const;
-    void renderPlayer();
     void renderAt(const RenderingContext& context) const;
     void drawHitbox(const HitboxContext& context) const;
 
@@ -94,7 +99,7 @@ public:
 
     static void initPauseMenu();
 
-    void HandleMainMenuEvent(const SDL_Event *e) const;
+    void HandleInputs();
 
     void changeResolution(int width, int height) const;
     void applyResolution(int width, int height);

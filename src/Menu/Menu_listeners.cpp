@@ -427,6 +427,7 @@ void ResumeButtonListener::ProcessEvent(Rml::Event&) {
     auto documents = uiComponent->getDocuments();
     if (documents->contains("pause_menu")) {
         documents->at("pause_menu")->Hide();
+        window->data.inMenu = false;
     }
 }
 
@@ -534,7 +535,7 @@ void MainMenuButtonListener::ProcessEvent(Rml::Event&) {
     uiComponent->setMenuData(data);
 
     window->data.mainScreen = true;
-    window->data.inMainMenu = true;
+    window->data.inMenu = true;
 
     if (documents->contains("main_menu")) {
         documents->at("main_menu")->Show();

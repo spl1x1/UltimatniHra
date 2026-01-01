@@ -49,7 +49,6 @@ private:
     std::string fontDirectory{"assets/fonts/"};
     MenuData menuData{};
     ImVec4 clear_color;
-    Uint64 DeltaTime{0};
 
     void RegisterButtonBindings(Window *window);
 

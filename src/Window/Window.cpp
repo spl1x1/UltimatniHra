@@ -85,19 +85,6 @@ void Window::handlePlayerInput() const {
     server->playerUpdate(event);
 }
 
-void Window::renderPlayer() {
-    auto player = server->getPlayer(0);
-    //player->GetRenderingComponent()->Render(data.Renderer, player->GetLogicComponent()->GetCoordinates(), *data.cameraRect, textures);
-    renderAt(player->GetRenderingContext());
-    drawHitbox(player->GetHitboxRenderingContext());
-
-#ifdef DEBUG
-    if (data.uiComponent->getMenuData().debugOverlay) {
-        dataModel.DirtyAllVariables();
-    }
-#endif
-}
-
 void Window::renderAt(const RenderingContext& context) const {
     if (!textures.contains(context.textureName) || !context.rect) return;
     SDL_FRect rect;
@@ -132,11 +119,15 @@ void Window::HandleEvent(const SDL_Event *e) const {
 }
 
 void Window::advanceFrame() {
-    SDL_RenderClear(data.Renderer);
-    if (!data.mainScreen) {
+        const Uint64 current = SDL_GetPerformanceCounter();
+        const float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
+        server->setDeltaTime(deltaTime);
+        server->Tick();
+        WaterSprite::Tick(deltaTime);
+        data.last = current;
+
         textures.at("FinalTexture");
         SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
-        handlePlayerInput();
         Coordinates coords = server->getPlayerPos(0);
 
         data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
@@ -160,6 +151,11 @@ void Window::advanceFrame() {
 
 #ifdef DEBUG
         if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer(0)->GetHitboxRenderingContext());
+        if (data.lastCollisionState != data.collisionState) {
+            server->playerUpdate(EventData{Event::CHANGE_COLLISION});
+            data.lastCollisionState = data.collisionState;
+            SDL_Log("Collision state changed: %s", data.collisionState ? "ON" : "OFF");
+        }
         data.playerX = std::floor(coords.x);
         data.playerY = std::floor(coords.y);
         data.playerAngle = server->getPlayer(0)->GetLogicComponent()->GetAngle();
@@ -175,14 +171,20 @@ void Window::advanceFrame() {
 #ifdef DEBUG
             if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(struc->GetHitboxContext());
 #endif
+            if (data.drawMousePreview) {
+                const float tileX = std::floor((static_cast<float>(data.mousePosition.x) + data.cameraRect->x) / 32.0f) * 32.0f;
+                const float tileY = std::floor((static_cast<float>(data.mousePosition.y) + data.cameraRect->y) / 32.0f) * 32.0f;
+
+                RenderingContext cursor;
+                cursor.coordinates = {tileX,tileY};
+                cursor.rect = data.mousePreviewRect.get();
+                cursor.textureName = "cursor";
+                renderAt(cursor);
+            }
         }
 
         SDL_SetRenderTarget(data.Renderer, nullptr);
         SDL_RenderTexture(data.Renderer, textures.at("FinalTexture"), nullptr, nullptr);
-    }
-
-    data.uiComponent->Render();
-    SDL_RenderPresent(data.Renderer);
 }
 
 bool Window::LoadSurface(const std::string& Path) {
@@ -300,8 +302,26 @@ void Window::initPauseMenu() {
 }
 
 
-void Window::HandleMainMenuEvent(const SDL_Event *e) const {
-    data.uiComponent->HandleEvent(e);
+void Window::HandleInputs() {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_EVENT_QUIT) {
+            data.Running = false;
+        }
+
+        if (event.type == SDL_EVENT_MOUSE_MOTION ||
+            event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+            event.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+            event.type == SDL_EVENT_MOUSE_WHEEL) {
+            SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
+            }
+        if (event.type == SDL_EVENT_MOUSE_MOTION) {
+            data.mousePosition.x = event.motion.x /data.scale;
+            data.mousePosition.y =  event.motion.y / data.scale;
+        }
+
+        data.uiComponent->HandleEvent(&event);
+    }
 }
 
 void Window::changeResolution(int width, int height) const {
@@ -377,37 +397,18 @@ void Window::applyDisplayMode(DisplayMode mode) {
 }
 
 void Window::tick() {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_QUIT) {
-            data.Running = false;
-        }
-
-        if (event.type == SDL_EVENT_MOUSE_MOTION ||
-            event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
-            event.type == SDL_EVENT_MOUSE_BUTTON_UP ||
-            event.type == SDL_EVENT_MOUSE_WHEEL) {
-            SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
-            }
-
-        data.uiComponent->HandleEvent(&event);
-    }
-
-    Uint64 current = SDL_GetPerformanceCounter();
-    float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
-    server->setDeltaTime(deltaTime);
-    server->Tick();
-    WaterSprite::Tick(deltaTime);
-    data.last = current;
-
-    if (data.Running) {
-        advanceFrame();
-    }
+    HandleInputs();
+    if (!data.inMenu) handlePlayerInput();
+    SDL_RenderClear(data.Renderer);
+    if (!data.mainScreen) advanceFrame();
+    data.uiComponent->Render();
+    SDL_RenderPresent(data.Renderer);
 }
 
-void Window::initGame() {
 
+void Window::initGame() {
     data.mainScreen = false;
+    data.inMenu = false;
     data.last = SDL_GetPerformanceCounter();
     if (data.wasLoaded) return; //TODO: Fix loading, rozdelit na load cast a init cast
     data.wasLoaded = true;
@@ -482,7 +483,7 @@ void Window::init(const std::string& title, int width, int height) {
     SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
     SDL_Log("Logical rendering size: %ix%i", GAMERESW, GAMERESH);
 
-    data.inMainMenu = true;
+    data.inMenu = true;
 
     if (data.uiComponent->getDocuments()->contains("main_menu")) {
         data.uiComponent->getDocuments()->at("main_menu")->Show();

@@ -34,7 +34,8 @@ enum class Event{
     // data = float amount
     DAMAGE,
     // data = float amount
-    HEAL
+    HEAL,
+    CHANGE_COLLISION
 };
 
 struct EventData {
@@ -103,7 +104,7 @@ class EntityCollisionComponent {
 public:
     struct HitboxData {
         Coordinates corners[4];
-        bool disableCollision{false};
+        bool disabledCollision{false};
         bool colliding{false};
     };
 private:
@@ -120,6 +121,7 @@ public:
     //Setters
     void SetHitbox(const HitboxData &hitbox);
     void DisableCollision(bool Switch = true);
+    void SwitchCollision();
 
     //Getters
     [[nodiscard]] HitboxData* GetHitbox();
