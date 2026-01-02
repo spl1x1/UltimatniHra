@@ -19,6 +19,7 @@ public:
     //Setters
     void setDirection(Direction newDirection) override;
     void setAnimation(AnimationType newAnimation) override;
+    void setVariant(int newVariant) override {}
 
     //Getters
     std::tuple<std::string,SDL_FRect*> getFrame() override;

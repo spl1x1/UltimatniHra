@@ -14,6 +14,7 @@ public:
 
     void setDirection(Direction newDirection)  override {};
     void setAnimation(AnimationType newAnimation) override {};
+    void setVariant(int newVariant) override;
 
     std::tuple<std::string,SDL_FRect*> getFrame() override;
     RenderingContext getRenderingContext() override;

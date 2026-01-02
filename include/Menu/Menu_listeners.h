@@ -239,7 +239,7 @@ private:
 class ConsoleEventListener : public Rml::EventListener {
 private:
     Window* window = nullptr;
-    void ProcessCommand(const Rml::String& command);
+    void ProcessCommand(const Rml::String& command) const;
 
 public:
     void SetWindow(Window* win) { window = win; }

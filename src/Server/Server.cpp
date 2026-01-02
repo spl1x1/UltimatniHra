@@ -101,14 +101,14 @@ void Server::addEntity(const std::shared_ptr<IEntity>& entity) {
 }
 
 
-void Server::addStructure(Coordinates coordinates, structureType type) {
+void Server::addStructure(Coordinates coordinates, structureType type, int variant) {
     std::lock_guard lock(serverMutex);
     int newId = getNextStructureId();
 
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
         case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr());
+            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr(), static_cast<Tree::TreeVariant>(variant));
             break;
         }
         default:
@@ -123,13 +123,13 @@ void Server::addStructure(Coordinates coordinates, structureType type) {
     _structures[newId] =newStructure;
 }
 
-void Server::addStructure_unprotected(Coordinates coordinates, structureType type) {
+void Server::addStructure_unprotected(Coordinates coordinates, structureType type, int variant) {
     int newId = getNextStructureId();
 
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
         case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr());
+            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr(), static_cast<Tree::TreeVariant>(variant));
             break;
         }
         default:
@@ -144,6 +144,16 @@ void Server::addStructure_unprotected(Coordinates coordinates, structureType typ
     _structures[newId] =newStructure;
 
 }
+
+
+void Server::removeStructure(int structureId) {
+    std::lock_guard lock(serverMutex);
+    if (!_structures.contains(structureId)) return;
+    _structures.erase(structureId);
+    reclaimedStructureIds.emplace_back(structureId);
+    cacheValidityData.isCacheValid = false; //Invalidae cache
+}
+
 
 void Server::playerUpdate(EventData e) {
     std::lock_guard lock(serverMutex);
@@ -258,12 +268,13 @@ void Server::generateTrees(){
     struct biomeTreeInfo {
         int biomeId;
         double densityModifier;
+        Tree::TreeVariant variant;
     };
 
     std::vector<biomeTreeInfo> biomesWithTrees = {
-        {3,0.5}, //Grass
-        {5,1.3}, //Forest
-        {6,0.3}  //Snow
+        {3,0.5, Tree::TreeVariant::PLAINS}, //Grass
+        {5,1.3,Tree::TreeVariant::FOREST}, //Forest
+        {6,0.3,Tree::TreeVariant::SNOW}  //Snow
     };
 
     std::mt19937 mt(_seed );
@@ -272,12 +283,13 @@ void Server::generateTrees(){
     std::lock_guard lock(serverMutex);
     for (int x = 0; x < MAPSIZE; x++) {
         for (int y = 0; y < MAPSIZE; y++) {
-
             double biomeModifier = 0.0;
+            auto variant = Tree::TreeVariant::PLAINS;
             int biomeValue = getMapValue_unprotected(x, y, WorldData::BIOME_MAP);
             for (const auto& biomeInfo : biomesWithTrees) {
                 if (biomeInfo.biomeId == biomeValue) {
                     biomeModifier = biomeInfo.densityModifier;
+                    variant = biomeInfo.variant;
                     break;
                 }
             }
@@ -286,7 +298,7 @@ void Server::generateTrees(){
             int roll = dist(mt);
             if (roll > TREEDENSITY* biomeModifier) continue;
             Coordinates position = {static_cast<float>(x*32),static_cast<float>(y*32)};
-            addStructure_unprotected(position, structureType::TREE);
+            addStructure_unprotected(position, structureType::TREE, static_cast<int>(variant));
         }
     }
 }

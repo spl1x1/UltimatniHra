@@ -3,7 +3,6 @@
 //
 
 #include "../../include/Entities/Entity.h"
-#include "../../include/Entities/EntityScripts.h"
 #include <cmath>
 
 #include "../../include/Application/MACROS.h"
@@ -11,6 +10,7 @@
 #include <queue>
 #include <unordered_map>
 #include <algorithm>
+#include <SDL3/SDL_log.h>
 
 //EntityRenderingComponent methods
 void EntityRenderingComponent::Tick(const float deltaTime) const {
@@ -129,157 +129,141 @@ bool EntityCollisionComponent::CheckCollisionAt(const float newX, const float ne
 //EntityMovementComponent methods
 
 void EntityLogicComponent::BindScript(const std::string &scriptName, const ScriptData &scriptData) {
-    _scriptBindings[scriptName] = scriptData;
+    scriptBindings[scriptName] = scriptData;
 }
 
 void EntityLogicComponent::UnbindScript(const std::string &scriptName) {
-    _scriptBindings.erase(scriptName);
+    scriptBindings.erase(scriptName);
 }
 
 EntityLogicComponent::ScriptData EntityLogicComponent::GetBoundScript(const std::string &scriptName) const {
-    if (_scriptBindings.contains(scriptName)) {
-        return _scriptBindings.at(scriptName);
+    if (scriptBindings.contains(scriptName)) {
+        return scriptBindings.at(scriptName);
     }
     return ScriptData{};
 }
 
-void EntityLogicComponent::SetTasks(const std::vector<TaskData> &newTasks) {
-    _tasks = newTasks;
-}
-
-void EntityLogicComponent::SetTask(const TaskData &newTask) {
-    _tasks.push_back(newTask);
-}
-
-std::vector<TaskData> EntityLogicComponent::GetTasks() const {
-    return  _tasks;
-}
 
 void EntityLogicComponent::SetEvents(const std::vector<EventData> &newEvents) {
-    _events = newEvents;
+    events = newEvents;
 }
 
 std::vector<EventData> EntityLogicComponent::GetEvents() const {
-    return _events;
+    return events;
 }
 
 
 void EntityLogicComponent::SetAngle(const int newAngle) {
-    _angle = newAngle;
+    angle = newAngle;
 }
 
 int EntityLogicComponent::GetAngle() const {
-    return _angle;
+    return angle;
 }
 
 void EntityLogicComponent::SetSpeed(float newSpeed) {
     if (newSpeed < 0.0f) return;
-    _speed = newSpeed;
+    speed = newSpeed;
 }
 
 float EntityLogicComponent::GetSpeed() const {
-    return _speed;
+    return speed;
 }
 
 
 void EntityLogicComponent::SetAngleBasedOnMovement(const float dX, const float dY) {
-    _angle = static_cast<int>(std::floor(std::atan2(dX, dY) * 180.0f / M_PI));
-    if (_angle < 0) _angle += 360;
+    angle = static_cast<int>(std::floor(std::atan2(dX, dY) * 180.0f / M_PI));
+    if (angle < 0) angle += 360;
 }
 
 void EntityLogicComponent::SetCoordinates(const Coordinates &newCoordinates) {
-    _coordinates = newCoordinates;
+    coordinates = newCoordinates;
 }
 
 Coordinates EntityLogicComponent::GetCoordinates() const {
-    return _coordinates;
+    return coordinates;
 }
 
 
 void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
-    for (auto taskIndex{0}; taskIndex < _tasks.size(); ++taskIndex) {
-        HandleTask(server, entity, taskIndex);
-    }
-    for (auto eventIndex{0}; eventIndex < _events.size(); ++eventIndex) {
+    events.insert(events.end(), queueUpEvents.begin(), queueUpEvents.end());
+    queueUpEvents.clear();
+    for (auto eventIndex{0}; eventIndex < events.size(); ++eventIndex) {
         HandleEvent(server, entity, eventIndex);
     }
 }
 
 void EntityLogicComponent::AddEvent(const EventData &eventData) {
-    _events.push_back(eventData);
+    events.push_back(eventData);
 }
 
 void EntityLogicComponent::RegisterScriptBinding(const std::string &scriptName, const ScriptData &scriptData) {
-    _scriptBindings[scriptName] = scriptData;
+    scriptBindings[scriptName] = scriptData;
 }
 
-EntityLogicComponent::EntityLogicComponent(const Coordinates &coordinates) : _coordinates(coordinates) {
-
-    //Register MOVE_TO script binding
-     RegisterScriptBinding("MOVE_TO", {
+EntityLogicComponent::EntityLogicComponent(const Coordinates &coordinates) : coordinates(coordinates) {
+    //TODO::Temp to be used later
+    //Register MOVE_TO script binding - not used, different approach implemented
+    /* RegisterScriptBinding("MOVE_TO", {
         .scriptName = "MOVE_TO",
         .function = EntityScripts::MoveToScript
-    });
+    }); */
 }
 
 
 bool EntityLogicComponent::Move(const float deltaTime, const float dX,const float dY, EntityCollisionComponent &collisionComponent, const Server* server) {
-    const float newX{_coordinates.x + dX * _speed* deltaTime};
-    const float newY{_coordinates.y + dY * _speed * deltaTime};
+    const float newX{coordinates.x + dX * speed* deltaTime};
+    const float newY{coordinates.y + dY * speed * deltaTime};
 
     collisionComponent.CheckCollision(newX, newY, server);
     const EntityCollisionComponent::HitboxData hitbox{*collisionComponent.GetHitbox()};
 
     if (hitbox.colliding && !hitbox.disabledCollision) return false;
-    this->_coordinates.x = newX;
-    this->_coordinates.y = newY;
+    this->coordinates.x = newX;
+    this->coordinates.y = newY;
     SetAngleBasedOnMovement(dX, dY);
     return true;
 }
 
+void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, EntityCollisionComponent &collisionComponent, const Server* server) {
+    const float diffX{targetX - coordinates.x};
+    const float diffY{targetY - coordinates.y};
+    const float distance{std::sqrt(diffX * diffX + diffY * diffY)};
+
+    if (distance <= threshold)
+        return; //Already at target
+
+    const float directionX{diffX / distance};
+    const float directionY{diffY / distance};
+
+    if (!Move(deltaTime, directionX, directionY, collisionComponent, server)) return;
+    queueUpEvents.push_back(EventData{
+        .type = Event::MOVE_TO,
+        .data = {.coordinates = {targetX, targetY}}
+    });
+}
+
 void EntityLogicComponent::HandleEvent(const Server* server, IEntity &entity, int eventIndex) {
-    auto data = _events.at(eventIndex);
+    auto data = events.at(eventIndex);
+    data.dt = server->getDeltaTime_unprotected();
     switch (data.type) {
         case Event::MOVE:
-            Move(data.dt, data.data.move.dX, data.data.move.dY, *entity.GetCollisionComponent(), server);
+            Move(data.dt, data.data.coordinates.x, data.data.coordinates.y, *entity.GetCollisionComponent(), server);
+            break;
+        case Event::MOVE_TO:
+            MoveTo(data.dt, data.data.coordinates.x, data.data.coordinates.y, *entity.GetCollisionComponent(), server);
             break;
         case Event::CHANGE_COLLISION:
             entity.GetCollisionComponent()->SwitchCollision();
             break;
         case Event::DAMAGE:
-            entity.GetHealthComponent()->TakeDamage(data.data.healthChange.amount);
+            entity.GetHealthComponent()->TakeDamage(data.data.amount);
             break;
         default:
             break;
     }
-    _events.erase(_events.begin());
+    events.erase(events.begin());
 }
-
-void EntityLogicComponent::HandleTask(const Server* server, IEntity& entity, int taskIndex) {
-    TaskData data = _tasks.at(taskIndex);
-    if (data.status == TaskData::Status::PENDING) {
-        ProcessNewTask(server, entity);
-        return;
-    }
-    if (data.status == TaskData::Status::DONE || data.status == TaskData::Status::FAILED) {
-        //Implement logger call
-        _tasks.erase(_tasks.begin());
-        return;
-    }
-    if (data.status == TaskData::Status::IN_PROGRESS) {
-        if (!_scriptBindings.contains(data.taskName)) return;
-        _scriptBindings[data.taskName].function(entity, data);
-    }
-}
-
-void EntityLogicComponent::ProcessNewTask(const Server* server, IEntity& entity) {
-    TaskData currentTask = _tasks.front();
-
-    if (!_scriptBindings.contains(currentTask.taskName)) return;
-    _scriptBindings[currentTask.taskName].function(entity, currentTask);
-    currentTask.status = TaskData::Status::IN_PROGRESS;
-}
-
 
 //EntityHealthComponent methods
 void EntityHealthComponent::Heal(const int amount) {

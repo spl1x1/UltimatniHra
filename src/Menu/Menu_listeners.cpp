@@ -772,7 +772,7 @@ void ConsoleEventListener::ProcessEvent(Rml::Event& event) {
     }
 }
 
-void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
+void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
     printf("Console command: %s\n", command.c_str());
     //TODO: @LukasKaplanek logika pak sem
     std::string cmd = command.c_str();
@@ -874,9 +874,33 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
             return;
         }
         EventData eventData{Event::DAMAGE};
-        eventData.data.healthChange.amount= static_cast<float>(damageAmount);
+        eventData.data.amount= static_cast<float>(damageAmount);
         window->server->playerUpdate(eventData);
 
+    }
+    else if (commandName =="movePlayerTo") {
+        if (args.empty()) {
+            printf("Usage: /movePlayerTo <x> <y>\n");
+            return;
+        }
+
+        int x{0}, y{0};
+        size_t firstSpace = args.find(' ');
+
+        std::from_chars(args.data(), args.data() + firstSpace, x);
+        std::from_chars(args.data() + firstSpace + 1, args.data() + args.size(), y);
+
+        if (!window) {
+            printf("Error: No server instance available to move player\n");
+            return;
+        }
+
+        EventData eventData{Event::MOVE_TO};
+        eventData.data.coordinates.x = static_cast<float>(x);
+        eventData.data.coordinates.y = static_cast<float>(y);
+
+        SDL_Log("Moving player to (%d, %d)", x, y);
+        window->server->playerUpdate(eventData);
     }
     else if (commandName == "help") {
         printf("Available commands:\n");
@@ -920,7 +944,7 @@ void ConsoleHandler::Setup(Rml::ElementDocument* console_doc, Window* window) {
         input->Focus();
     }
 
-    document->Show();
+    document->Hide();
 }
 
 ConsoleHandler& ConsoleHandler::GetInstance() {

@@ -10,21 +10,10 @@
 #include "../../include/Entities/Entity.h"
 #include "../../include/Application/MACROS.h"
 
-void EntityScripts::MoveToScript(IEntity &entity, TaskData &taskData) {
-    if (taskData.status  == TaskData::Status::PENDING) {
-        MakePath(taskData.moveTo.targetX, taskData.moveTo.targetY, entity, taskData);
-    }
-    if (MoveTo(entity, taskData)) {
-        taskData.pathPoints.erase(taskData.pathPoints.begin());
-    }
-    if (taskData.pathPoints.empty()) {
-        taskData.status = TaskData::Status::DONE;
-    }
-}
 
-bool EntityScripts::MoveTo(IEntity &entity, const TaskData &taskData) {
-    const auto logicComponent = entity.GetLogicComponent();
-    const Coordinates targetPoint = taskData.pathPoints.front();
+bool EntityScripts::MoveTo(IEntity &entity, const EventData &eventData) {
+   /* const auto logicComponent = entity.GetLogicComponent();
+    Coordinates targetPoint = taskData.pathPoints.front();
     const Coordinates currentPoint = logicComponent->GetCoordinates();
 
     const float deltaX{targetPoint.x - currentPoint.x};
@@ -38,7 +27,7 @@ bool EntityScripts::MoveTo(IEntity &entity, const TaskData &taskData) {
     logicComponent->AddEvent(EventData{
             .type = Event::MOVE,
             .data = {deltaX / distance, deltaY / distance}
-    });
+    }); */
     return false;
 }
 
@@ -64,15 +53,16 @@ struct GridPointHash {
     }
 };
 
-void EntityScripts::MakePath(const float targetX, const float targetY, IEntity &entity, TaskData &taskData) {
+void EntityScripts::MakePath(const float targetX, const float targetY, IEntity &entity, EventData &eventData) {
+    /*
     const auto logicComponent = entity.GetLogicComponent();
     const auto collisionComponent = *entity.GetCollisionComponent();
     const auto server = entity.GetServer();
 
     taskData.pathPoints.clear();
 
-    const int startX = static_cast<int>(std::floor(logicComponent->_coordinates.x / 32.0f));
-    const int startY = static_cast<int>(std::floor(logicComponent->_coordinates.y / 32.0f));
+    const int startX = static_cast<int>(std::floor(logicComponent->coordinates.x / 32.0f));
+    const int startY = static_cast<int>(std::floor(logicComponent->coordinates.y / 32.0f));
     const int endX = static_cast<int>(std::floor (targetX / 32.0f));
     const int endY = static_cast<int>(std::floor (targetY / 32.0f));
 
@@ -176,6 +166,5 @@ void EntityScripts::MakePath(const float targetX, const float targetY, IEntity &
             });
         }
     }
-
-
+*/
 }

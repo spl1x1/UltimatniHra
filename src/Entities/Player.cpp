@@ -59,9 +59,6 @@ void Player::Move(float dX, float dY) {
         _entityRenderingComponent.SetAnimation(AnimationType::RUNNING);
 }
 
-void Player::HandleTask(TaskData data) {
-    _entityLogicComponent.SetTask(data);
-}
 
 void Player::SetCoordinates(const Coordinates &newCoordinates) {
     _entityLogicComponent.SetCoordinates(newCoordinates);
@@ -76,13 +73,7 @@ void Player::SetSpeed(float newSpeed) {
     _entityLogicComponent.SetSpeed(newSpeed);
 }
 
-void Player::SetTask(int index) {
-    // Not implemented for Player
-}
 
-void Player::RemoveTask(int index) {
-    // Not implemented for Player
-}
 
 void Player::SetEntityCollision(bool disable) {
     _entityCollisionComponent.DisableCollision(disable);

@@ -25,6 +25,11 @@ void StructureRenderingComponent::Tick(float deltaTime) const {
     sprite->Tick(deltaTime);
 }
 
+void StructureRenderingComponent::SetVariant(int variant) const {
+    if (!sprite) return;
+    sprite->setVariant(variant);
+}
+
 RenderingContext StructureRenderingComponent::getRenderingContext() const {
     if (!sprite) return RenderingContext{};
 
@@ -36,9 +41,9 @@ RenderingContext StructureRenderingComponent::getRenderingContext() const {
 StructureHitbox::StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner) : server(server) {
     const Coordinates topLeft = {(std::floor(topLeftCorner.x/32))*32, (std::floor(topLeftCorner.y/32))*32};
     this->topLeftCorner = topLeft;
-    this->server = server;
 }
 
+StructureHitbox::StructureHitbox(const std::shared_ptr<Server>& server) : server(server) {}
 
 void StructureHitbox::updateCollisionMap(int value, int checkValue) const {
     for (const TrueCoordinates& point : hitboxPoints) {
@@ -59,6 +64,10 @@ bool StructureHitbox::checkCollisionMap() const {
 
 Coordinates StructureHitbox::getTopLeftCorner() const {
     return topLeftCorner;
+}
+
+void StructureHitbox::SetTopLeftCorner(const Coordinates topLeftCorner) {
+    this->topLeftCorner = topLeftCorner;
 }
 
 void StructureHitbox::addRowOfPoints(int posX, int posY, int length) {

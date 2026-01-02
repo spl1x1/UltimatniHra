@@ -82,8 +82,8 @@ void Window::handlePlayerInput() const {
     if (dx == 0.0f && dy == 0.0f) return;
 
     auto event = EventData{Event::MOVE};
-    event.data.move.dX = dx;
-    event.data.move.dY = dy;
+    event.data.coordinates.x = dx;
+    event.data.coordinates.y = dy;
     server->playerUpdate(event);
 }
 

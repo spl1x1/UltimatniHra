@@ -45,6 +45,7 @@ class StructureRenderingComponent {
     //Methods
     [[nodiscard]] RenderingContext getRenderingContext() const;
     void Tick(float deltaTime) const;
+    void SetVariant(int variant) const;
 
     explicit StructureRenderingComponent(std::unique_ptr<ISprite> sprite, Coordinates topLeft);
 
@@ -62,11 +63,12 @@ class StructureHitbox {
     HitboxContext hitboxContext;
 
     void updateCollisionMap(int value, int checkValue = -2) const;
-    bool checkCollisionMap() const;
+    [[nodiscard]] bool checkCollisionMap() const;
 
 public:
     //Methods
-    Coordinates getTopLeftCorner() const;
+    [[nodiscard]] Coordinates getTopLeftCorner() const;
+    void SetTopLeftCorner(Coordinates topLeftCorner);
 
     /*
         * Prida radek bodu do hitboxu struktury
@@ -98,7 +100,8 @@ public:
     void destroy(int id) const;
 
     //Constructor and Destructor
-    explicit StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);
+    StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);
+    StructureHitbox(const std::shared_ptr<Server>& server ); //Empty constructor for default initialization
 };
 
 

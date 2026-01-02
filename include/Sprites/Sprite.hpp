@@ -40,6 +40,7 @@ public:
     //Setters
     virtual void setDirection(Direction newDirection)  = 0;
     virtual void setAnimation(AnimationType newAnimation) = 0;
+    virtual void setVariant(int newVariant) = 0;
 
     //Getters
     virtual std::tuple<std::string,SDL_FRect*> getFrame() = 0;
@@ -74,6 +75,7 @@ public:
     void setActiveAnimation(AnimationType newAnimation);
     void setDirection(Direction newDirection);
     void setFrameCount(int newFrameCount);
+    void setYOffset(float newYOffset);
     [[nodiscard]] int getWidth() const;
     [[nodiscard]] int getHeight() const;
 

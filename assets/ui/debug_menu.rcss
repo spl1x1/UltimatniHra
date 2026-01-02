@@ -3,14 +3,25 @@ body {
     font-family: "Andy";
     display: flex;
     flex-direction: column;
-    margin-top: 5%;
+    margin-top: 8%;
+    margin-left: 2%;
 }
 
 #dbm {
     display: flex;
     flex-direction: column;
     align-items: right;
-    padding: 2%;
     font-size: 200%;
-    width: 12%;
+}
+
+#Xc {
+width: 13%;
+}
+
+#Yc {
+width: 13%;
+}
+
+#Angle {
+width: 19%;
 }

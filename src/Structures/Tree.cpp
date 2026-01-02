@@ -38,13 +38,15 @@ HitboxContext Tree::GetHitboxContext() {
 }
 
 
-Tree::Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server)
+Tree::Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, TreeVariant variant)
     : _id(id),
-      _renderingComponent(std::make_unique<TreeSprite>(), topLeftCorner),
-      _hitboxComponent(server, topLeftCorner) {
-
-
-    _hitboxComponent.addPoint(1,1);
+      _renderingComponent(std::make_unique<TreeSprite>(), topLeftCorner), _hitboxComponent(server) {
+    _renderingComponent.SetVariant(static_cast<int>(variant));
+    topLeftCorner.x -= 32.0f; // Hitbox alignment
+    topLeftCorner.y -= 32.0f;
+    _hitboxComponent.SetTopLeftCorner(topLeftCorner);
+    _hitboxComponent = StructureHitbox(server, topLeftCorner);
+    _hitboxComponent.addPoint(1, 1);
     initialized = _hitboxComponent.finalize(id);
 }
 

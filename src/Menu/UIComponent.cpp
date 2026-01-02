@@ -238,14 +238,18 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                 }
                 case SDL_SCANCODE_GRAVE:
                 case SDL_SCANCODE_F1: {
+                    if (blockInput) break;
                     auto& consoleHandler = ConsoleHandler::GetInstance();
                     if (consoleHandler.document) {
                         if (consoleHandler.document->IsVisible()) {
                             consoleHandler.document->Hide();
-                            SDL_Log("Console hidden");}
+                            SDL_Log("Console hidden");
+                            windowClass->data.inMenu = false;
+                        }
                         else {
                             consoleHandler.document->Show();
                             SDL_Log("Console show");
+                            windowClass->data.inMenu = true;
                             if (Rml::Element* input = consoleHandler.document->GetElementById("console-input")) {
                                 input->Focus();
                             }
@@ -253,9 +257,9 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     }
                     break;
                 }
-                case SDL_SCANCODE_ESCAPE:
-                {
+                case SDL_SCANCODE_ESCAPE: {
                     if (documents.at("main_menu")->IsVisible()) break;
+                    if (documents.at("console")->IsVisible()) documents.at("console")->Hide();
                     blockInput = !blockInput;
                     if (blockInput) {
                         SDL_Log("Game paused, input blocked.");
@@ -265,6 +269,8 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     } else {
                         SDL_Log("Game unpaused, input unblocked.");
                         documents.at("pause_menu")->Hide();
+                        if (documents.at("settings_menu")->IsVisible())
+                            documents.at("settings_menu")->Hide();
                         windowClass->data.inMenu = false;
                     }
                     break;

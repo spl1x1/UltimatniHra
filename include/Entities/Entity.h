@@ -23,6 +23,8 @@ class IEntity;
 enum class Event{
     // data = float dX, float dY
     MOVE,
+    // data = float targetX, float targetY
+    MOVE_TO,
     // data = attackType
     ATTACK,
     // data = int structureType, Coordinates position
@@ -46,34 +48,10 @@ struct EventData {
      Parameters for the event
      */
     union {
-        struct { float dX{0}, dY{0}; } move;
-        struct { int resourceId{0}, amount{0}; } gather;
-        struct { int structureId{-1}; float x{0},y{0};} build;
-        struct { int attackType{0}; } attack;
-        struct { int amount{0}; } healthChange;
+        struct { float x{0}, y{0}; } coordinates; // For event that need coordinates
+        struct {int id{0}, variant{0}, type{0}; } idRelated; // For structure, entities related events, usually interact events
+        int amount{0}; // For damage/heal events
     } data;
-};
-
-struct TaskData {
-    enum class Status {
-        PENDING,
-        IN_PROGRESS,
-        DONE,
-        FAILED
-    };
-
-    std::string taskName{};
-    /*
-    Parameters for the task
-    */
-    union {
-        struct { float targetX{0}, targetY{0};} moveTo;
-        struct { int resourceId{0}, amount{0}; } gather;
-        struct { int structureId{-1}; float x{0},y{0};} build;
-    };
-    std::vector<Coordinates> pathPoints{};
-    //Task status
-    Status status = Status::PENDING;
 };
 
 class EntityRenderingComponent {
@@ -130,7 +108,6 @@ public:
 
     //Constructor
     explicit EntityCollisionComponent(const HitboxData &hitbox): _hitbox(hitbox){}
-
 };
 
 class EntityLogicComponent {
@@ -139,23 +116,21 @@ public:
 
     struct ScriptData {
         std::string scriptName{};
-        std::function<void(IEntity&, TaskData&)> function{};
+        std::function<void(IEntity&, EventData&)> function{};
     };
 
 private:
     static constexpr float threshold = 1.0f; //Threshold to consider reached target
-    Coordinates _coordinates{0.0f, 0.0f};
-    std::vector<TaskData> _tasks{};
-    std::vector<EventData> _events{};
+    Coordinates coordinates{0.0f, 0.0f};
+    std::vector<EventData> events{};
+    std::vector<EventData> queueUpEvents{}; //Events to be processed in next tick, usually result of scripts or other events
 
-    std::unordered_map<std::string,ScriptData> _scriptBindings; //Scripts bound to entity
+    std::unordered_map<std::string,ScriptData> scriptBindings; //Scripts bound to entity
 
-    int _angle{0};
-    float _speed{0};
+    int angle{0};
+    float speed{0};
 
     void HandleEvent(const Server* server, IEntity &entity, int eventIndex);
-    void HandleTask(const Server* server, IEntity &entity, int taskIndex);
-    void ProcessNewTask(const Server* server, IEntity& entity);
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
 public:
@@ -163,14 +138,10 @@ public:
     //Script binding methods
     void BindScript(const std::string &scriptName, const ScriptData &scriptData);
     void UnbindScript(const std::string &scriptName);
-    ScriptData GetBoundScript(const std::string &scriptName) const;
+    [[nodiscard]] ScriptData GetBoundScript(const std::string &scriptName) const;
 
     void SetCoordinates(const Coordinates &newCoordinates);
     [[nodiscard]] Coordinates GetCoordinates() const;
-
-    void SetTasks(const std::vector<TaskData> &newTasks);
-    void SetTask(const TaskData &newTask);
-    [[nodiscard]] std::vector<TaskData> GetTasks() const;
 
     void SetEvents(const std::vector<EventData> &newEvents);
     [[nodiscard]] std::vector<EventData> GetEvents() const;
@@ -183,6 +154,7 @@ public:
 
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
+    void MoveTo(float deltaTime, float targetX, float targetY, EntityCollisionComponent &collisionComponent, const Server* server);
     void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
     void AddEvent(const EventData &eventData);
     void RegisterScriptBinding(const std::string &scriptName, const ScriptData &scriptData);
@@ -227,16 +199,12 @@ public:
 
     //Entity actions
     virtual void Move(float dX, float dY) = 0;
-    virtual void HandleTask(TaskData data) = 0;
 
     //Setters
     virtual void SetCoordinates(const Coordinates &newCoordinates) = 0;
     //Sets entity angle in degrees
     virtual void SetAngle(int newAngle) = 0;
     virtual void SetSpeed(float newSpeed) = 0;
-    //Sets current task and task data
-    virtual void SetTask(int index) = 0;
-    virtual void RemoveTask(int index) = 0;
     virtual  void SetEntityCollision(bool disable) = 0;
     //Event
     virtual void AddEvent(const EventData &eventData) = 0;

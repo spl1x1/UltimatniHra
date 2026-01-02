@@ -36,8 +36,11 @@ class Server : public std::enable_shared_from_this<Server> {
 
     //ID counters, k limitu se nikdy nedostaneme reclaim neni nutny
     int _nextEntityId = 0;
+
     int _nextPlayerId = 0; // 0 je vyhradeno pro lokalniho hrace
+
     int _nextStructureId = 0; // 0 zatim neni vyhrazeno
+    std::vector<int> reclaimedStructureIds{}; //Pro pripad ze budeme chtit reclaimovat
 
     std::set<int> EntityIdCache; //Cache pro rychlejsi hledani entit v oblasti, set protoze nechceme duplikaty
 
@@ -49,7 +52,15 @@ class Server : public std::enable_shared_from_this<Server> {
 
     int getNextEntityId() {return _nextEntityId++;}; //Vraci dalsi volne ID entity, neni thread safe, vola se jen v addEntity
     int getNextPlayerId() {return _nextPlayerId++;};
-    int getNextStructureId() {return ++_nextStructureId;};
+
+    int getNextStructureId() {
+        if (!reclaimedStructureIds.empty()) {
+            int id = reclaimedStructureIds.back();
+            reclaimedStructureIds.pop_back();
+            return id;
+        }
+        return ++_nextStructureId;
+    };
 
 public:
 
@@ -96,8 +107,8 @@ public:
     void addPlayer(Coordinates coordinates); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
     void addPlayer(const std::shared_ptr<IEntity>& player); //Prida na server entitu
 
-    void addStructure(Coordinates coordinates,  structureType type); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
-    void addStructure_unprotected(Coordinates coordinates, structureType type);
+    void addStructure(Coordinates coordinates,  structureType type, int variant); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
+    void addStructure_unprotected(Coordinates coordinates, structureType type, int variant);
     void addStructure(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
     void addStructure_unprotected(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 

@@ -13,6 +13,11 @@ class Tree: public IStructure {
     StructureHitbox _hitboxComponent;
     bool initialized{false};
 public:
+    enum class TreeVariant {
+        PLAINS,
+        SNOW,
+        FOREST,
+    };
     //Interface implementation
     [[nodiscard]] structureType getType() const override;
     [[nodiscard]] int getId() const override;
@@ -22,7 +27,7 @@ public:
     [[nodiscard]] HitboxContext GetHitboxContext() override;
 
     //Constructor
-    Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server);
+    Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, TreeVariant variant);
     ~Tree() override;
 };
 

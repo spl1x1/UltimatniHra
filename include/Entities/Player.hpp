@@ -28,7 +28,6 @@ public:
 
     //Entity actions
     void Move(float dX, float dY) override;
-    void HandleTask(TaskData data) override;
 
     //Setters
     void SetCoordinates(const Coordinates &newCoordinates) override;
@@ -36,8 +35,6 @@ public:
     void SetAngle(int newAngle) override;
     void SetSpeed(float newSpeed) override;
     //Sets current task and task data
-    void SetTask(int index) override;
-    void RemoveTask(int index) override;
     void SetEntityCollision(bool disable) override;
     //Event
     void AddEvent(const EventData &eventData) override;

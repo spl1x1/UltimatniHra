@@ -46,6 +46,10 @@ void SpriteRenderingContext::setFrameCount(int newFrameCount) {
     }
 }
 
+void SpriteRenderingContext::setYOffset(float newYOffset) {
+    yOffset = newYOffset;
+}
+
 void SpriteRenderingContext::setActiveAnimation(AnimationType newAnimation){
     if (activeAnimation != newAnimation) {
         activeAnimation = newAnimation;
