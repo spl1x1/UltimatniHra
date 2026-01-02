@@ -79,6 +79,8 @@ void Window::handlePlayerInput() const {
         dx *= 0.7071f;
         dy *= 0.7071f;
     }
+    if (dx == 0.0f && dy == 0.0f) return;
+
     auto event = EventData{Event::MOVE};
     event.data.move.dX = dx;
     event.data.move.dY = dy;
@@ -114,77 +116,113 @@ void Window::drawHitbox(const HitboxContext& context) const {
     SDL_SetRenderDrawColor(data.Renderer, 0, 0 , 0, 255);
 }
 
+void Window::renderHud() {
+    if (data.drawMousePreview) {
+        const float tileX = std::floor((static_cast<float>(data.mousePosition.x) + data.cameraRect->x) / 32.0f) * 32.0f;
+        const float tileY = std::floor((static_cast<float>(data.mousePosition.y) + data.cameraRect->y) / 32.0f) * 32.0f;
+
+        RenderingContext cursor;
+        cursor.coordinates = {tileX,tileY};
+        cursor.rect = data.mousePreviewRect.get();
+        cursor.textureName = "cursor";
+        renderAt(cursor);
+    }
+
+    const auto playerHealth = server->getPlayer(0)->GetHealthComponent()->GetHealth();
+
+    SDL_FRect rect;
+    rect.x = 10.0f;
+    rect.y = 10.0f;
+    rect.w = 169.0f;
+    rect.h = 16.0f;
+    SDL_RenderTexture(data.Renderer, textures.at("healthcontainers"), nullptr, &rect);
+
+    rect.w = 16.0f;
+    rect.h = 16.0f;
+
+    data.healthFrameTime += server->getDeltaTime();
+    if (playerHealth != data.lastHealth) {
+        data.healthHurtState = true;
+        data.healthFrameTime = 0.0f;
+    }
+
+    if (data.healthFrameTime >= 0.5f) {
+        data.healthFrameTime -= 0.5f;
+        data.healthHurtState = false;
+    }
+
+    for (auto i{0}; i < playerHealth / 10; ++i) {
+        rect.x = 10 + static_cast<float>(i) * 17.0f;
+        SDL_RenderTexture(data.Renderer,data.healthHurtState ? textures.at("heart_full_hurt") :  textures.at("heart_full"), nullptr, &rect);
+    }
+    if (static_cast<int>(playerHealth) % 10 >= 5) {
+        rect.x += 17.0f;
+        SDL_RenderTexture(data.Renderer,data.healthHurtState ? textures.at("heart_half_hurt") : textures.at("heart_half"), nullptr, &rect);
+    }
+
+    data.lastHealth = playerHealth;
+}
+
 void Window::HandleEvent(const SDL_Event *e) const {
     data.uiComponent->HandleEvent(e);
 }
 
 void Window::advanceFrame() {
-        const Uint64 current = SDL_GetPerformanceCounter();
-        const float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
-        server->setDeltaTime(deltaTime);
-        server->Tick();
-        WaterSprite::Tick(deltaTime);
-        data.last = current;
+    const Uint64 current = SDL_GetPerformanceCounter();
+    const float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
+    server->setDeltaTime(deltaTime);
+    server->Tick();
+    WaterSprite::Tick(deltaTime);
+    data.last = current;
 
-        textures.at("FinalTexture");
-        SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
-        Coordinates coords = server->getPlayerPos(0);
+    textures.at("FinalTexture");
+    SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
+    Coordinates coords = server->getPlayerPos(0);
 
-        data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
-        data.cameraWaterRect->y += static_cast<float>(std::lround(coords.y - (data.cameraRect->y + cameraOffsetY)));
+    data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
+    data.cameraWaterRect->y += static_cast<float>(std::lround(coords.y - (data.cameraRect->y + cameraOffsetY)));
 
-        data.cameraRect->x = static_cast<float>(std::lround(coords.x - cameraOffsetX));
-        data.cameraRect->y = static_cast<float>(std::lround(coords.y - cameraOffsetY));
-
-
-        if (data.cameraWaterRect->x > 96) data.cameraWaterRect->x -= 32;
-        if (data.cameraWaterRect->x < 32) data.cameraWaterRect->x += 32;
-        if (data.cameraWaterRect->y > 96) data.cameraWaterRect->y -= 32;
-        if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
-
-        const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
-        SDL_RenderTexture(data.Renderer, textures.at(texture), data.cameraWaterRect.get(), nullptr);
-        SDL_RenderTexture(data.Renderer, textures.at("WorldMap"), data.cameraRect.get(), nullptr);
+    data.cameraRect->x = static_cast<float>(std::lround(coords.x - cameraOffsetX));
+    data.cameraRect->y = static_cast<float>(std::lround(coords.y - cameraOffsetY));
 
 
-        renderAt(server->getPlayer(0)->GetRenderingContext());
+    if (data.cameraWaterRect->x > 96) data.cameraWaterRect->x -= 32;
+    if (data.cameraWaterRect->x < 32) data.cameraWaterRect->x += 32;
+    if (data.cameraWaterRect->y > 96) data.cameraWaterRect->y -= 32;
+    if (data.cameraWaterRect->y < 32) data.cameraWaterRect->y += 32;
+
+    const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
+    SDL_RenderTexture(data.Renderer, textures.at(texture), data.cameraWaterRect.get(), nullptr);
+    SDL_RenderTexture(data.Renderer, textures.at("WorldMap"), data.cameraRect.get(), nullptr);
+    renderAt(server->getPlayer(0)->GetRenderingContext());
 
 #ifdef DEBUG
-        if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer(0)->GetHitboxRenderingContext());
-        if (data.lastCollisionState != data.collisionState) {
-            server->playerUpdate(EventData{Event::CHANGE_COLLISION});
-            data.lastCollisionState = data.collisionState;
-            SDL_Log("Collision state changed: %s", data.collisionState ? "ON" : "OFF");
-        }
-        data.playerX = std::floor(coords.x);
-        data.playerY = std::floor(coords.y);
-        data.playerAngle = server->getPlayer(0)->GetLogicComponent()->GetAngle();
-        dataModel.DirtyAllVariables();
+    if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer(0)->GetHitboxRenderingContext());
+    if (data.lastCollisionState != data.collisionState) {
+        server->playerUpdate(EventData{Event::CHANGE_COLLISION});
+        data.lastCollisionState = data.collisionState;
+        SDL_Log("Collision state changed: %s", data.collisionState ? "ON" : "OFF");
+    }
+    data.playerX = std::floor(coords.x);
+    data.playerY = std::floor(coords.y);
+    data.playerAngle = server->getPlayer(0)->GetLogicComponent()->GetAngle();
+    dataModel.DirtyAllVariables();
 #endif
 
-        const auto structures = server->getStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH});
-        for (const auto& structure : structures) {
-            IStructure *struc = server->getStructure(structure);
-            if (!struc) continue;
-            renderAt(struc->GetRenderingContext());
-            struc->Tick(server->getDeltaTime());
+    const auto structures = server->getStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH});
+    for (const auto& structure : structures) {
+        IStructure *struc = server->getStructure(structure);
+        if (!struc) continue;
+        renderAt(struc->GetRenderingContext());
+        struc->Tick(server->getDeltaTime());
 #ifdef DEBUG
             if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(struc->GetHitboxContext());
 #endif
-            if (data.drawMousePreview) {
-                const float tileX = std::floor((static_cast<float>(data.mousePosition.x) + data.cameraRect->x) / 32.0f) * 32.0f;
-                const float tileY = std::floor((static_cast<float>(data.mousePosition.y) + data.cameraRect->y) / 32.0f) * 32.0f;
+    }
 
-                RenderingContext cursor;
-                cursor.coordinates = {tileX,tileY};
-                cursor.rect = data.mousePreviewRect.get();
-                cursor.textureName = "cursor";
-                renderAt(cursor);
-            }
-        }
-
-        SDL_SetRenderTarget(data.Renderer, nullptr);
-        SDL_RenderTexture(data.Renderer, textures.at("FinalTexture"), nullptr, nullptr);
+    renderHud();
+    SDL_SetRenderTarget(data.Renderer, nullptr);
+    SDL_RenderTexture(data.Renderer, textures.at("FinalTexture"), nullptr, nullptr);
 }
 
 bool Window::LoadSurface(const std::string& Path) {
@@ -294,11 +332,6 @@ void Window::initDebugMenu() {
     dataModel = constructor.GetModelHandle();
 
     SDL_Log("Debug menu initialized");
-}
-
-
-void Window::initPauseMenu() {
-    SDL_Log("initPauseMenu called - pause menu is already initialized by UIComponent");
 }
 
 

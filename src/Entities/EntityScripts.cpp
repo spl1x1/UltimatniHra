@@ -10,21 +10,21 @@
 #include "../../include/Entities/Entity.h"
 #include "../../include/Application/MACROS.h"
 
-void EntityScripts::MoveToScript(IEntity* entity, TaskData* taskData) {
-    if (taskData->status  == TaskData::Status::PENDING) {
-        MakePath(taskData->moveTo.targetX, taskData->moveTo.targetY, entity, taskData);
+void EntityScripts::MoveToScript(IEntity &entity, TaskData &taskData) {
+    if (taskData.status  == TaskData::Status::PENDING) {
+        MakePath(taskData.moveTo.targetX, taskData.moveTo.targetY, entity, taskData);
     }
     if (MoveTo(entity, taskData)) {
-        taskData->pathPoints.erase(taskData->pathPoints.begin());
+        taskData.pathPoints.erase(taskData.pathPoints.begin());
     }
-    if (taskData->pathPoints.empty()) {
-        taskData->status = TaskData::Status::DONE;
+    if (taskData.pathPoints.empty()) {
+        taskData.status = TaskData::Status::DONE;
     }
 }
 
-bool EntityScripts::MoveTo(IEntity* entity, const TaskData* taskData) {
-    const auto logicComponent = entity->GetLogicComponent();
-    const Coordinates targetPoint = taskData->pathPoints.front();
+bool EntityScripts::MoveTo(IEntity &entity, const TaskData &taskData) {
+    const auto logicComponent = entity.GetLogicComponent();
+    const Coordinates targetPoint = taskData.pathPoints.front();
     const Coordinates currentPoint = logicComponent->GetCoordinates();
 
     const float deltaX{targetPoint.x - currentPoint.x};
@@ -64,12 +64,12 @@ struct GridPointHash {
     }
 };
 
-void EntityScripts::MakePath(const float targetX, const float targetY, IEntity* entity, TaskData* taskData) {
-    const auto logicComponent = entity->GetLogicComponent();
-    const auto collisionComponent = *entity->GetCollisionComponent();
-    const auto server = entity->GetServer();
+void EntityScripts::MakePath(const float targetX, const float targetY, IEntity &entity, TaskData &taskData) {
+    const auto logicComponent = entity.GetLogicComponent();
+    const auto collisionComponent = *entity.GetCollisionComponent();
+    const auto server = entity.GetServer();
 
-    taskData->pathPoints.clear();
+    taskData.pathPoints.clear();
 
     const int startX = static_cast<int>(std::floor(logicComponent->_coordinates.x / 32.0f));
     const int startY = static_cast<int>(std::floor(logicComponent->_coordinates.y / 32.0f));
@@ -77,7 +77,7 @@ void EntityScripts::MakePath(const float targetX, const float targetY, IEntity* 
     const int endY = static_cast<int>(std::floor (targetY / 32.0f));
 
     if (endX <0 || endY <0 || endX >= MAPSIZE || endY >= MAPSIZE) return;
-    if (collisionComponent.CheckCollisionAt(static_cast<float>(endX), static_cast<float>(endY), entity->GetServer())) return;
+    if (collisionComponent.CheckCollisionAt(static_cast<float>(endX), static_cast<float>(endY), entity.GetServer())) return;
 
     std::priority_queue<PathNode, std::vector<PathNode>, std::greater<>> pq;
     std::unordered_map<GridPoint, bool, GridPointHash> visited;
@@ -151,7 +151,7 @@ void EntityScripts::MakePath(const float targetX, const float targetY, IEntity* 
         std::ranges::reverse(fullPath);
 
         if (fullPath.size() > 1) {
-                taskData->pathPoints.push_back({
+                taskData.pathPoints.push_back({
                 static_cast<float>(fullPath[0].x * 32 + 16),
                 static_cast<float>(fullPath[0].y * 32 + 16)
             });
@@ -163,14 +163,14 @@ void EntityScripts::MakePath(const float targetX, const float targetY, IEntity* 
                 const int nextDy = fullPath[i+1].y - fullPath[i].y;
 
                 if (prevDx != nextDx || prevDy != nextDy) {
-                    taskData->pathPoints.push_back({
+                    taskData.pathPoints.push_back({
                         static_cast<float>(fullPath[i].x * 32 + 16),
                         static_cast<float>(fullPath[i].y * 32 + 16)
                     });
                 }
             }
 
-            taskData->pathPoints.push_back({
+            taskData.pathPoints.push_back({
                 static_cast<float>(fullPath.back().x * 32 + 16),
                 static_cast<float>(fullPath.back().y * 32 + 16)
             });

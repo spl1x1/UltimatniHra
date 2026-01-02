@@ -10,11 +10,11 @@ class IEntity;
 
 class EntityScripts {
     //Sub functions for scripts --- MoveToScript
-    static void MakePath(float targetX, float targetY,IEntity* entity, TaskData* taskData);
-    static bool MoveTo(IEntity* entity, const TaskData *taskData);
+    static void MakePath(float targetX, float targetY,IEntity &entity, TaskData &taskData);
+    static bool MoveTo(IEntity &entity, const TaskData &taskData);
 
 public:
-    static void MoveToScript(IEntity* entity, TaskData *taskData);
+    static void MoveToScript(IEntity &entity, TaskData &taskData);
 
 };
 

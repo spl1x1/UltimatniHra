@@ -9,6 +9,7 @@
 #include "../../include/Items/Item.h"
 #include <SDL3/SDL.h>
 #include <cstdio>
+#include <charconv>
 
 inline UIComponent* getUI(Window* win) {
     return win->data.uiComponent.get();
@@ -775,7 +776,6 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
     printf("Console command: %s\n", command.c_str());
     //TODO: @LukasKaplanek logika pak sem
     std::string cmd = command.c_str();
-
     if (cmd.empty() || cmd[0] != '/') {
         printf("Error: Commands must start with '/'\n");
         return;
@@ -856,12 +856,35 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
             }
         }
     }
+    else if (commandName == "damageplayer") {
+        if (args.empty()) {
+            printf("Usage: /damageplayer <playerId>\n");
+            return;
+        }
+
+        int damageAmount{0};
+        std::from_chars(args.data(), args.data() + args.size(), damageAmount);
+        if (damageAmount <= 0) {
+            printf("Error: Invalid damage amount '%s'\n", args.c_str());
+            return;
+        }
+
+        if (!window) {
+            printf("Error: No server instance available to damage player\n");
+            return;
+        }
+        EventData eventData{Event::DAMAGE};
+        eventData.data.healthChange.amount= static_cast<float>(damageAmount);
+        window->server->playerUpdate(eventData);
+
+    }
     else if (commandName == "help") {
         printf("Available commands:\n");
         printf("  /rmlshow <name>  - Show an RML document\n");
         printf("  /rmlhide <name>  - Hide an RML document\n");
-        printf("  /rmllist         - List all loaded documents\n");
+        printf("  /rmllist      - List all loaded documents\n");
         printf("  /itemshow        - Add test item to inventory\n");
+        printf("/damageplayer <amount>        - Sends damage event to server\n");
         printf("  /help            - Show this help message\n");
     }
     else {

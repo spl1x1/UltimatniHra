@@ -22,6 +22,7 @@ struct WindowData {
     std::unique_ptr<SDL_FRect> cameraRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
     std::unique_ptr<SDL_FRect> cameraWaterRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
     std::unique_ptr<SDL_FRect> mousePreviewRect = std::make_unique<SDL_FRect>(0.0f,0.0f,32.0f,32.0f);
+
 #ifdef DEBUG
     int playerAngle{0};
     int playerX{0};
@@ -36,6 +37,9 @@ struct WindowData {
 
     std::unique_ptr<UIComponent> uiComponent = nullptr;
     MousePosition mousePosition;
+    int lastHealth{100};
+    float healthFrameTime{0.0f};
+    bool healthHurtState{false};
 
     bool initialized{false};
     bool Running{false};
@@ -47,6 +51,7 @@ struct WindowData {
     std::string WINDOW_TITLE;
     int WINDOW_WIDTH;
     int WINDOW_HEIGHT;
+
     float scale{1.0f};
 
     Uint64 last;
@@ -59,6 +64,7 @@ class Window {
     void handlePlayerInput() const;
     void renderAt(const RenderingContext& context) const;
     void drawHitbox(const HitboxContext& context) const;
+    void renderHud();
 
     void HandleEvent(const SDL_Event* e) const;
     void advanceFrame();
@@ -96,8 +102,6 @@ public:
     void loadSurfacesFromDirectory(const std::string& directoryPath);
     void loadTexturesFromDirectory(const std::string& directoryPath);
     void initDebugMenu();
-
-    static void initPauseMenu();
 
     void HandleInputs();
 

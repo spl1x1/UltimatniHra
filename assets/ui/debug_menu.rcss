@@ -3,6 +3,7 @@ body {
     font-family: "Andy";
     display: flex;
     flex-direction: column;
+    margin-top: 5%;
 }
 
 #dbm {

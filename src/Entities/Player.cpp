@@ -15,7 +15,7 @@ void Player::Tick() {
     const auto deltaTime = _server->getDeltaTime_unprotected();
     _entityRenderingComponent.SetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
     _entityRenderingComponent.Tick(deltaTime);
-    _entityLogicComponent.Tick(deltaTime, _server, _entityCollisionComponent, this);
+    _entityLogicComponent.Tick(_server, *this);
     if (oldCoords.x == _entityLogicComponent.GetCoordinates().x && oldCoords.y == _entityLogicComponent.GetCoordinates().y)
         _entityRenderingComponent.SetAnimation(AnimationType::IDLE);
     else
@@ -138,7 +138,7 @@ Player::Player(Server* server, const Coordinates& coordinates):
     _entityRenderingComponent(std::make_unique<PlayerSprite>()),
     _entityCollisionComponent(EntityCollisionComponent::HitboxData{}),
     _entityLogicComponent(coordinates),
-    _entityHealthComponent(100.0f, 100.0f) {
+    _entityHealthComponent(100, 100) {
     _server = server;
 
     EntityCollisionComponent::HitboxData playerHitboxData = {

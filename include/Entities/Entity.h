@@ -50,7 +50,7 @@ struct EventData {
         struct { int resourceId{0}, amount{0}; } gather;
         struct { int structureId{-1}; float x{0},y{0};} build;
         struct { int attackType{0}; } attack;
-        struct { float amount{0}; } healthChange;
+        struct { int amount{0}; } healthChange;
     } data;
 };
 
@@ -139,7 +139,7 @@ public:
 
     struct ScriptData {
         std::string scriptName{};
-        std::function<void(IEntity*, TaskData*)> function{};
+        std::function<void(IEntity&, TaskData&)> function{};
     };
 
 private:
@@ -153,9 +153,9 @@ private:
     int _angle{0};
     float _speed{0};
 
-    void HandleEvent(const Server* server, EntityCollisionComponent &collisionComponent);
-    void HandleTask(const Server* server, EntityCollisionComponent &collisionComponent, IEntity* entity);
-    void ProcessNewTask(const Server* server, EntityCollisionComponent &collisionComponent, IEntity* entity);
+    void HandleEvent(const Server* server, IEntity &entity, int eventIndex);
+    void HandleTask(const Server* server, IEntity &entity, int taskIndex);
+    void ProcessNewTask(const Server* server, IEntity& entity);
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
 public:
@@ -183,7 +183,7 @@ public:
 
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
-    void Tick(float deltaTime, const Server* server, EntityCollisionComponent &collisionComponent, IEntity *entity); //Process tasks when not already in progress else continue
+    void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
     void AddEvent(const EventData &eventData);
     void RegisterScriptBinding(const std::string &scriptName, const ScriptData &scriptData);
 
@@ -193,24 +193,24 @@ public:
 
 class EntityHealthComponent {
     friend class EntityScripts;
-    float health{0.0f};
-    float maxHealth{0.0f};
+    int health{0};
+    int maxHealth{0};
 public:
     //Methods
-    void TakeDamage(float damage);
-    void Heal(float amount);
+    void TakeDamage(int damage);
+    void Heal(int amount);
 
     //Setters
-    void SetHealth(float newHealth);
-    void SetMaxHealth(float newMaxHealth);
+    void SetHealth(int newHealth);
+    void SetMaxHealth(int newMaxHealth);
 
     //Getters
-    [[nodiscard]] float GetHealth() const;
-    [[nodiscard]] float GetMaxHealth() const;
+    [[nodiscard]] int GetHealth() const;
+    [[nodiscard]] int GetMaxHealth() const;
     [[nodiscard]] bool isDead() const;
 
     //Constructor
-    EntityHealthComponent(const float health, const float maxHealth): health(health), maxHealth(maxHealth){}
+    EntityHealthComponent(const int health, const int maxHealth): health(health), maxHealth(maxHealth){}
 };
 
 class EntityInventoryComponent {

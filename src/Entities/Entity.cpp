@@ -196,13 +196,12 @@ Coordinates EntityLogicComponent::GetCoordinates() const {
 }
 
 
-void EntityLogicComponent::Tick(const float deltaTime,const Server* server, EntityCollisionComponent &collisionComponent, IEntity* entity) {
-    for (auto &task : _tasks) {
-    if (!_tasks.empty()) HandleTask(server, collisionComponent, entity);
+void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
+    for (auto taskIndex{0}; taskIndex < _tasks.size(); ++taskIndex) {
+        HandleTask(server, entity, taskIndex);
     }
-
-    for (auto &event : _events) {
-        if (!_events.empty()) HandleEvent(server, collisionComponent);
+    for (auto eventIndex{0}; eventIndex < _events.size(); ++eventIndex) {
+        HandleEvent(server, entity, eventIndex);
     }
 }
 
@@ -238,14 +237,17 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
     return true;
 }
 
-void EntityLogicComponent::HandleEvent(const Server* server, EntityCollisionComponent &collisionComponent) {
-    auto data = _events.front();
+void EntityLogicComponent::HandleEvent(const Server* server, IEntity &entity, int eventIndex) {
+    auto data = _events.at(eventIndex);
     switch (data.type) {
         case Event::MOVE:
-            Move(data.dt, data.data.move.dX, data.data.move.dY, collisionComponent, server);
+            Move(data.dt, data.data.move.dX, data.data.move.dY, *entity.GetCollisionComponent(), server);
             break;
         case Event::CHANGE_COLLISION:
-            collisionComponent.SwitchCollision();
+            entity.GetCollisionComponent()->SwitchCollision();
+            break;
+        case Event::DAMAGE:
+            entity.GetHealthComponent()->TakeDamage(data.data.healthChange.amount);
             break;
         default:
             break;
@@ -253,59 +255,59 @@ void EntityLogicComponent::HandleEvent(const Server* server, EntityCollisionComp
     _events.erase(_events.begin());
 }
 
-void EntityLogicComponent::HandleTask(const Server* server, EntityCollisionComponent &collisionComponent, IEntity* entity) {
-    TaskData* data = &_tasks.front();
-    if (data->status == TaskData::Status::PENDING) {
-        ProcessNewTask(server, collisionComponent, entity);
+void EntityLogicComponent::HandleTask(const Server* server, IEntity& entity, int taskIndex) {
+    TaskData data = _tasks.at(taskIndex);
+    if (data.status == TaskData::Status::PENDING) {
+        ProcessNewTask(server, entity);
         return;
     }
-    if (data->status == TaskData::Status::DONE || data->status == TaskData::Status::FAILED) {
+    if (data.status == TaskData::Status::DONE || data.status == TaskData::Status::FAILED) {
         //Implement logger call
         _tasks.erase(_tasks.begin());
         return;
     }
-    if (data->status == TaskData::Status::IN_PROGRESS) {
-        if (!_scriptBindings.contains(data->taskName)) return;
-        _scriptBindings[data->taskName].function(entity, data);
+    if (data.status == TaskData::Status::IN_PROGRESS) {
+        if (!_scriptBindings.contains(data.taskName)) return;
+        _scriptBindings[data.taskName].function(entity, data);
     }
 }
 
-void EntityLogicComponent::ProcessNewTask(const Server* server, EntityCollisionComponent &collisionComponent, IEntity* entity) {
-    TaskData* currentTask = &_tasks.front();
+void EntityLogicComponent::ProcessNewTask(const Server* server, IEntity& entity) {
+    TaskData currentTask = _tasks.front();
 
-    if (!_scriptBindings.contains(currentTask->taskName)) return;
-    _scriptBindings[currentTask->taskName].function(entity, currentTask);
-    currentTask->status = TaskData::Status::IN_PROGRESS;
+    if (!_scriptBindings.contains(currentTask.taskName)) return;
+    _scriptBindings[currentTask.taskName].function(entity, currentTask);
+    currentTask.status = TaskData::Status::IN_PROGRESS;
 }
 
 
 //EntityHealthComponent methods
-void EntityHealthComponent::Heal(const float amount) {
+void EntityHealthComponent::Heal(const int amount) {
     health += amount;
     if (health > maxHealth) health = maxHealth;
 }
 
-void EntityHealthComponent::TakeDamage(const float damage) {
+void EntityHealthComponent::TakeDamage(const int damage) {
     health -= damage;
-    if (health < 0.0f) health = 0.0f;
+    if (health < 0) health = 0;
 }
-void EntityHealthComponent::SetHealth(const float newHealth) {
+void EntityHealthComponent::SetHealth(const int newHealth) {
     health = newHealth;
     if (health > maxHealth) health = maxHealth;
-    if (health < 0.0f) health = 0.0f;
+    if (health < 0) health = 0;
 }
-void EntityHealthComponent::SetMaxHealth(const float newMaxHealth) {
+void EntityHealthComponent::SetMaxHealth(const int newMaxHealth) {
     maxHealth = newMaxHealth;
     if (health > maxHealth) health = maxHealth;
 }
 
-float EntityHealthComponent::GetHealth() const {
+int EntityHealthComponent::GetHealth() const {
     return health;
 }
-float EntityHealthComponent::GetMaxHealth() const {
+int EntityHealthComponent::GetMaxHealth() const {
     return maxHealth;
 }
 bool EntityHealthComponent::isDead() const {
-    return health <= 0.0f;
+    return health <= 0;
 }
 
