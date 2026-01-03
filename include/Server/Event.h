@@ -14,7 +14,7 @@ struct EventCallback {
     std::string callbackName;
 };
 
-class Event {
+class EntityEvent {
     std::vector<EventCallback> registeredEvents;
     std::mutex eventMutex;
 public:

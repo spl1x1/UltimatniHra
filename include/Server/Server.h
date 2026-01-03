@@ -12,12 +12,12 @@
 #include "../Application/dataStructures.h"
 #include "../Window/WorldStructs.h"
 
-struct EventData;
 enum class structureType;
 class Sprite;
 class WorldData;
 enum class EntityType;
 class IStructure;
+class EntityEvent;
 
 
 class Server : public std::enable_shared_from_this<Server> {
@@ -98,7 +98,7 @@ public:
     void generateStructures(); //Generuje stromy na mape sveta pro jistotu lockuje mutex serveru, volat při prvním vytvoreni jinak load
     void generateWorld(); //Generuje mapy sveta pro jistotu lockuje mutex serveru
     void Tick(); //Tick serveru, zatim tickuje sprity TODO: implementovat, nezapomenout na thread safety
-    void playerUpdate(EventData e); //Tick pro hrace TODO: implementovat, nezapomenout na thread safety
+    void playerUpdate(std::unique_ptr<EntityEvent> e, int playerId = 0); //Tick pro hrace TODO: implementovat, nezapomenout na thread safety
     std::set<int> getStructuresInArea(Coordinates topLeft, Coordinates bootomLeft); //Vraci ID vsech entit v dane oblasti TODO: implementovat, nezapomenout na thread safety
 
 

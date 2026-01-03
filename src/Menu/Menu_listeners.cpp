@@ -874,34 +874,8 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
             printf("Error: No server instance available to damage player\n");
             return;
         }
-        EventData eventData{Event::DAMAGE};
-        eventData.data.amount= damageAmount;
-        window->server->playerUpdate(eventData);
+        window->server->playerUpdate(Event_Damage::Create(damageAmount));
 
-    }
-    else if (commandName =="moveplayerto") {
-        if (args.empty()) {
-            printf("Usage: /movePlayerTo <x> <y>\n");
-            return;
-        }
-
-        int x{0}, y{0};
-        size_t firstSpace = args.find(' ');
-
-        std::from_chars(args.data(), args.data() + firstSpace, x);
-        std::from_chars(args.data() + firstSpace + 1, args.data() + args.size(), y);
-
-        if (!window) {
-            printf("Error: No server instance available to move player\n");
-            return;
-        }
-
-        EventData eventData{Event::MOVE_TO};
-        eventData.data.coordinates.x = static_cast<float>(x);
-        eventData.data.coordinates.y = static_cast<float>(y);
-
-        SDL_Log("Moving player to (%d, %d)", x, y);
-        window->server->playerUpdate(eventData);
     }
 
     else if (commandName == "help") {
@@ -911,7 +885,6 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
         printf("  /rmllist      - List all loaded documents\n");
         printf("  /itemshow        - Add test item to inventory\n");
         printf("/damageplayer <amount>        - Sends damage event to server\n");
-        printf("/moveplayerto <x> <y>        - Moves player to specified coordinates\n");
         printf("  /help            - Show this help message\n");
     }
     else {

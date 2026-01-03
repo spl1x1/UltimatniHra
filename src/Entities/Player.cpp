@@ -79,8 +79,8 @@ void Player::SetEntityCollision(bool disable) {
     _entityCollisionComponent.DisableCollision(disable);
 }
 
-void Player::AddEvent(const EventData &eventData) {
-    _entityLogicComponent.AddEvent(eventData);
+void Player::AddEvent(std::unique_ptr<EntityEvent> eventData) {
+    _entityLogicComponent.AddEvent(std::move(eventData));
 }
 
 Coordinates Player::GetCoordinates() const {

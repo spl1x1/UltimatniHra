@@ -7,10 +7,9 @@
 
 #include "../../include/Application/MACROS.h"
 #include "../../include/Sprites/Sprite.hpp"
+#include "../../include/Entities/EntityEvent.h"
 #include <queue>
-#include <unordered_map>
 #include <algorithm>
-#include <SDL3/SDL_log.h>
 
 //EntityRenderingComponent methods
 void EntityRenderingComponent::Tick(const float deltaTime) const {
@@ -128,30 +127,6 @@ bool EntityCollisionComponent::CheckCollisionAt(const float newX, const float ne
 
 //EntityMovementComponent methods
 
-void EntityLogicComponent::BindScript(const std::string &scriptName, const ScriptData &scriptData) {
-    scriptBindings[scriptName] = scriptData;
-}
-
-void EntityLogicComponent::UnbindScript(const std::string &scriptName) {
-    scriptBindings.erase(scriptName);
-}
-
-EntityLogicComponent::ScriptData EntityLogicComponent::GetBoundScript(const std::string &scriptName) const {
-    if (scriptBindings.contains(scriptName)) {
-        return scriptBindings.at(scriptName);
-    }
-    return ScriptData{};
-}
-
-
-void EntityLogicComponent::SetEvents(const std::vector<EventData> &newEvents) {
-    events = newEvents;
-}
-
-std::vector<EventData> EntityLogicComponent::GetEvents() const {
-    return events;
-}
-
 
 void EntityLogicComponent::SetAngle(const int newAngle) {
     angle = newAngle;
@@ -186,22 +161,34 @@ Coordinates EntityLogicComponent::GetCoordinates() const {
 
 
 void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
-    events.insert(events.end(), queueUpEvents.begin(), queueUpEvents.end());
+    const auto dt = server->getDeltaTime_unprotected();
+    auto isInInterrupts= [&](int index)->bool {
+        return std::ranges::any_of(interruptedEvents,
+                                   [&] (EntityEvent::Type interruptedEvent) {
+                                       return interruptedEvent== events.at(index)->GetType();
+                                   });
+    }; //Check if event type is in interruptedEvents
+
+    auto process = [&](int index) {
+        events.at(index)->SetDeltaTime(dt);
+        HandleEvent(server, entity, index);
+    }; //Process event at index
+
+    for (auto &e : queueUpEvents) {
+        events.emplace_back(std::move(e));
+    }
     queueUpEvents.clear();
+
     for (auto eventIndex{0}; eventIndex < events.size(); ++eventIndex) {
-        if (interrupted) break;
-        HandleEvent(server, entity, eventIndex);
+        if (!interrupted && !isInInterrupts(eventIndex)) process(eventIndex);
     }
     events.clear();
+    interruptedEvents.clear();
     interrupted = false;
 }
 
-void EntityLogicComponent::AddEvent(const EventData &eventData) {
-    events.push_back(eventData);
-}
-
-void EntityLogicComponent::RegisterScriptBinding(const std::string &scriptName, const ScriptData &scriptData) {
-    scriptBindings[scriptName] = scriptData;
+void EntityLogicComponent::AddEvent(std::unique_ptr<EntityEvent> eventData) {
+    events.push_back(std::move(eventData));
 }
 
 EntityLogicComponent::EntityLogicComponent(const Coordinates &coordinates) : coordinates(coordinates) {
@@ -240,37 +227,43 @@ void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, co
     const float directionY{diffY / distance};
 
     if (!Move(deltaTime, directionX, directionY, collisionComponent, server)) return;
-    queueUpEvents.push_back(EventData{
-        .type = Event::MOVE_TO,
-        .data = {.coordinates = {targetX, targetY}}
-    });
+    queueUpEvents.emplace_back(Event_MoveTo::Create(targetX,targetY));
 }
 
 void EntityLogicComponent::HandleEvent(const Server* server, IEntity &entity, int eventIndex) {
-    auto data = events.at(eventIndex);
-    data.dt = server->getDeltaTime_unprotected();
-    switch (data.type) {
-        case Event::MOVE:
-            Move(data.dt, data.data.coordinates.x, data.data.coordinates.y, *entity.GetCollisionComponent(), server);
-            break;
-        case Event::MOVE_TO:
-            MoveTo(data.dt, data.data.coordinates.x, data.data.coordinates.y, *entity.GetCollisionComponent(), server);
-            break;
-        case Event::CHANGE_COLLISION:
-            entity.GetCollisionComponent()->SwitchCollision();
-            break;
-        case Event::DAMAGE:
-            entity.GetHealthComponent()->TakeDamage(data.data.amount);
-            break;
-        case Event::INTERRUPT:
-            interrupted = true;
-            break;
-        case Event::CLICK_MOVE:
-            interrupted = true;
-            MoveTo(data.dt, data.data.coordinates.x, data.data.coordinates.y, *entity.GetCollisionComponent(), server);
-            break;
-        default:
-            break;
+    const auto *e = events.at(eventIndex).get();
+    if (!e->validate()) return;
+    if (auto type = e->GetType(); type == EntityEvent::Type::INTERRUPT) {
+        interrupted = true;
+    }
+    else if (type == EntityEvent::Type::INTERRUPT_SPECIFIC) {
+        auto data =  dynamic_cast<const Event_InterruptSpecific*>(e);
+        interruptedEvents.emplace(data->eventToInterrupt);
+    }
+    else if (type == EntityEvent::Type::MOVE) {
+        auto data =  dynamic_cast<const Event_Move*>(e);
+        Move(data->GetDeltaTime(), data->dX, data->dY, *entity.GetCollisionComponent(), server);
+    }
+    else if (type == EntityEvent::Type::CLICK_MOVE) {
+        auto data = dynamic_cast<const Event_ClickMove*>(e);
+        interrupted = true;
+        MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, *entity.GetCollisionComponent(), server);
+        return;
+    }
+    else if (type == EntityEvent::Type::MOVE_TO) {
+        auto data = dynamic_cast<const Event_MoveTo*>(e);
+        MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, *entity.GetCollisionComponent(), server);
+    }
+    else if (type == EntityEvent::Type::CHANGE_COLLISION) {
+        entity.GetCollisionComponent()->SwitchCollision();
+    }
+    else if (type == EntityEvent::Type::DAMAGE) {
+        auto data = dynamic_cast<const Event_Damage*>(e);
+        entity.GetHealthComponent()->TakeDamage(data->amount);
+    }
+    else if (type == EntityEvent::Type::HEAL) {
+        auto data = dynamic_cast<const Event_Heal*>(e);
+        entity.GetHealthComponent()->Heal(data->amount);
     }
 }
 

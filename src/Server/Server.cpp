@@ -164,11 +164,10 @@ void Server::removeStructure(int structureId) {
 }
 
 
-void Server::playerUpdate(EventData e) {
+void Server::playerUpdate(std::unique_ptr<EntityEvent> e, int playerId) {
     std::lock_guard lock(serverMutex);
-    e.dt = _deltaTime;
-    if (const auto playerEntity = dynamic_cast<Player*>(_players[0].get())) {
-        playerEntity->AddEvent(e);
+    if (const auto playerEntity = dynamic_cast<Player*>(_players.at(playerId).get())) {
+        playerEntity->AddEvent(std::move(e));
     }
 }
 

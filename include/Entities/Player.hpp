@@ -37,7 +37,7 @@ public:
     //Sets current task and task data
     void SetEntityCollision(bool disable) override;
     //Event
-    void AddEvent(const EventData &eventData) override;
+    void AddEvent(std::unique_ptr<EntityEvent> eventData) override;
 
     //Getters
 

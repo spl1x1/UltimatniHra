@@ -90,9 +90,7 @@ void Window::handleMouseInputs() const {
         }
     }
     if ((mousestates ^ SDL_BUTTON_RMASK) == 0) {
-        auto entityEvent = EventData{Event::CLICK_MOVE};
-        entityEvent.data.coordinates = {data.mousePosition.x - 32 , data.mousePosition.y - 32}; // Center of tile
-        server->playerUpdate(entityEvent);
+        server->playerUpdate(Event_ClickMove::Create(data.mousePosition.x - 32, data.mousePosition.y - 32));
     }
 }
 
@@ -122,10 +120,8 @@ void Window::handlePlayerInput() const {
     }
     if (dx == 0.0f && dy == 0.0f) return;
 
-    auto event = EventData{Event::MOVE};
-    event.data.coordinates.x = dx;
-    event.data.coordinates.y = dy;
-    server->playerUpdate(event);
+    server->playerUpdate(Event_Move::Create(dx, dy));
+    server->playerUpdate(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO));
 }
 
 void Window::renderAt(const RenderingContext& context) const {
@@ -234,7 +230,7 @@ void Window::advanceFrame() {
 #ifdef DEBUG
     if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer(0)->GetHitboxRenderingContext());
     if (data.lastCollisionState != data.collisionState) {
-        server->playerUpdate(EventData{Event::CHANGE_COLLISION});
+        server->playerUpdate(Event_ChangeCollision::Create());
         data.lastCollisionState = data.collisionState;
         SDL_Log("Collision state changed: %s", data.collisionState ? "ON" : "OFF");
     }

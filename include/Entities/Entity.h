@@ -9,55 +9,15 @@
 
 #ifndef ENTITY_H
 #define ENTITY_H
-#include <functional>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 #include <SDL3/SDL_render.h>
 
 #include "../Server/Server.h"
 #include "../Sprites/Sprite.hpp"
+#include "../Entities/EntityEvent.h"
 
 class IEntity;
-
-enum class Event{
-    // data = float dX, float dY
-    MOVE,
-    // data = float targetX, float targetY
-    MOVE_TO,
-    // data = attackType
-    ATTACK,
-    // data = int structureType, Coordinates position
-    PLACE,
-    // data = Coordinates position
-    INTERACT,
-    // data = std::vector<Item> items
-    INVENTORY,
-    // data = float amount
-    DAMAGE,
-    // data = float amount
-    HEAL,
-    CHANGE_COLLISION,
-    //causes events after to discard
-    INTERRUPT,
-    // data = float x, float y, player specific event
-    CLICK_MOVE
-};
-
-struct EventData {
-    Event type{};
-    //Delta time for task processing
-    float dt{};
-    /*
-     Parameters for the event
-     */
-    union {
-        struct { float x{0}, y{0}; } coordinates; // For event that need coordinates
-        struct {int id{0}, variant{0}, type{0}; } idRelated; // For structure, entities related events, usually interact events
-        int amount{0}; // For damage/heal events
-    } data;
-};
-
 class EntityRenderingComponent {
     friend class EntityScripts;
     std::unique_ptr<ISprite> _sprite{nullptr};
@@ -116,20 +76,12 @@ public:
 
 class EntityLogicComponent {
     friend class EntityScripts;
-public:
 
-    struct ScriptData {
-        std::string scriptName{};
-        std::function<void(IEntity&, EventData&)> function{};
-    };
-
-private:
     static constexpr float threshold = 1.0f; //Threshold to consider reached target
     Coordinates coordinates{0.0f, 0.0f};
-    std::vector<EventData> events{};
-    std::vector<EventData> queueUpEvents{}; //Events to be processed in next tick, usually result of scripts or other events
-
-    std::unordered_map<std::string,ScriptData> scriptBindings; //Scripts bound to entity
+    std::vector<std::unique_ptr<EntityEvent>> events{};
+    std::vector<std::unique_ptr<EntityEvent>> queueUpEvents{}; //Events to be processed in next tick, usually result of scripts or other events
+    std::set<EntityEvent::Type> interruptedEvents{};
 
     int angle{0};
     float speed{0};
@@ -139,17 +91,8 @@ private:
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
 public:
-
-    //Script binding methods
-    void BindScript(const std::string &scriptName, const ScriptData &scriptData);
-    void UnbindScript(const std::string &scriptName);
-    [[nodiscard]] ScriptData GetBoundScript(const std::string &scriptName) const;
-
     void SetCoordinates(const Coordinates &newCoordinates);
     [[nodiscard]] Coordinates GetCoordinates() const;
-
-    void SetEvents(const std::vector<EventData> &newEvents);
-    [[nodiscard]] std::vector<EventData> GetEvents() const;
 
     void SetAngle(int newAngle);
     [[nodiscard]] int GetAngle() const;
@@ -161,8 +104,7 @@ public:
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
     void MoveTo(float deltaTime, float targetX, float targetY, EntityCollisionComponent &collisionComponent, const Server* server);
     void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
-    void AddEvent(const EventData &eventData);
-    void RegisterScriptBinding(const std::string &scriptName, const ScriptData &scriptData);
+    void AddEvent(std::unique_ptr<EntityEvent> eventData);
 
     //Constructor
     explicit EntityLogicComponent(const Coordinates &coordinates);
@@ -212,7 +154,7 @@ public:
     virtual void SetSpeed(float newSpeed) = 0;
     virtual  void SetEntityCollision(bool disable) = 0;
     //Event
-    virtual void AddEvent(const EventData &eventData) = 0;
+    virtual void AddEvent(std::unique_ptr<EntityEvent> eventData) = 0;
 
     //Getters
 
