@@ -41,6 +41,7 @@ public:
     virtual void setDirection(Direction newDirection)  = 0;
     virtual void setAnimation(AnimationType newAnimation) = 0;
     virtual void setVariant(int newVariant) = 0;
+    virtual void setCurrentFrame(int newCurrentFrame) = 0; //For special cases
 
     //Getters
     virtual std::tuple<std::string,SDL_FRect*> getFrame() = 0;
@@ -56,15 +57,18 @@ class SpriteRenderingContext {
     AnimationType activeAnimation = AnimationType::NONE;
     Direction direction = Direction::OMNI;
 
-    float frameTime = 0;
-    int frameCount = 0;
+    float frameTime{0};
+    int frameCount{0};
+    int variantCount{1};
+
     float frameDuration; // 0.1 10 FPS
     int currentFrame;
+    int currentVariant{1};
     float yOffset;
+    float xOffset;
 
-    int SpriteWidth;
-    int SpriteHeight;
-    int FrameSpacing;
+    int spriteWidth;
+    int spriteHeight;
 public:
     //Methods
     void Tick(float deltaTime);
@@ -75,7 +79,8 @@ public:
     void setActiveAnimation(AnimationType newAnimation);
     void setDirection(Direction newDirection);
     void setFrameCount(int newFrameCount);
-    void setYOffset(float newYOffset);
+    void setVariant(int newVariant);
+    void setCurrentFrame(int newCurrentFrame); //For special cases
     [[nodiscard]] int getWidth() const;
     [[nodiscard]] int getHeight() const;
 
@@ -85,7 +90,7 @@ public:
     std::string attachFrameNumber(std::string& texture) const; //Attaches current frame number to texture string, made for special cases
 
     //Constructor and Destructor
-    explicit SpriteRenderingContext(std::string textureName , Direction direction = Direction::OMNI,float frameDuration = 0.1f, int frameCount =0, int spriteWidth=32, int spriteHeight=32, int frameSpacing=0, float yOffset = 0);
+    explicit SpriteRenderingContext(std::string textureName , Direction direction = Direction::OMNI,float frameDuration = 0.1f, int frameCount =0, int spriteWidth=32, int spriteHeight=32,int variants=1, int currentVariant = 1, float xOffset=0.0f, float yOffset = 0.0f);
     ~SpriteRenderingContext() = default;
 };
 

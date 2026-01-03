@@ -46,8 +46,14 @@ void SpriteRenderingContext::setFrameCount(int newFrameCount) {
     }
 }
 
-void SpriteRenderingContext::setYOffset(float newYOffset) {
-    yOffset = newYOffset;
+void SpriteRenderingContext::setVariant(int newVariant) {
+    if (newVariant < 1 || newVariant > variantCount) return;
+    currentVariant = newVariant;
+}
+
+void SpriteRenderingContext::setCurrentFrame(int newCurrentFrame) {
+    if (newCurrentFrame < 1 || newCurrentFrame > frameCount) newCurrentFrame = 1;
+    currentFrame = newCurrentFrame;
 }
 
 void SpriteRenderingContext::setActiveAnimation(AnimationType newAnimation){
@@ -63,27 +69,31 @@ void SpriteRenderingContext::setDirection(Direction newDirection){
 }
 
 int SpriteRenderingContext::getWidth() const {
-    return SpriteWidth;
+    return spriteWidth;
 }
 int SpriteRenderingContext::getHeight() const {
-    return SpriteHeight;
+    return spriteHeight;
 }
 
 
 SDL_FRect* SpriteRenderingContext::getFrameRect() const {
     float x = 0;
-    if (currentFrame != 1) {
-        x = static_cast<float>((currentFrame - 1) * SpriteWidth + FrameSpacing);
+    float y = 0;
+    if (currentFrame > 1) {
+        x = static_cast<float>((currentFrame - 1) * spriteWidth) + xOffset;
+    }
+    if (currentVariant > 1) {
+        y += static_cast<float>((currentVariant - 1) * spriteHeight) + yOffset;
     }
     frameRect->x =x;
-    frameRect->y = yOffset;
-    frameRect->w = static_cast<float>(SpriteWidth);
-    frameRect->h = static_cast<float>(SpriteHeight);
+    frameRect->y = y;
+    frameRect->w = static_cast<float>(spriteWidth);
+    frameRect->h = static_cast<float>(spriteHeight);
     return frameRect.get();
 }
 
-SpriteRenderingContext::SpriteRenderingContext(std::string textureName, Direction direction ,float frameDuration, int frameCount, int spriteWidth, int spriteHeight, int frameSpacing, float yOffset)
-: textureName(std::move(textureName)), direction(direction), frameCount(frameCount), frameDuration(frameDuration), currentFrame(1), yOffset(yOffset), SpriteWidth(spriteWidth), SpriteHeight(spriteHeight), FrameSpacing(frameSpacing){}
+SpriteRenderingContext::SpriteRenderingContext(std::string textureName, const Direction direction , const float frameDuration, const int frameCount, const int spriteWidth, const int spriteHeight, const int variants, const int currentVariant, const float xOffset, const float yOffset)
+: textureName(std::move(textureName)), direction(direction), frameCount(frameCount), frameDuration(frameDuration), currentFrame(1), yOffset(yOffset), spriteWidth(spriteWidth), spriteHeight(spriteHeight), variantCount(variants), currentVariant(currentVariant), xOffset(xOffset){}
 
 
 

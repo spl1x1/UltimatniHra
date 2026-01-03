@@ -10,15 +10,7 @@
 
 //StructureRenderingComponent methods
 
-StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<ISprite> sprite, Coordinates topLeft) : sprite(std::move(sprite)){
-    Coordinates topLeftCorner = {(std::floor(topLeft.x/32))*32, (std::floor(topLeft.y/32))*32};
-    auto width = static_cast<float>(this->sprite->getWidth());
-    auto height = static_cast<float>(this->sprite->getHeight());
-    this->fourCorners[0] = topLeftCorner; //Top-left
-    this->fourCorners[1] = {topLeftCorner.x + width, topLeftCorner.y}; //Top-right
-    this->fourCorners[2] = {topLeftCorner.x, topLeftCorner.y + height}; //Bottom-left
-    this->fourCorners[3] = {topLeftCorner.x + width, topLeftCorner.y + height}; //Bottom-right
-}
+StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<ISprite> sprite) : sprite(std::move(sprite)){}
 
 void StructureRenderingComponent::Tick(float deltaTime) const {
     if (!sprite) return;
@@ -30,6 +22,10 @@ void StructureRenderingComponent::SetVariant(int variant) const {
     sprite->setVariant(variant);
 }
 
+ISprite* StructureRenderingComponent::GetSprite() const {
+    return sprite.get();
+}
+
 RenderingContext StructureRenderingComponent::getRenderingContext() const {
     if (!sprite) return RenderingContext{};
 
@@ -38,14 +34,14 @@ RenderingContext StructureRenderingComponent::getRenderingContext() const {
 }
 
 //StructueHitbox methods
-StructureHitbox::StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner) : server(server) {
+StructureHitboxComponent::StructureHitboxComponent(const std::shared_ptr<Server>& server, Coordinates topLeftCorner) : server(server) {
     const Coordinates topLeft = {(std::floor(topLeftCorner.x/32))*32, (std::floor(topLeftCorner.y/32))*32};
     this->topLeftCorner = topLeft;
 }
 
-StructureHitbox::StructureHitbox(const std::shared_ptr<Server>& server) : server(server) {}
+StructureHitboxComponent::StructureHitboxComponent(const std::shared_ptr<Server>& server) : server(server) {}
 
-void StructureHitbox::updateCollisionMap(int value, int checkValue) const {
+void StructureHitboxComponent::updateCollisionMap(int value, int checkValue) const {
     for (const TrueCoordinates& point : hitboxPoints) {
         if (checkValue != -2) {
             if (server->getMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != checkValue) {
@@ -56,40 +52,40 @@ void StructureHitbox::updateCollisionMap(int value, int checkValue) const {
     }
 }
 
-bool StructureHitbox::checkCollisionMap() const {
+bool StructureHitboxComponent::checkCollisionMap() const {
      return std::ranges::any_of(hitboxPoints, [this](const TrueCoordinates& point) {
         return server->getMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != 0;
     });
 }
 
-Coordinates StructureHitbox::getTopLeftCorner() const {
+Coordinates StructureHitboxComponent::getTopLeftCorner() const {
     return topLeftCorner;
 }
 
-void StructureHitbox::SetTopLeftCorner(const Coordinates topLeftCorner) {
+void StructureHitboxComponent::SetTopLeftCorner(const Coordinates topLeftCorner) {
     this->topLeftCorner = topLeftCorner;
 }
 
-void StructureHitbox::addRowOfPoints(int posX, int posY, int length) {
+void StructureHitboxComponent::addRowOfPoints(int posX, int posY, int length) {
     for (int i = 0; i < length; i++) {
         addPoint(posX + i, posY);
     }
 }
 
-void StructureHitbox::addColumnOfPoints(int posX, int posY, int length) {
+void StructureHitboxComponent::addColumnOfPoints(int posX, int posY, int length) {
     for (int i = 0; i < length; i++) {
         addPoint(posX, posY + i);
     }
 }
 
-void StructureHitbox::addPoint(int posX, int posY){
+void StructureHitboxComponent::addPoint(int posX, int posY){
     TrueCoordinates point{};
     point.x = static_cast<int>(topLeftCorner.x)/32 + posX;
     point.y = static_cast<int>(topLeftCorner.y)/32 + posY;
     hitboxPoints.push_back(point);
 }
 
-HitboxContext StructureHitbox::getHitboxContext() {
+HitboxContext StructureHitboxComponent::getHitboxContext() {
     if (!hitboxContext.corners.empty()) {
         return hitboxContext; // Return cached context if already computed
     }
@@ -131,12 +127,12 @@ HitboxContext StructureHitbox::getHitboxContext() {
     return context;
 }
 
-bool StructureHitbox::finalize(int id) const {
+bool StructureHitboxComponent::finalize(int id) const {
     if (checkCollisionMap()) return false; // Collision detected, cannot finalize hitbox
     updateCollisionMap(id);
     return true;
 }
 
-void StructureHitbox::destroy(int id) const {
+void StructureHitboxComponent::destroy(int id) const {
     updateCollisionMap(0, id); //Reset collision map points to 0
 }

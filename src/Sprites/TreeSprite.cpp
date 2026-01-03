@@ -21,7 +21,7 @@ void TreeSprite::Tick(float deltaTime) {
 }
 
 void TreeSprite::setVariant(int newVariant) {
-    renderingContext.setYOffset(static_cast<float>(newVariant*getHeight()));
+    renderingContext.setVariant(newVariant);
 }
 
 int TreeSprite::getWidth() const {

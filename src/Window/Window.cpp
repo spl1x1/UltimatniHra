@@ -118,11 +118,8 @@ void Window::drawHitbox(const HitboxContext& context) const {
 
 void Window::renderHud() {
     if (data.drawMousePreview) {
-        const float tileX = std::floor((static_cast<float>(data.mousePosition.x) + data.cameraRect->x) / 32.0f) * 32.0f;
-        const float tileY = std::floor((static_cast<float>(data.mousePosition.y) + data.cameraRect->y) / 32.0f) * 32.0f;
-
         RenderingContext cursor;
-        cursor.coordinates = {tileX,tileY};
+        cursor.coordinates = {data.mousePosition.x,data.mousePosition.y};
         cursor.rect = data.mousePreviewRect.get();
         cursor.textureName = "cursor";
         renderAt(cursor);
@@ -349,10 +346,39 @@ void Window::HandleInputs() {
             SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
             }
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
-            data.mousePosition.x = event.motion.x /data.scale;
-            data.mousePosition.y =  event.motion.y / data.scale;
+            data.mousePosition.x = std::floor(((event.motion.x /data.scale) + data.cameraRect->x) / 32.0f) * 32.0f;
+            data.mousePosition.y = std::floor(((event.motion.y / data.scale) + data.cameraRect->y) / 32.0f) * 32.0f;
         }
-
+        if (!data.inMenu && data.drawMousePreview && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+            Coordinates cooridinates = {data.mousePosition.x/32, data.mousePosition.y/32};
+            int value = server->getMapValue(
+                static_cast<int>(cooridinates.x),
+                static_cast<int>(cooridinates.y) ,
+                WorldData::BIOME_MAP
+            );
+            SDL_Log("Tile X: %d, Tile Y: %d",
+                    static_cast<int>(cooridinates.x),
+                    static_cast<int>(cooridinates.y));
+            SDL_Log("Biome ID: %d",
+                    value);
+            value = server->getMapValue(
+                static_cast<int>(cooridinates.x),
+                static_cast<int>(cooridinates.y) ,
+                WorldData::COLLISION_MAP
+            );
+            SDL_Log("Collision ID at tile: %d", value);
+            if (value > 0) {
+                auto structure = server->getStructure(value);
+                SDL_Log("Structure Type: %d", structure->getType());
+                auto renderingContext = structure->GetRenderingContext();
+                SDL_Log("Structure variant: %.2f  %.2f ",
+                    renderingContext.rect->x, renderingContext.rect->y);
+                SDL_Log("Rendering context w, h: %.2f %.2f",
+                    renderingContext.rect->w, renderingContext.rect->h);
+                SDL_Log("Structure texture: %s",
+                    renderingContext.textureName.c_str());
+            }
+        }
         data.uiComponent->HandleEvent(&event);
     }
 }
@@ -458,7 +484,7 @@ void Window::initGame() {
     server->generateWorld();
     WorldRender wr(*this);
     wr.GenerateTextures();
-    server->generateTrees();
+    server->generateStructures();
 
     textures.insert_or_assign("FinalTexture", SDL_CreateTexture(data.Renderer,
                                                     SDL_PIXELFORMAT_RGBA8888,

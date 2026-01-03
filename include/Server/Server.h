@@ -95,7 +95,7 @@ public:
 
 
     //Methods
-    void generateTrees(); //Generuje stromy na mape sveta pro jistotu lockuje mutex serveru, volat při prvním vytvoreni jinak load
+    void generateStructures(); //Generuje stromy na mape sveta pro jistotu lockuje mutex serveru, volat při prvním vytvoreni jinak load
     void generateWorld(); //Generuje mapy sveta pro jistotu lockuje mutex serveru
     void Tick(); //Tick serveru, zatim tickuje sprity TODO: implementovat, nezapomenout na thread safety
     void playerUpdate(EventData e); //Tick pro hrace TODO: implementovat, nezapomenout na thread safety
@@ -107,8 +107,8 @@ public:
     void addPlayer(Coordinates coordinates); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
     void addPlayer(const std::shared_ptr<IEntity>& player); //Prida na server entitu
 
-    void addStructure(Coordinates coordinates,  structureType type, int variant); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
-    void addStructure_unprotected(Coordinates coordinates, structureType type, int variant);
+    void addStructure(Coordinates coordinates,  structureType type, int innerType, int variant = 0); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
+    void addStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant = 0); //Prida na server strukturu
     void addStructure(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
     void addStructure_unprotected(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 

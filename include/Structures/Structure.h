@@ -20,7 +20,8 @@ enum class structureType{
     FARM,
     BARRACKS,
     TOWER,
-    TREE
+    TREE,
+    ORE_NODE
 };
 
 class IStructure {
@@ -36,22 +37,19 @@ public:
 };
 
 class StructureRenderingComponent {
-    Coordinates fourCorners[4];
     std::unique_ptr<ISprite> sprite;
-    std::unique_ptr<SDL_FRect> Rect = std::make_unique<SDL_FRect>();
-
     public:
 
     //Methods
     [[nodiscard]] RenderingContext getRenderingContext() const;
     void Tick(float deltaTime) const;
     void SetVariant(int variant) const;
+    [[nodiscard]] ISprite* GetSprite() const;
 
-    explicit StructureRenderingComponent(std::unique_ptr<ISprite> sprite, Coordinates topLeft);
-
+    explicit StructureRenderingComponent(std::unique_ptr<ISprite> sprite);
 };
 
-class StructureHitbox {
+class StructureHitboxComponent {
     struct TrueCoordinates {
         int x;
         int y;
@@ -100,8 +98,8 @@ public:
     void destroy(int id) const;
 
     //Constructor and Destructor
-    StructureHitbox(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);
-    StructureHitbox(const std::shared_ptr<Server>& server ); //Empty constructor for default initialization
+    StructureHitboxComponent(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);
+    StructureHitboxComponent(const std::shared_ptr<Server>& server ); //Empty constructor for default initialization
 };
 
 

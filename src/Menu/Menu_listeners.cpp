@@ -10,6 +10,7 @@
 #include <SDL3/SDL.h>
 #include <cstdio>
 #include <charconv>
+#include <cmath>
 
 inline UIComponent* getUI(Window* win) {
     return win->data.uiComponent.get();
@@ -874,11 +875,11 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
             return;
         }
         EventData eventData{Event::DAMAGE};
-        eventData.data.amount= static_cast<float>(damageAmount);
+        eventData.data.amount= damageAmount;
         window->server->playerUpdate(eventData);
 
     }
-    else if (commandName =="movePlayerTo") {
+    else if (commandName =="moveplayerto") {
         if (args.empty()) {
             printf("Usage: /movePlayerTo <x> <y>\n");
             return;
@@ -902,6 +903,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
         SDL_Log("Moving player to (%d, %d)", x, y);
         window->server->playerUpdate(eventData);
     }
+
     else if (commandName == "help") {
         printf("Available commands:\n");
         printf("  /rmlshow <name>  - Show an RML document\n");
@@ -909,6 +911,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
         printf("  /rmllist      - List all loaded documents\n");
         printf("  /itemshow        - Add test item to inventory\n");
         printf("/damageplayer <amount>        - Sends damage event to server\n");
+        printf("/moveplayerto <x> <y>        - Moves player to specified coordinates\n");
         printf("  /help            - Show this help message\n");
     }
     else {

@@ -18,7 +18,7 @@ class WaterSprite {
     static float lastDeltaTime; //To make sure we are not ticking multiple times per frame
 
     //Sprite base data
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("water", Direction::OMNI,0.2f, 4, 32, 32, 0.0f, 0.0f);
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("water", Direction::OMNI,0.2f, 4, 32, 32);
 
     //Hidden Methods
     void tickInternal(float deltaTime);

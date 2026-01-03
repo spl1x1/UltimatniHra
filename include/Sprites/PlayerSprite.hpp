@@ -4,13 +4,11 @@
 
 #ifndef PLAYERSPRITE_H
 #define PLAYERSPRITE_H
-//#include <RmlUi/Core/Spritesheet.h>
 
 #include "Sprite.hpp"
-#include "../Server/BossPathfinding.h"
 
 class PlayerSprite : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("player",Direction::DOWN ,0.1f, 8, 96, 96, 0.0f, 0.0f);
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("player",Direction::DOWN ,0.1f, 8, 96, 96);
 public:
     //Interface Methods
     void Tick(float deltaTime) override;
@@ -20,6 +18,7 @@ public:
     void setDirection(Direction newDirection) override;
     void setAnimation(AnimationType newAnimation) override;
     void setVariant(int newVariant) override {}
+    void setCurrentFrame(int newCurrentFrame) override{};
 
     //Getters
     std::tuple<std::string,SDL_FRect*> getFrame() override;

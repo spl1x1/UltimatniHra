@@ -8,15 +8,16 @@
 #include "Structure.h"
 
 class Tree: public IStructure {
-    int _id;
-    StructureRenderingComponent _renderingComponent;
-    StructureHitbox _hitboxComponent;
+    int id;
+    StructureRenderingComponent renderingComponent;
+    StructureHitboxComponent hitboxComponent;
     bool initialized{false};
 public:
     enum class TreeVariant {
         PLAINS,
         SNOW,
         FOREST,
+        NONE
     };
     //Interface implementation
     [[nodiscard]] structureType getType() const override;

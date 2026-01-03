@@ -15,7 +15,7 @@ structureType Tree::getType() const {
 }
 
 int Tree::getId() const {
-    return _id;
+    return id;
 }
 
 bool Tree::wasProperlyInitialized() {
@@ -23,34 +23,32 @@ bool Tree::wasProperlyInitialized() {
 }
 
 void Tree::Tick(float deltaTime) {
-    _renderingComponent.Tick(deltaTime);
+    renderingComponent.Tick(deltaTime);
 }
 
 
 RenderingContext Tree::GetRenderingContext() const {
-    auto context = _renderingComponent.getRenderingContext();
-    context.coordinates = _hitboxComponent.getTopLeftCorner();
+    auto context = renderingComponent.getRenderingContext();
+    context.coordinates = hitboxComponent.getTopLeftCorner();
     return context;
 }
 
 HitboxContext Tree::GetHitboxContext() {
-    return _hitboxComponent.getHitboxContext();
+    return hitboxComponent.getHitboxContext();
 }
 
 
-Tree::Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, TreeVariant variant)
-    : _id(id),
-      _renderingComponent(std::make_unique<TreeSprite>(), topLeftCorner), _hitboxComponent(server) {
-    _renderingComponent.SetVariant(static_cast<int>(variant));
+Tree::Tree(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, TreeVariant variant)
+: id(id),renderingComponent(std::make_unique<TreeSprite>()), hitboxComponent(server) {
+    renderingComponent.SetVariant(static_cast<int>(variant));
     topLeftCorner.x -= 32.0f; // Hitbox alignment
     topLeftCorner.y -= 32.0f;
-    _hitboxComponent.SetTopLeftCorner(topLeftCorner);
-    _hitboxComponent = StructureHitbox(server, topLeftCorner);
-    _hitboxComponent.addPoint(1, 1);
-    initialized = _hitboxComponent.finalize(id);
+    hitboxComponent.SetTopLeftCorner(topLeftCorner);
+    hitboxComponent.addPoint(1, 1);
+    initialized = hitboxComponent.finalize(id);
 }
 
 Tree::~Tree() {
     if (!initialized) return;
-    _hitboxComponent.destroy(_id);
+    hitboxComponent.destroy(id);
 };

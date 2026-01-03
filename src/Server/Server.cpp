@@ -11,6 +11,7 @@
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
+#include "../../include/Structures/OreNode.h"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Structures/Tree.h"
 #include "../../include/Window/WorldStructs.h"
@@ -101,14 +102,18 @@ void Server::addEntity(const std::shared_ptr<IEntity>& entity) {
 }
 
 
-void Server::addStructure(Coordinates coordinates, structureType type, int variant) {
+void Server::addStructure(Coordinates coordinates, structureType type, int innerType, int variant) {
     std::lock_guard lock(serverMutex);
     int newId = getNextStructureId();
 
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
         case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr(), static_cast<Tree::TreeVariant>(variant));
+            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr(), static_cast<Tree::TreeVariant>(innerType));
+            break;
+        }
+        case structureType::ORE_NODE: {
+            newStructure = std::make_shared<OreNode>(newId, coordinates, getSharedPtr(), static_cast<OreNode::OreType>(innerType), variant);
             break;
         }
         default:
@@ -123,13 +128,17 @@ void Server::addStructure(Coordinates coordinates, structureType type, int varia
     _structures[newId] =newStructure;
 }
 
-void Server::addStructure_unprotected(Coordinates coordinates, structureType type, int variant) {
+void Server::addStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant) {
     int newId = getNextStructureId();
 
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
         case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr(), static_cast<Tree::TreeVariant>(variant));
+            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr(), static_cast<Tree::TreeVariant>(innerType));
+            break;
+        }
+        case structureType::ORE_NODE: {
+            newStructure = std::make_shared<OreNode>(newId, coordinates, getSharedPtr(), static_cast<OreNode::OreType>(innerType), variant);
             break;
         }
         default:
@@ -264,41 +273,56 @@ IStructure* Server::getStructure(int structureId) {
     return nullptr; // Return nullptr if entity not found
 }
 
-void Server::generateTrees(){
-    struct biomeTreeInfo {
+void Server::generateStructures(){
+    struct biomeModifierInfo {
         int biomeId;
-        double densityModifier;
-        Tree::TreeVariant variant;
+        double treeDensityModifier;
+        double oreDensityModifier;
+        Tree::TreeVariant treeVariant{Tree::TreeVariant::NONE};
+        double oreRarityModifier{0};
     };
 
-    std::vector<biomeTreeInfo> biomesWithTrees = {
-        {3,0.5, Tree::TreeVariant::PLAINS}, //Grass
-        {5,1.3,Tree::TreeVariant::FOREST}, //Forest
-        {6,0.3,Tree::TreeVariant::SNOW}  //Snow
+    std::vector<biomeModifierInfo> biomeModifierValues = {
+        {1, 0.0,0.1, Tree::TreeVariant::NONE, 0},//Beach
+        {2, 0.0,0.7,Tree::TreeVariant::NONE, 0.1}, //Desert
+        {3,0.5,0.5, Tree::TreeVariant::PLAINS, 0.05}, //Grass
+        {4, 0.0,1.5, Tree::TreeVariant::NONE, 0.2},//Mountain
+        {5,1.3,0.3,Tree::TreeVariant::FOREST,0.05}, //Forest
+        {6,0.3,1.3, Tree::TreeVariant::SNOW,0.15}  //Snow
     };
+
+    constexpr int commonOreVariants{2}; //Pocet variant rud, IRON, COPPER
+    constexpr int rareOreVariants{1}; //Pocet variant vzacnych rud, GOLD
 
     std::mt19937 mt(_seed );
     std::uniform_int_distribution dist(1,100);
+    std::uniform_int_distribution<> oreDist(1,2); //Pro ruzne varianty rud
+
 
     std::lock_guard lock(serverMutex);
     for (int x = 0; x < MAPSIZE; x++) {
         for (int y = 0; y < MAPSIZE; y++) {
-            double biomeModifier = 0.0;
-            auto variant = Tree::TreeVariant::PLAINS;
+            auto Biome = biomeModifierValues.at(0);
+
             int biomeValue = getMapValue_unprotected(x, y, WorldData::BIOME_MAP);
-            for (const auto& biomeInfo : biomesWithTrees) {
-                if (biomeInfo.biomeId == biomeValue) {
-                    biomeModifier = biomeInfo.densityModifier;
-                    variant = biomeInfo.variant;
-                    break;
-                }
+            for (const auto& biomeInfo : biomeModifierValues) {
+                if (biomeInfo.biomeId != biomeValue) continue;
+                Biome = biomeInfo;
+                break;
             }
-            if (biomeModifier == 0.0) continue; //Pokud neni v biomu povoleno generovat stromy, pokracuj dale
+            if (Biome.treeDensityModifier == 0.0 && Biome.oreDensityModifier == 0.0)  continue; //Pokud v biomu nejsou stromy ani rudy, pokracuj dal
 
             int roll = dist(mt);
-            if (roll > TREEDENSITY* biomeModifier) continue;
             Coordinates position = {static_cast<float>(x*32),static_cast<float>(y*32)};
-            addStructure_unprotected(position, structureType::TREE, static_cast<int>(variant));
+
+            if (roll < TREEDENSITY* Biome.treeDensityModifier) addStructure_unprotected(position, structureType::TREE, static_cast<int>(Biome.treeVariant));
+            else if (roll < OREDENSITY* Biome.oreDensityModifier + TREEDENSITY* Biome.treeDensityModifier) {
+                int rareRoll = dist(mt);
+                int oreAmount = commonOreVariants;
+                if (rareRoll < Biome.oreRarityModifier * 100) oreAmount += rareOreVariants; //Pokud padne vzacna ruda, je mozne ji generovat
+                std::uniform_int_distribution<> oreTypeDist(1,oreAmount);
+                addStructure_unprotected(position, structureType::ORE_NODE, oreTypeDist(mt), oreDist(mt));
+            }
         }
     }
 }
@@ -307,7 +331,6 @@ void Server::generateWorld(){
     std::lock_guard lock(serverMutex);
     auto *generaceMapy = new GeneraceMapy(8);
 
-    std::srand(static_cast<unsigned int>(_seed));
     std::mt19937 mt(_seed);
     std::uniform_real_distribution<double> dist(1.0,VARIATION_LEVELS);
 
