@@ -37,7 +37,11 @@ enum class Event{
     DAMAGE,
     // data = float amount
     HEAL,
-    CHANGE_COLLISION
+    CHANGE_COLLISION,
+    //causes events after to discard
+    INTERRUPT,
+    // data = float x, float y, player specific event
+    CLICK_MOVE
 };
 
 struct EventData {
@@ -129,6 +133,7 @@ private:
 
     int angle{0};
     float speed{0};
+    bool interrupted{false};
 
     void HandleEvent(const Server* server, IEntity &entity, int eventIndex);
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction

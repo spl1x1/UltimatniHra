@@ -55,6 +55,47 @@ void Window::loadConfig() {
     }
 }
 
+void Window::handleMouseInputs() const {
+    if (!data.drawMousePreview) return;
+    SDL_MouseButtonFlags mousestates = SDL_GetMouseState(nullptr, nullptr);
+
+    if ((mousestates^SDL_BUTTON_LMASK) == 0) {
+        Coordinates cooridinates = {data.mousePosition.x/32, data.mousePosition.y/32};
+        int value = server->getMapValue(
+            static_cast<int>(cooridinates.x),
+            static_cast<int>(cooridinates.y) ,
+            WorldData::BIOME_MAP
+        );
+        SDL_Log("Tile X: %d, Tile Y: %d",
+                static_cast<int>(cooridinates.x),
+                static_cast<int>(cooridinates.y));
+        SDL_Log("Biome ID: %d",
+                value);
+        value = server->getMapValue(
+            static_cast<int>(cooridinates.x),
+            static_cast<int>(cooridinates.y) ,
+            WorldData::COLLISION_MAP
+        );
+        SDL_Log("Collision ID at tile: %d", value);
+        if (value > 0) {
+            auto structure = server->getStructure(value);
+            SDL_Log("Structure Type: %d", structure->getType());
+            auto renderingContext = structure->GetRenderingContext();
+            SDL_Log("Structure variant: %.2f  %.2f ",
+                renderingContext.rect->x, renderingContext.rect->y);
+            SDL_Log("Rendering context w, h: %.2f %.2f",
+                renderingContext.rect->w, renderingContext.rect->h);
+            SDL_Log("Structure texture: %s",
+                renderingContext.textureName.c_str());
+        }
+    }
+    if ((mousestates ^ SDL_BUTTON_RMASK) == 0) {
+        auto entityEvent = EventData{Event::CLICK_MOVE};
+        entityEvent.data.coordinates = {data.mousePosition.x - 32 , data.mousePosition.y - 32}; // Center of tile
+        server->playerUpdate(entityEvent);
+    }
+}
+
 void Window::handlePlayerInput() const {
     const bool* keystates = SDL_GetKeyboardState(nullptr);
 
@@ -160,9 +201,6 @@ void Window::renderHud() {
     data.lastHealth = playerHealth;
 }
 
-void Window::HandleEvent(const SDL_Event *e) const {
-    data.uiComponent->HandleEvent(e);
-}
 
 void Window::advanceFrame() {
     const Uint64 current = SDL_GetPerformanceCounter();
@@ -349,38 +387,11 @@ void Window::HandleInputs() {
             data.mousePosition.x = std::floor(((event.motion.x /data.scale) + data.cameraRect->x) / 32.0f) * 32.0f;
             data.mousePosition.y = std::floor(((event.motion.y / data.scale) + data.cameraRect->y) / 32.0f) * 32.0f;
         }
-        if (!data.inMenu && data.drawMousePreview && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-            Coordinates cooridinates = {data.mousePosition.x/32, data.mousePosition.y/32};
-            int value = server->getMapValue(
-                static_cast<int>(cooridinates.x),
-                static_cast<int>(cooridinates.y) ,
-                WorldData::BIOME_MAP
-            );
-            SDL_Log("Tile X: %d, Tile Y: %d",
-                    static_cast<int>(cooridinates.x),
-                    static_cast<int>(cooridinates.y));
-            SDL_Log("Biome ID: %d",
-                    value);
-            value = server->getMapValue(
-                static_cast<int>(cooridinates.x),
-                static_cast<int>(cooridinates.y) ,
-                WorldData::COLLISION_MAP
-            );
-            SDL_Log("Collision ID at tile: %d", value);
-            if (value > 0) {
-                auto structure = server->getStructure(value);
-                SDL_Log("Structure Type: %d", structure->getType());
-                auto renderingContext = structure->GetRenderingContext();
-                SDL_Log("Structure variant: %.2f  %.2f ",
-                    renderingContext.rect->x, renderingContext.rect->y);
-                SDL_Log("Rendering context w, h: %.2f %.2f",
-                    renderingContext.rect->w, renderingContext.rect->h);
-                SDL_Log("Structure texture: %s",
-                    renderingContext.textureName.c_str());
-            }
-        }
         data.uiComponent->HandleEvent(&event);
     }
+    if (data.inMenu) return;
+    handleMouseInputs();
+    handlePlayerInput();
 }
 
 void Window::changeResolution(int width, int height) const {
@@ -457,7 +468,6 @@ void Window::applyDisplayMode(DisplayMode mode) {
 
 void Window::tick() {
     HandleInputs();
-    if (!data.inMenu) handlePlayerInput();
     SDL_RenderClear(data.Renderer);
     if (!data.mainScreen) advanceFrame();
     data.uiComponent->Render();

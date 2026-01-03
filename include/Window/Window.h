@@ -61,12 +61,12 @@ class Window {
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
+    void handleMouseInputs() const;
     void handlePlayerInput() const;
     void renderAt(const RenderingContext& context) const;
     void drawHitbox(const HitboxContext& context) const;
     void renderHud();
 
-    void HandleEvent(const SDL_Event* e) const;
     void advanceFrame();
 
     Rml::DataModelHandle dataModel;

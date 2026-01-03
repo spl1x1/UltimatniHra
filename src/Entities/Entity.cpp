@@ -189,8 +189,11 @@ void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
     events.insert(events.end(), queueUpEvents.begin(), queueUpEvents.end());
     queueUpEvents.clear();
     for (auto eventIndex{0}; eventIndex < events.size(); ++eventIndex) {
+        if (interrupted) break;
         HandleEvent(server, entity, eventIndex);
     }
+    events.clear();
+    interrupted = false;
 }
 
 void EntityLogicComponent::AddEvent(const EventData &eventData) {
@@ -259,10 +262,16 @@ void EntityLogicComponent::HandleEvent(const Server* server, IEntity &entity, in
         case Event::DAMAGE:
             entity.GetHealthComponent()->TakeDamage(data.data.amount);
             break;
+        case Event::INTERRUPT:
+            interrupted = true;
+            break;
+        case Event::CLICK_MOVE:
+            interrupted = true;
+            MoveTo(data.dt, data.data.coordinates.x, data.data.coordinates.y, *entity.GetCollisionComponent(), server);
+            break;
         default:
             break;
     }
-    events.erase(events.begin());
 }
 
 //EntityHealthComponent methods
