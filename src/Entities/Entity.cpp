@@ -11,44 +11,66 @@
 #include <queue>
 #include <algorithm>
 
+std::unique_ptr<EventBindings> EventBindings::instance = nullptr;
+
 //EntityRenderingComponent methods
 void EntityRenderingComponent::Tick(const float deltaTime) const {
-    if (!_sprite) return;
-    _sprite->Tick(deltaTime);
+    if (!sprite) return;
+    sprite->Tick(deltaTime);
+}
+
+Coordinates EntityRenderingComponent::CalculateCenterOffset(IEntity& entity) {
+    if (offset.x != -1.0f && offset.y != -1.0f) {
+        return offset;
+    }
+    const auto hitbox = entity.GetCollisionComponent()->GetHitbox()->corners;
+
+    const auto hitboxCenter = Coordinates{
+        (hitbox[0].x + hitbox[1].x) / 2.0f,
+        (hitbox[0].y + hitbox[2].y) / 2.0f
+    };
+    const auto spriteCenter = Coordinates{
+        static_cast<float>(sprite->getWidth()) / 2.0f,
+        static_cast<float>(sprite->getHeight()) / 2.0f
+    };
+
+    const Coordinates Coordinates{
+        spriteCenter.x - hitboxCenter.x,
+        spriteCenter.y - hitboxCenter.y
+    };
+
+    offset = Coordinates;
+    return Coordinates;
 }
 
 RenderingContext EntityRenderingComponent::GetRenderingContext() const {
-    if (!_sprite) return RenderingContext{};
+    if (!sprite) return RenderingContext{};
 
-    auto renderingContext = _sprite->getRenderingContext();
+    auto renderingContext = sprite->getRenderingContext();
     return renderingContext;
 }
 
 void EntityRenderingComponent::SetDirectionBaseOnAngle(const int angle) const {
-    if (!_sprite) return;
+    if (!sprite) return;
 
     if ((angle >= 0 && angle <= 44) || (angle >= 316 && angle <= 360)) {
-        _sprite->setDirection(Direction::DOWN);
+        sprite->setDirection(Direction::DOWN);
     } else if (angle >= 136 && angle <= 224) {
-        _sprite->setDirection(Direction::UP);
+        sprite->setDirection(Direction::UP);
     } else if (angle >= 45 && angle <= 135) {
-        _sprite->setDirection(Direction::RIGHT);
+        sprite->setDirection(Direction::RIGHT);
     } else if (angle >= 225 && angle <= 315) {
-        _sprite->setDirection(Direction::LEFT);
+        sprite->setDirection(Direction::LEFT);
     }
 }
 
 void EntityRenderingComponent::SetAnimation(const AnimationType animation) const {
-    if (!_sprite) return;
-    _sprite->setAnimation(animation);
+    if (!sprite) return;
+    sprite->setAnimation(animation);
 }
 
-void EntityRenderingComponent::SetSprite(std::unique_ptr<ISprite> sprite) {
-    _sprite = std::move(_sprite);
-}
-
-EntityRenderingComponent::EntityRenderingComponent(std::unique_ptr<ISprite> sprite) :_sprite(std::move(sprite)) {
-    _rect = std::make_unique<SDL_FRect>();
+EntityRenderingComponent::EntityRenderingComponent(std::unique_ptr<ISprite> sprite) :sprite(std::move(sprite)) {
+    rect = std::make_unique<SDL_FRect>();
 }
 
 //EntityCollisionComponent methods
@@ -162,16 +184,17 @@ Coordinates EntityLogicComponent::GetCoordinates() const {
 
 void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
     const auto dt = server->getDeltaTime_unprotected();
-    auto isInInterrupts= [&](int index)->bool {
+    auto isInInterrupts= [&](const int index)->bool {
         return std::ranges::any_of(interruptedEvents,
-                                   [&] (EntityEvent::Type interruptedEvent) {
+                                   [&] (const EntityEvent::Type interruptedEvent) {
                                        return interruptedEvent== events.at(index)->GetType();
                                    });
     }; //Check if event type is in interruptedEvents
 
-    auto process = [&](int index) {
-        events.at(index)->SetDeltaTime(dt);
-        HandleEvent(server, entity, index);
+    auto process = [&](const int index) {
+        const auto event = events.at(index).get();
+        event->SetDeltaTime(dt);
+        if (event->validate()) EventBindings::Callback(&entity, event);
     }; //Process event at index
 
     for (auto &e : queueUpEvents) {
@@ -191,16 +214,6 @@ void EntityLogicComponent::AddEvent(std::unique_ptr<EntityEvent> eventData) {
     events.push_back(std::move(eventData));
 }
 
-EntityLogicComponent::EntityLogicComponent(const Coordinates &coordinates) : coordinates(coordinates) {
-    //TODO::Temp to be used later
-    //Register MOVE_TO script binding - not used, different approach implemented
-    /* RegisterScriptBinding("MOVE_TO", {
-        .scriptName = "MOVE_TO",
-        .function = EntityScripts::MoveToScript
-    }); */
-}
-
-
 bool EntityLogicComponent::Move(const float deltaTime, const float dX,const float dY, EntityCollisionComponent &collisionComponent, const Server* server) {
     const float newX{coordinates.x + dX * speed* deltaTime};
     const float newY{coordinates.y + dY * speed * deltaTime};
@@ -216,55 +229,18 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
 }
 
 void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, EntityCollisionComponent &collisionComponent, const Server* server) {
-    const float diffX{targetX - coordinates.x};
-    const float diffY{targetY - coordinates.y};
+    float diffX{targetX - coordinates.x};
+    float diffY{targetY - coordinates.y};
     const float distance{std::sqrt(diffX * diffX + diffY * diffY)};
 
     if (distance <= threshold)
         return; //Already at target
 
-    const float directionX{diffX / distance};
-    const float directionY{diffY / distance};
+    diffX /= distance;
+    diffY /= distance;
 
-    if (!Move(deltaTime, directionX, directionY, collisionComponent, server)) return;
+    if (!Move(deltaTime, diffX, diffY, collisionComponent, server)) return;
     queueUpEvents.emplace_back(Event_MoveTo::Create(targetX,targetY));
-}
-
-void EntityLogicComponent::HandleEvent(const Server* server, IEntity &entity, int eventIndex) {
-    const auto *e = events.at(eventIndex).get();
-    if (!e->validate()) return;
-    if (auto type = e->GetType(); type == EntityEvent::Type::INTERRUPT) {
-        interrupted = true;
-    }
-    else if (type == EntityEvent::Type::INTERRUPT_SPECIFIC) {
-        auto data =  dynamic_cast<const Event_InterruptSpecific*>(e);
-        interruptedEvents.emplace(data->eventToInterrupt);
-    }
-    else if (type == EntityEvent::Type::MOVE) {
-        auto data =  dynamic_cast<const Event_Move*>(e);
-        Move(data->GetDeltaTime(), data->dX, data->dY, *entity.GetCollisionComponent(), server);
-    }
-    else if (type == EntityEvent::Type::CLICK_MOVE) {
-        auto data = dynamic_cast<const Event_ClickMove*>(e);
-        interrupted = true;
-        MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, *entity.GetCollisionComponent(), server);
-        return;
-    }
-    else if (type == EntityEvent::Type::MOVE_TO) {
-        auto data = dynamic_cast<const Event_MoveTo*>(e);
-        MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, *entity.GetCollisionComponent(), server);
-    }
-    else if (type == EntityEvent::Type::CHANGE_COLLISION) {
-        entity.GetCollisionComponent()->SwitchCollision();
-    }
-    else if (type == EntityEvent::Type::DAMAGE) {
-        auto data = dynamic_cast<const Event_Damage*>(e);
-        entity.GetHealthComponent()->TakeDamage(data->amount);
-    }
-    else if (type == EntityEvent::Type::HEAL) {
-        auto data = dynamic_cast<const Event_Heal*>(e);
-        entity.GetHealthComponent()->Heal(data->amount);
-    }
 }
 
 //EntityHealthComponent methods
@@ -295,5 +271,48 @@ int EntityHealthComponent::GetMaxHealth() const {
 }
 bool EntityHealthComponent::isDead() const {
     return health <= 0;
+}
+
+void EventBindings::Callback(IEntity* entity, const EntityEvent* eventData) {
+    instance->bindings.at(eventData->GetType())(entity, eventData);
+}
+
+void EventBindings::InitializeBindings() {
+    instance = std::make_unique<EventBindings>();
+    instance->bindings = std::unordered_map<EntityEvent::Type, std::function<void(IEntity* entity, const EntityEvent* eventData)>>();
+    instance->bindings.insert_or_assign(EntityEvent::Type::INTERRUPT,  [](IEntity* entity, const EntityEvent *e) {
+        auto logicComponent = entity->GetLogicComponent();
+        logicComponent->interrupted = true;
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::INTERRUPT_SPECIFIC, [](IEntity* entity, const EntityEvent* e) {
+        const auto data =  dynamic_cast<const Event_InterruptSpecific*>(e);
+        entity->GetLogicComponent()->interruptedEvents.emplace(data->eventToInterrupt);
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::CHANGE_COLLISION, [](IEntity* entity, const EntityEvent *e) {
+        entity->GetCollisionComponent()->SwitchCollision();
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::MOVE, [](IEntity* entity, const EntityEvent *e) {
+        const auto data =  dynamic_cast<const Event_Move*>(e);
+        entity->GetLogicComponent()->Move(data->GetDeltaTime(), data->dX, data->dY, *entity->GetCollisionComponent(), entity->GetServer());
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::MOVE_TO, [](IEntity* entity, const EntityEvent *e) {
+        const auto data =  dynamic_cast<const Event_MoveTo*>(e);
+        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, *entity->GetCollisionComponent(), entity->GetServer());
+
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::CLICK_MOVE, [](IEntity* entity, const EntityEvent *e) {
+       const auto data = dynamic_cast<const Event_ClickMove*>(e);
+        entity->GetLogicComponent()->interrupted = true;
+        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, *entity->GetCollisionComponent(), entity->GetServer());
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::HEAL, [](IEntity* entity, const EntityEvent *e) {
+        const auto data =  dynamic_cast<const Event_Heal*>(e);
+        entity->GetHealthComponent()->Heal(data->amount);
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::DAMAGE, [](IEntity* entity, const EntityEvent *e) {
+        const auto data =  dynamic_cast<const Event_Damage*>(e);
+        entity->GetHealthComponent()->TakeDamage(data->amount);
+    });
+
 }
 

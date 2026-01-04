@@ -9,11 +9,20 @@
 #include "../Sprites/PlayerSprite.hpp"
 
 class Player final : public IEntity {
-    EntityRenderingComponent _entityRenderingComponent;
-    EntityCollisionComponent _entityCollisionComponent;
-    EntityLogicComponent _entityLogicComponent;
-    EntityHealthComponent _entityHealthComponent;
-    EntityInventoryComponent _entityInventoryComponent;
+    EntityRenderingComponent _entityRenderingComponent = EntityRenderingComponent(std::make_unique<PlayerSprite>());
+
+    EntityCollisionComponent _entityCollisionComponent =
+        EntityCollisionComponent(EntityCollisionComponent::HitboxData
+        {
+            Coordinates{41, 34}, // TOP_LEFT
+            Coordinates{55, 34}, // TOP_RIGHT
+            Coordinates{55, 60}, // BOTTOM_RIGHT
+            Coordinates{41, 60} // BOTTOM_LEFT
+        });
+    EntityHealthComponent _entityHealthComponent = EntityHealthComponent(100, 100);
+
+    EntityLogicComponent _entityLogicComponent = EntityLogicComponent();
+    EntityInventoryComponent _entityInventoryComponent = EntityInventoryComponent();
 
     Server* _server;
 
@@ -21,6 +30,7 @@ public:
     //Interface methods implementation
     void Tick() override;
     RenderingContext GetRenderingContext() override;
+    Coordinates CalculateEntityCenterOffset() override; //Returns offset to center sprite based on its dimensions and hitbox
 
     static void Create(Server* server, int slotId) ;
     static void Load(Server* server, int slotId);

@@ -479,6 +479,7 @@ void Window::initGame() {
     data.wasLoaded = true;
 
     WaterSprite::Init();
+    EventBindings::InitializeBindings();
     Coordinates coordinates = server->getEntityPos(0);
 
     data.cameraRect->x = coordinates.x - cameraOffsetX;

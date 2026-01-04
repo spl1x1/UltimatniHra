@@ -28,6 +28,10 @@ RenderingContext Player::GetRenderingContext() {
     return context;
 }
 
+Coordinates Player::CalculateEntityCenterOffset() {
+    return _entityRenderingComponent.CalculateCenterOffset(*this);
+}
+
 void Player::Create(Server* server, int slotId) {
     auto player = std::make_shared<Player>(server, server->getSpawnPoint());
     server->addPlayer(player);
@@ -125,24 +129,8 @@ Server* Player::GetServer() const {
     return _server;
 }
 
-Player::Player(Server* server, const Coordinates& coordinates):
-    _entityRenderingComponent(std::make_unique<PlayerSprite>()),
-    _entityCollisionComponent(EntityCollisionComponent::HitboxData{}),
-    _entityLogicComponent(coordinates),
-    _entityHealthComponent(100, 100) {
+Player::Player(Server* server, const Coordinates& coordinates){
     _server = server;
-
-    EntityCollisionComponent::HitboxData playerHitboxData = {
-        {
-            {41, 34}, // TOP_LEFT
-            {55, 34}, // TOP_RIGHT
-            {55, 60}, // BOTTOM_RIGHT
-            {41, 60} // BOTTOM_LEFT
-        },
-        false, // disableCollision
-        false // colliding
-    };
+    _entityLogicComponent.SetCoordinates(coordinates);
     _entityLogicComponent.SetSpeed(200.0f);
-    _entityRenderingComponent.SetAnimation(AnimationType::IDLE);
-    _entityCollisionComponent.SetHitbox(playerHitboxData);
 }

@@ -9,7 +9,9 @@
 
 #ifndef ENTITY_H
 #define ENTITY_H
+#include <functional>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include <SDL3/SDL_render.h>
 
@@ -18,18 +20,22 @@
 #include "../Entities/EntityEvent.h"
 
 class IEntity;
+class EventBindings;
+
 class EntityRenderingComponent {
-    friend class EntityScripts;
-    std::unique_ptr<ISprite> _sprite{nullptr};
-    std::unique_ptr<SDL_FRect> _rect;
+    friend class EventBindings;
+
+    std::unique_ptr<ISprite> sprite{nullptr};
+    std::unique_ptr<SDL_FRect> rect;
+    Coordinates offset{-1.0f, -1.0f}; //Offset to center sprite based on its dimensions and hitbox
 
 public:
     void Tick(float deltaTime) const;
+    [[nodiscard]] Coordinates CalculateCenterOffset(IEntity& entity); //Returns offset to center sprite based on its dimensions and hitbox
 
     //Setters
     void SetDirectionBaseOnAngle(int angle) const;
     void SetAnimation(AnimationType animation) const;
-    void SetSprite(std::unique_ptr<ISprite> sprite);
 
     //Getters
     [[nodiscard]] RenderingContext GetRenderingContext() const;
@@ -42,7 +48,7 @@ public:
 };
 
 class EntityCollisionComponent {
-    friend class EntityScripts;
+    friend class EventBindings;
 public:
     struct HitboxData {
         Coordinates corners[4];
@@ -75,8 +81,7 @@ public:
 };
 
 class EntityLogicComponent {
-    friend class EntityScripts;
-
+    friend class EventBindings;
     static constexpr float threshold = 1.0f; //Threshold to consider reached target
     Coordinates coordinates{0.0f, 0.0f};
     std::vector<std::unique_ptr<EntityEvent>> events{};
@@ -87,7 +92,6 @@ class EntityLogicComponent {
     float speed{0};
     bool interrupted{false};
 
-    void HandleEvent(const Server* server, IEntity &entity, int eventIndex);
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
 public:
@@ -100,6 +104,7 @@ public:
     void SetSpeed(float newSpeed);
     [[nodiscard]] float GetSpeed() const;
 
+
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
     void MoveTo(float deltaTime, float targetX, float targetY, EntityCollisionComponent &collisionComponent, const Server* server);
@@ -107,11 +112,11 @@ public:
     void AddEvent(std::unique_ptr<EntityEvent> eventData);
 
     //Constructor
-    explicit EntityLogicComponent(const Coordinates &coordinates);
+    explicit EntityLogicComponent() = default;
 };
 
 class EntityHealthComponent {
-    friend class EntityScripts;
+    friend class EventBindings;
     int health{0};
     int maxHealth{0};
 public:
@@ -133,9 +138,18 @@ public:
 };
 
 class EntityInventoryComponent {
-    friend class EntityScripts;
+    friend class EventBindings;
     //Inventory data and methods would go here
     //To be implemented
+};
+
+class EventBindings {
+    static std::unique_ptr<EventBindings> instance;
+    std::unordered_map<EntityEvent::Type, std::function<void(IEntity* entity, const EntityEvent* eventData)>> bindings{};
+
+public:
+    static void Callback(IEntity* entity, const EntityEvent* eventData);
+    static void InitializeBindings();
 };
 
 class IEntity {
@@ -143,6 +157,7 @@ public:
     //Interface methods
     virtual void Tick() = 0;
     virtual RenderingContext GetRenderingContext() = 0;
+    virtual Coordinates CalculateEntityCenterOffset() = 0; //Returns offset to center sprite based on its dimensions and hitbox
 
     //Entity actions
     virtual void Move(float dX, float dY) = 0;

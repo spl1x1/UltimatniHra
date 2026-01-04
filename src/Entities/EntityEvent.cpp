@@ -25,6 +25,7 @@ bool EntityEvent::validate() const {
     return true;
 }
 
+
 Event_Move::Event_Move(const float dX, const float dY) {
     this->type = Type::MOVE;
     this->dX = dX;

@@ -40,3 +40,7 @@ RenderingContext PlayerSprite::getRenderingContext() {
     return context;
 }
 
+PlayerSprite::PlayerSprite() {
+    renderingContext.setActiveAnimation(AnimationType::IDLE);
+}
+

@@ -39,13 +39,12 @@ protected:
     Type type{Type::NONE};
     float deltaTime{0};
     [[nodiscard]] bool validateDeltaTime() const; // Validate that delta not 0 or negative for events that require it
-
 public:
-    [[nodiscard]] Type GetType() const;
+    [[nodiscard]] Type GetType() const; // Get event type
     void SetDeltaTime(float dt); // Delta time is set by the server when processing events
-    [[nodiscard]] float GetDeltaTime() const;
-
+    [[nodiscard]] float GetDeltaTime() const; // Get delta time
     [[nodiscard]] virtual bool validate() const; // Validate event data, to be overridden by derived classes, default implementation returns true
+
 
     virtual ~EntityEvent() = default;
 };
@@ -61,7 +60,7 @@ public:
 };
 
 class Event_MoveTo final : public EntityEvent {
-    public:
+public:
     float targetX{-1};
     float targetY{-1};
 
@@ -99,7 +98,7 @@ public:
 };
 
 class Event_ClickMove final : public EntityEvent {
-    public:
+public:
     float targetX{-1};
     float targetY{-1};
     explicit Event_ClickMove(float targetX, float targetY);
@@ -111,8 +110,8 @@ class Event_InterruptSpecific final : public EntityEvent {
 public:
     Type eventToInterrupt{Type::NONE};
     explicit Event_InterruptSpecific(Type eventType);
-    [[nodiscard]] bool validate() const override;
 
+    [[nodiscard]] bool validate() const override;
     [[nodiscard]] static std::unique_ptr<EntityEvent> Create(Type eventType);
 };
 
