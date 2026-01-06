@@ -9,7 +9,7 @@
 #include <fstream>
 #include <SDL3_image/SDL_image.h>
 #include <utility>
-
+#include <cmath>
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Entities/Player.hpp"
