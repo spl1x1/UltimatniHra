@@ -108,7 +108,7 @@ public:
     void addPlayer(const std::shared_ptr<IEntity>& player); //Prida na server entitu
 
     void addStructure(Coordinates coordinates,  structureType type, int innerType, int variant = 0); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
-    void addStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant = 0); //Prida na server strukturu
+    bool addStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant = 0); //Prida na server strukturu
     void addStructure(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
     void addStructure_unprotected(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 

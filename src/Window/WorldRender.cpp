@@ -5,7 +5,6 @@
 #include "../../include/Window/WorldRender.h"
 #include "../../include/Window/Window.h"
 #include "../../include/Server/Server.h"
-#include "../../include/Application/Logger.h"
 
 #include <SDL3_image/SDL_image.h>
 
@@ -32,7 +31,7 @@ void WorldRender::ReleaseResources() const {
             ++it;
             continue;
         }
-        Logger::Log("Releasing surface: " +  it->first);
+        SDL_Log("Releasing surface: %s", it->first.c_str());
         SDL_DestroySurface(it->second);
         it = window.surfaces.erase(it);
     }

@@ -30,7 +30,6 @@ public:
     //Interface methods implementation
     void Tick() override;
     RenderingContext GetRenderingContext() override;
-    Coordinates CalculateEntityCenterOffset() override; //Returns offset to center sprite based on its dimensions and hitbox
 
     static void Create(Server* server, int slotId) ;
     static void Load(Server* server, int slotId);

@@ -4,7 +4,6 @@
 
 #include "../../include/Window/Window.h"
 
-#include <cmath>
 #include <filesystem>
 #include <ranges>
 #include <fstream>
@@ -90,7 +89,7 @@ void Window::handleMouseInputs() const {
         }
     }
     if ((mousestates ^ SDL_BUTTON_RMASK) == 0) {
-        server->playerUpdate(Event_ClickMove::Create(data.mousePosition.x - 32, data.mousePosition.y - 32));
+        server->playerUpdate(Event_ClickMove::Create(data.mousePosition.x +16, data.mousePosition.y +16));
     }
 }
 
@@ -379,10 +378,12 @@ void Window::HandleInputs() {
             event.type == SDL_EVENT_MOUSE_WHEEL) {
             SDL_ConvertEventToRenderCoordinates(data.Renderer, &event);
             }
-        if (event.type == SDL_EVENT_MOUSE_MOTION) {
-            data.mousePosition.x = std::floor(((event.motion.x /data.scale) + data.cameraRect->x) / 32.0f) * 32.0f;
-            data.mousePosition.y = std::floor(((event.motion.y / data.scale) + data.cameraRect->y) / 32.0f) * 32.0f;
-        }
+
+        float x,y;
+        SDL_GetMouseState(&x, &y);
+        data.mousePosition.x = std::floor((x /data.scale + data.cameraRect->x) / 32.0f) * 32.0f;
+        data.mousePosition.y = std::floor((y / data.scale + data.cameraRect->y) / 32.0f) * 32.0f;
+
         data.uiComponent->HandleEvent(&event);
     }
     if (data.inMenu) return;

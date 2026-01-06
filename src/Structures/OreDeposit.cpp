@@ -1,32 +1,32 @@
-﻿//
-// Created by USER on 03.01.2026.
+//
+// Created by Lukáš Kaplánek on 06.01.2026.
 //
 
-#include "../../include/Structures/OreNode.h"
+#include "../../include/Structures/OreDeposit.h"
 
-structureType OreNode::getType() const {
-    return  structureType::ORE_NODE;
+structureType OreDeposit::getType() const {
+    return structureType::ORE_DEPOSIT;
 }
 
-int OreNode::getId() const {
+int OreDeposit::getId() const {
     return  id;
 }
 
-bool OreNode::wasProperlyInitialized() {
+bool OreDeposit::wasProperlyInitialized() {
     return initialized;
 }
 
-RenderingContext OreNode::GetRenderingContext() const {
+RenderingContext OreDeposit::GetRenderingContext() const {
     auto context = renderingComponent.getRenderingContext();
     context.coordinates = hitboxComponent.getTopLeftCorner();
     return context;
 }
 
-HitboxContext OreNode::GetHitboxContext() {
+HitboxContext OreDeposit::GetHitboxContext() {
     return hitboxComponent.getHitboxContext();
 }
 
-OreNode::OreNode(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, OreType type, const int variant)
+OreDeposit::OreDeposit(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, OreType type, const int variant)
 : id(id),hitboxComponent(server), type(type) {
     renderingComponent.SetVariant(static_cast<int>(type));
     renderingComponent.GetSprite()->setCurrentFrame(variant);
@@ -37,7 +37,7 @@ OreNode::OreNode(const int id, Coordinates topLeftCorner, const std::shared_ptr<
     initialized = hitboxComponent.finalize(id);
 }
 
-OreNode::~OreNode() {
+OreDeposit::~OreDeposit() {
     if (!initialized) return;
     hitboxComponent.destroy(id);
 };

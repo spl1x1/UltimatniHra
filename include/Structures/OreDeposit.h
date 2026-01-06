@@ -1,15 +1,15 @@
-﻿//
-// Created by USER on 02.01.2026.
+//
+// Created by Lukáš Kaplánek on 06.01.2026.
 //
 
-#ifndef ORENODE_H
-#define ORENODE_H
+#ifndef ULTIMATNIHRA_OREDEPOSIT_H
+#define ULTIMATNIHRA_OREDEPOSIT_H
 #include "Structure.h"
-#include "../../include/Sprites/OreNodeSprite.h"
+#include "../../include/Sprites/OreDepositSprite.h"
 
-class OreNode final : public IStructure {
+class OreDeposit final : public IStructure {
     int id;
-    StructureRenderingComponent renderingComponent = StructureRenderingComponent(std::make_unique<OreNodeSprite>());
+    StructureRenderingComponent renderingComponent = StructureRenderingComponent(std::make_unique<OreDepositSprite>());
     StructureHitboxComponent hitboxComponent;
     bool initialized{false};
     OreType type;
@@ -27,9 +27,8 @@ public:
     //Structure specific methods
 
     //Constructors and Destructor
-    OreNode(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, OreType type, int variant);
-    ~OreNode() override;
+    OreDeposit(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, OreType type, int variant);
+    ~OreDeposit() override;
 };
 
-
-#endif //ORENODE_H
+#endif //ULTIMATNIHRA_OREDEPOSIT_H

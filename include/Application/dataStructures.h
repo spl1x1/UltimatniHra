@@ -37,4 +37,12 @@ struct MousePosition {
     float x{0.0f};
     float y{0.0f};
 };
+
+enum class OreType {
+    IRON,
+    COPPER,
+    GOLD
+    // more types in future
+};
+
 #endif //ULTIMATNIHRA_DATASTRUCTURES_H

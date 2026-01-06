@@ -20,6 +20,7 @@ add_library(SDL_image::SDL_image ALIAS SDL3_image-static)
 #other libs
 CPMAddPackage("gh:nlohmann/json#55f9368")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
+CPMAddPackage("gh:ocornut/imgui#683f916")
 
 # HWINFO nefunguje pro Windows
 if (NOT WIN32)

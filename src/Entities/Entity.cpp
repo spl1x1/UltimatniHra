@@ -29,18 +29,7 @@ Coordinates EntityRenderingComponent::CalculateCenterOffset(IEntity& entity) {
         (hitbox[0].x + hitbox[1].x) / 2.0f,
         (hitbox[0].y + hitbox[2].y) / 2.0f
     };
-    const auto spriteCenter = Coordinates{
-        static_cast<float>(sprite->getWidth()) / 2.0f,
-        static_cast<float>(sprite->getHeight()) / 2.0f
-    };
-
-    const Coordinates Coordinates{
-        spriteCenter.x - hitboxCenter.x,
-        spriteCenter.y - hitboxCenter.y
-    };
-
-    offset = Coordinates;
-    return Coordinates;
+    return offset = hitboxCenter;
 }
 
 RenderingContext EntityRenderingComponent::GetRenderingContext() const {
@@ -228,9 +217,10 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
     return true;
 }
 
-void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, EntityCollisionComponent &collisionComponent, const Server* server) {
-    float diffX{targetX - coordinates.x};
-    float diffY{targetY - coordinates.y};
+void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, IEntity* entity, const Server* server) {
+    const auto adjustment = entity->GetRenderingComponent()->CalculateCenterOffset(*entity);
+    float diffX{targetX - coordinates.x - adjustment.x};
+    float diffY{targetY - coordinates.y - adjustment.y};
     const float distance{std::sqrt(diffX * diffX + diffY * diffY)};
 
     if (distance <= threshold)
@@ -239,7 +229,7 @@ void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, co
     diffX /= distance;
     diffY /= distance;
 
-    if (!Move(deltaTime, diffX, diffY, collisionComponent, server)) return;
+    if (!Move(deltaTime, diffX, diffY, *entity->GetCollisionComponent(), server)) return;
     queueUpEvents.emplace_back(Event_MoveTo::Create(targetX,targetY));
 }
 
@@ -297,13 +287,13 @@ void EventBindings::InitializeBindings() {
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::MOVE_TO, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_MoveTo*>(e);
-        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, *entity->GetCollisionComponent(), entity->GetServer());
+        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, entity, entity->GetServer());
 
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::CLICK_MOVE, [](IEntity* entity, const EntityEvent *e) {
        const auto data = dynamic_cast<const Event_ClickMove*>(e);
         entity->GetLogicComponent()->interrupted = true;
-        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, *entity->GetCollisionComponent(), entity->GetServer());
+        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, entity, entity->GetServer());
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::HEAL, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_Heal*>(e);

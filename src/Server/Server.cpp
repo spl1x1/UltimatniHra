@@ -15,8 +15,7 @@
 #include "../../include/Structures/Structure.h"
 #include "../../include/Structures/Tree.h"
 #include "../../include/Window/WorldStructs.h"
-
-
+#include "../../include/Structures/OreDeposit.h"
 
 void Server::setEntityPos(int entityId, Coordinates newCoordinates) {
     std::lock_guard lock(serverMutex);
@@ -113,8 +112,11 @@ void Server::addStructure(Coordinates coordinates, structureType type, int inner
             break;
         }
         case structureType::ORE_NODE: {
-            newStructure = std::make_shared<OreNode>(newId, coordinates, getSharedPtr(), static_cast<OreNode::OreType>(innerType), variant);
+            newStructure = std::make_shared<OreNode>(newId, coordinates, getSharedPtr(), static_cast<OreType>(innerType), variant);
             break;
+        }
+            case structureType::ORE_DEPOSIT: {
+            newStructure = std::make_shared<OreDeposit>(newId, coordinates, getSharedPtr(), static_cast<OreType>(innerType), variant);
         }
         default:
             break;
@@ -128,7 +130,7 @@ void Server::addStructure(Coordinates coordinates, structureType type, int inner
     _structures[newId] =newStructure;
 }
 
-void Server::addStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant) {
+bool Server::addStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant) {
     int newId = getNextStructureId();
 
     std::shared_ptr<IStructure> newStructure;
@@ -138,8 +140,11 @@ void Server::addStructure_unprotected(Coordinates coordinates, structureType typ
             break;
         }
         case structureType::ORE_NODE: {
-            newStructure = std::make_shared<OreNode>(newId, coordinates, getSharedPtr(), static_cast<OreNode::OreType>(innerType), variant);
+            newStructure = std::make_shared<OreNode>(newId, coordinates, getSharedPtr(), static_cast<OreType>(innerType), variant);
             break;
+        }
+        case structureType::ORE_DEPOSIT: {
+            newStructure = std::make_shared<OreDeposit>(newId, coordinates, getSharedPtr(), static_cast<OreType>(innerType), variant);
         }
         default:
             break;
@@ -148,10 +153,10 @@ void Server::addStructure_unprotected(Coordinates coordinates, structureType typ
     if (!newStructure->wasProperlyInitialized()) {
         SDL_Log("Failed to create Tree structure at (%f, %f)", coordinates.x, coordinates.y);
         _nextStructureId--; //Rollback ID pokud se nepovede vytvorit struktura
-        return;
+        return false;
     }
     _structures[newId] =newStructure;
-
+    return true;
 }
 
 
@@ -272,7 +277,7 @@ IStructure* Server::getStructure(int structureId) {
     return nullptr; // Return nullptr if entity not found
 }
 
-void Server::generateStructures(){
+void Server::generateStructures() {
     struct biomeModifierInfo {
         int biomeId;
         double treeDensityModifier;
@@ -281,7 +286,7 @@ void Server::generateStructures(){
         double oreRarityModifier{0};
     };
 
-    std::vector<biomeModifierInfo> biomeModifierValues = {
+    const std::vector<biomeModifierInfo> biomeModifierValues = {
         {1, 0.0,0.1, Tree::TreeVariant::NONE, 0},//Beach
         {2, 0.0,0.7,Tree::TreeVariant::NONE, 0.1}, //Desert
         {3,0.5,0.5, Tree::TreeVariant::PLAINS, 0.05}, //Grass
@@ -291,38 +296,46 @@ void Server::generateStructures(){
     };
 
     constexpr int commonOreVariants{2}; //Pocet variant rud, IRON, COPPER
-    constexpr int rareOreVariants{1}; //Pocet variant vzacnych rud, GOLD
+    constexpr int rareOreVariants{3}; //Pocet variant IRON, COPPER, GOLD
+
 
     std::mt19937 mt(_seed );
     std::uniform_int_distribution dist(1,100);
     std::uniform_int_distribution<> oreDist(1,2); //Pro ruzne varianty rud
 
 
+    auto TryToSpawnTree = [&](const biomeModifierInfo &biome, const Coordinates pos)-> bool {
+        if (dist(mt) > TREEDENSITY* biome.treeDensityModifier) return false;
+        return addStructure_unprotected(pos, structureType::TREE, static_cast<int>(biome.treeVariant));
+    };
+
+    auto TryToSpawnOre = [&](const biomeModifierInfo &biome, const Coordinates pos)-> bool {
+        if (dist(mt) > OREDENSITY* biome.oreDensityModifier) return false;
+
+        const int oreAmount = (dist(mt) < biome.oreRarityModifier * 100) ? rareOreVariants : commonOreVariants;
+        std::uniform_int_distribution<> oreTypeDist(1,oreAmount);
+
+        if (dist(mt) < OREDEPOSIT*10) return addStructure_unprotected(pos, structureType::ORE_DEPOSIT, oreTypeDist(mt), oreDist(mt));
+        return addStructure_unprotected(pos, structureType::ORE_NODE, oreTypeDist(mt), oreDist(mt));
+    };
+
+    auto process = [&](const int x, const int y){
+        auto Biome = biomeModifierValues.at(0);
+        const int biomeValue = getMapValue_unprotected(x, y, WorldData::BIOME_MAP);
+        const Coordinates coordinates {x*32.0f ,y*32.0f};
+        for (const auto& biomeInfo : biomeModifierValues) {
+            if (biomeInfo.biomeId != biomeValue) continue;
+            Biome = biomeInfo;
+            break;
+        }
+        if (TryToSpawnTree(Biome,coordinates)){}
+        else TryToSpawnOre(Biome,coordinates);
+    };
+
+
     std::lock_guard lock(serverMutex);
     for (int x = 0; x < MAPSIZE; x++) {
-        for (int y = 0; y < MAPSIZE; y++) {
-            auto Biome = biomeModifierValues.at(0);
-
-            int biomeValue = getMapValue_unprotected(x, y, WorldData::BIOME_MAP);
-            for (const auto& biomeInfo : biomeModifierValues) {
-                if (biomeInfo.biomeId != biomeValue) continue;
-                Biome = biomeInfo;
-                break;
-            }
-            if (Biome.treeDensityModifier == 0.0 && Biome.oreDensityModifier == 0.0)  continue; //Pokud v biomu nejsou stromy ani rudy, pokracuj dal
-
-            int roll = dist(mt);
-            Coordinates position = {static_cast<float>(x*32),static_cast<float>(y*32)};
-
-            if (roll < TREEDENSITY* Biome.treeDensityModifier) addStructure_unprotected(position, structureType::TREE, static_cast<int>(Biome.treeVariant));
-            else if (roll < OREDENSITY* Biome.oreDensityModifier + TREEDENSITY* Biome.treeDensityModifier) {
-                int rareRoll = dist(mt);
-                int oreAmount = commonOreVariants;
-                if (rareRoll < Biome.oreRarityModifier * 100) oreAmount += rareOreVariants; //Pokud padne vzacna ruda, je mozne ji generovat
-                std::uniform_int_distribution<> oreTypeDist(1,oreAmount);
-                addStructure_unprotected(position, structureType::ORE_NODE, oreTypeDist(mt), oreDist(mt));
-            }
-        }
+        for (int y = 0; y < MAPSIZE; y++) process(x, y);
     }
 }
 

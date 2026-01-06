@@ -7,7 +7,7 @@
 
 #include "Structure.h"
 
-class Tree: public IStructure {
+class Tree final : public IStructure {
     int id;
     StructureRenderingComponent renderingComponent;
     StructureHitboxComponent hitboxComponent;

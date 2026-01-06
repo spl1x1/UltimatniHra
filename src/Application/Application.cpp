@@ -7,7 +7,6 @@
 #include <iostream>
 
 #include "../../include/Hardware/Hardware.h"
-#include "../../include/Application/Logger.h"
 
 
 void Application::handleException() {
@@ -22,7 +21,6 @@ void Application::handleException() {
 }
 
 void Application::init() const{
-    Logger::Init();
     gameWindow->server = server;
     gameWindow->init(name);
 }

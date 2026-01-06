@@ -16,12 +16,9 @@
 class ISprite;
 
 enum class structureType{
-    HOUSE,
-    FARM,
-    BARRACKS,
-    TOWER,
     TREE,
-    ORE_NODE
+    ORE_NODE,
+    ORE_DEPOSIT
 };
 
 class IStructure {

@@ -107,7 +107,7 @@ public:
 
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
-    void MoveTo(float deltaTime, float targetX, float targetY, EntityCollisionComponent &collisionComponent, const Server* server);
+    void MoveTo(float deltaTime, float targetX, float targetY,IEntity* entity, const Server* server);
     void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
     void AddEvent(std::unique_ptr<EntityEvent> eventData);
 
@@ -157,7 +157,6 @@ public:
     //Interface methods
     virtual void Tick() = 0;
     virtual RenderingContext GetRenderingContext() = 0;
-    virtual Coordinates CalculateEntityCenterOffset() = 0; //Returns offset to center sprite based on its dimensions and hitbox
 
     //Entity actions
     virtual void Move(float dX, float dY) = 0;

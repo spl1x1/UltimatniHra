@@ -1,32 +1,32 @@
-﻿//
-// Created by USER on 03.01.2026.
+//
+// Created by Lukáš Kaplánek on 06.01.2026.
 //
 
-#include "../../include/Sprites/OreNodeSprite.h"
+#include "../../include/Sprites/OreDepositSprite.h"
 
-void OreNodeSprite::setVariant(const int newVariant) {
+void OreDepositSprite::setVariant(const int newVariant) {
     renderingContext.setVariant(newVariant);
 }
 
-void OreNodeSprite::setCurrentFrame(const int newCurrentFrame) {
+void OreDepositSprite::setCurrentFrame(const int newCurrentFrame) {
     renderingContext.setCurrentFrame(newCurrentFrame);
 }
 
-std::tuple<std::string, SDL_FRect*> OreNodeSprite::getFrame() {
+std::tuple<std::string, SDL_FRect*> OreDepositSprite::getFrame() {
     return {renderingContext.getTexture(), renderingContext.getFrameRect()};
 }
 
-RenderingContext OreNodeSprite::getRenderingContext() {
+RenderingContext OreDepositSprite::getRenderingContext() {
     RenderingContext context;
     context.textureName = renderingContext.getTexture();
     context.rect = renderingContext.getFrameRect();
     return context;
 }
 
-int OreNodeSprite::getWidth() const {
+int OreDepositSprite::getWidth() const {
     return renderingContext.getWidth();
 }
 
-int OreNodeSprite::getHeight() const {
+int OreDepositSprite::getHeight() const {
     return renderingContext.getHeight();
 }

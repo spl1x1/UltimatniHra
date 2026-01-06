@@ -28,10 +28,6 @@ RenderingContext Player::GetRenderingContext() {
     return context;
 }
 
-Coordinates Player::CalculateEntityCenterOffset() {
-    return _entityRenderingComponent.CalculateCenterOffset(*this);
-}
-
 void Player::Create(Server* server, int slotId) {
     auto player = std::make_shared<Player>(server, server->getSpawnPoint());
     server->addPlayer(player);
