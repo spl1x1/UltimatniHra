@@ -160,6 +160,36 @@ namespace ItemFactory {
         }
     }
 
+    std::string getMaterialPrefix(const MaterialType tier) {
+        switch (tier) {
+            case MaterialType::WOOD: return "wooden";
+            case MaterialType::STONE: return "stone";
+            case MaterialType::LEATHER: return "leather";
+            case MaterialType::IRON: return "iron";
+            case MaterialType::STEEL: return "steel";
+            case MaterialType::DRAGON_SCALE: return "dragon_scale";
+            default: return "unknown";
+        }
+    }
+
+    const std::string ITEMS_ICON_BASE = "assets/textures/items/";
+
+    std::string getWeaponIconPath(const std::string& weaponType, MaterialType material) {
+        return ITEMS_ICON_BASE + getMaterialPrefix(material) + "_" + weaponType + ".png";
+    }
+
+    std::string getArmourIconPath(const std::string& armourType, MaterialType material) {
+        return ITEMS_ICON_BASE + getMaterialPrefix(material) + "_" + armourType + ".png";
+    }
+
+    std::string getConsumableIconPath(const std::string& consumableType) {
+        return ITEMS_ICON_BASE + consumableType + ".png";
+    }
+
+    std::string getMaterialIconPath(MaterialType material) {
+        return ITEMS_ICON_BASE + getMaterialPrefix(material) + ".png";
+    }
+
     std::unique_ptr<Weapon> createAxe(MaterialType material) {
         const std::string matName = getMaterialName(material);
         int baseDmg = 0, dur = 0;
@@ -173,7 +203,9 @@ namespace ItemFactory {
             default: baseDmg = 5; dur = 50; atkSpd = 0.8f; break;
         }
 
-        return std::make_unique<Weapon>(matName + " Axe", WeaponType::AXE, material, baseDmg, atkSpd, dur);
+        auto weapon = std::make_unique<Weapon>(matName + " Axe", WeaponType::AXE, material, baseDmg, atkSpd, dur);
+        weapon->setIconPath(getWeaponIconPath("axe", material));
+        return weapon;
     }
 
     std::unique_ptr<Weapon> createPickaxe(MaterialType material) {
@@ -189,7 +221,9 @@ namespace ItemFactory {
             default: baseDmg = 4; dur = 60; atkSpd = 0.7f; break;
         }
 
-        return std::make_unique<Weapon>(matName + " Pickaxe", WeaponType::PICKAXE, material, baseDmg, atkSpd, dur);
+        auto weapon = std::make_unique<Weapon>(matName + " Pickaxe", WeaponType::PICKAXE, material, baseDmg, atkSpd, dur);
+        weapon->setIconPath(getWeaponIconPath("pickaxe", material));
+        return weapon;
     }
 
     std::unique_ptr<Weapon> createSword(MaterialType material) {
@@ -205,7 +239,9 @@ namespace ItemFactory {
             default: baseDmg = 6; dur = 50; atkSpd = 1.2f; break;
         }
 
-        return std::make_unique<Weapon>(matName + " Sword", WeaponType::SWORD, material, baseDmg, atkSpd, dur);
+        auto weapon = std::make_unique<Weapon>(matName + " Sword", WeaponType::SWORD, material, baseDmg, atkSpd, dur);
+        weapon->setIconPath(getWeaponIconPath("sword", material));
+        return weapon;
     }
 
     std::unique_ptr<Weapon> createBow(MaterialType material) {
@@ -221,7 +257,9 @@ namespace ItemFactory {
             default: baseDmg = 8; dur = 40; atkSpd = 1.5f; break;
         }
 
-        return std::make_unique<Weapon>(matName + " Bow", WeaponType::BOW, material, baseDmg, atkSpd, dur);
+        auto weapon = std::make_unique<Weapon>(matName + " Bow", WeaponType::BOW, material, baseDmg, atkSpd, dur);
+        weapon->setIconPath(getWeaponIconPath("bow", material));
+        return weapon;
     }
 
     // Armour creation
@@ -237,7 +275,9 @@ namespace ItemFactory {
             default: def = 2; dur = 60; break;
         }
 
-        return std::make_unique<Armour>(matName + " Helmet", ArmourType::HELMET, material, def, dur);
+        auto armour = std::make_unique<Armour>(matName + " Helmet", ArmourType::HELMET, material, def, dur);
+        armour->setIconPath(getArmourIconPath("helmet", material));
+        return armour;
     }
 
     std::unique_ptr<Armour> createChestplate(MaterialType material) {
@@ -252,7 +292,9 @@ namespace ItemFactory {
             default: def = 3; dur = 80; break;
         }
 
-        return std::make_unique<Armour>(matName + " Chestplate", ArmourType::CHESTPLATE, material, def, dur);
+        auto armour = std::make_unique<Armour>(matName + " Chestplate", ArmourType::CHESTPLATE, material, def, dur);
+        armour->setIconPath(getArmourIconPath("chestplate", material));
+        return armour;
     }
 
     std::unique_ptr<Armour> createLeggings(MaterialType material) {
@@ -267,7 +309,9 @@ namespace ItemFactory {
             default: def = 2; dur = 70; break;
         }
 
-        return std::make_unique<Armour>(matName + " Leggings", ArmourType::LEGGINGS, material, def, dur);
+        auto armour = std::make_unique<Armour>(matName + " Leggings", ArmourType::LEGGINGS, material, def, dur);
+        armour->setIconPath(getArmourIconPath("leggings", material));
+        return armour;
     }
 
     std::unique_ptr<Armour> createBoots(MaterialType material) {
@@ -282,31 +326,49 @@ namespace ItemFactory {
             default: def = 1; dur = 50; break;
         }
 
-        return std::make_unique<Armour>(matName + " Boots", ArmourType::BOOTS, material, def, dur);
+        auto armour = std::make_unique<Armour>(matName + " Boots", ArmourType::BOOTS, material, def, dur);
+        armour->setIconPath(getArmourIconPath("boots", material));
+        return armour;
     }
 
     // Consumables
     std::unique_ptr<Consumable> createHealthPotion(int healAmount) {
         std::string name;
-        if (healAmount <= 30) name = "Minor Health Potion";
-        else if (healAmount <= 60) name = "Health Potion";
-        else name = "Greater Health Potion";
+        std::string iconName;
+        if (healAmount <= 30) {
+            name = "Minor Health Potion";
+            iconName = "health_potion_minor";
+        } else if (healAmount <= 60) {
+            name = "Health Potion";
+            iconName = "health_potion";
+        } else {
+            name = "Greater Health Potion";
+            iconName = "health_potion_greater";
+        }
 
-        return std::make_unique<Consumable>(name, ConsumableType::HEALTH_POTION, healAmount, 0.0f);
+        auto consumable = std::make_unique<Consumable>(name, ConsumableType::HEALTH_POTION, healAmount, 0.0f);
+        consumable->setIconPath(getConsumableIconPath(iconName));
+        return consumable;
     }
 
     std::unique_ptr<Consumable> createDamageBoost(int damageIncrease, float duration) {
-        return std::make_unique<Consumable>("Strength Potion", ConsumableType::DAMAGE_BOOST, damageIncrease, duration);
+        auto consumable = std::make_unique<Consumable>("Strength Potion", ConsumableType::DAMAGE_BOOST, damageIncrease, duration);
+        consumable->setIconPath(getConsumableIconPath("strength_potion"));
+        return consumable;
     }
 
     std::unique_ptr<Consumable> createSpeedBoost(int speedIncrease, float duration) {
-        return std::make_unique<Consumable>("Swiftness Potion", ConsumableType::SPEED_BOOST, speedIncrease, duration);
+        auto consumable = std::make_unique<Consumable>("Swiftness Potion", ConsumableType::SPEED_BOOST, speedIncrease, duration);
+        consumable->setIconPath(getConsumableIconPath("swiftness_potion"));
+        return consumable;
     }
 
     // Materials
     std::unique_ptr<Material> createMaterial(MaterialType tier) {
         std::string name = getMaterialName(tier);
-        return std::make_unique<Material>(name, tier);
+        auto material = std::make_unique<Material>(name, tier);
+        material->setIconPath(getMaterialIconPath(tier));
+        return material;
     }
 
 }
