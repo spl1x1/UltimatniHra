@@ -349,8 +349,10 @@ void UIComponent::Render() {
 }
 
 void UIComponent::applyUiScaling(const int scale) {
-    menuData.resolutionWidth *= scale;
-    menuData.resolutionHeight *= scale;
+    constexpr int BASE_WIDTH = 640;
+    constexpr int BASE_HEIGHT = 360;
+    menuData.resolutionWidth = BASE_WIDTH * scale;
+    menuData.resolutionHeight = BASE_HEIGHT * scale;
     RmlContext->SetDimensions(Rml::Vector2i(menuData.resolutionWidth, menuData.resolutionHeight));
     RmlContext->SetDensityIndependentPixelRatio(static_cast<float>(scale));
     SDL_SetRenderLogicalPresentation(renderer,
