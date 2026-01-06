@@ -327,76 +327,68 @@ void OptionsButtonListener::ProcessEvent(Rml::Event&) {
     }
 
 
-    // Setup all button listeners for options menu
-    if (Rml::Element* backButton = documents->at("options_menu")->GetElementById("backButton")) {
-        backButton->AddEventListener(Rml::EventId::Click, new BackButtonListener(window, uiComponent));
-    }
+    // Setup all button listeners for options menu - only once
+    static bool optionsListenersRegistered = false;
+    if (!optionsListenersRegistered) {
+        if (Rml::Element* backButton = documents->at("options_menu")->GetElementById("backButton")) {
+            backButton->AddEventListener(Rml::EventId::Click, new BackButtonListener(window, uiComponent));
+        }
 
-    if (Rml::Element* resButton = documents->at("options_menu")->GetElementById("resolutionButton")) {
-        resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window, uiComponent, "resolutionDropdown"));
-    }
+        if (Rml::Element* resButton = documents->at("options_menu")->GetElementById("resolutionButton")) {
+            resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window, uiComponent, "resolutionDropdown"));
+        }
 
-    // Resolution options
-    if (Rml::Element* res640 = documents->at("options_menu")->GetElementById("res640x360")) {
-        res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 640, 360));
-    }
+        // Resolution options
+        if (Rml::Element* res640 = documents->at("options_menu")->GetElementById("res640x360")) {
+            res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 640, 360));
+        }
 
-    if (Rml::Element* res1280 = documents->at("options_menu")->GetElementById("res1280x720")) {
-        res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 1280, 720));
-    }
+        if (Rml::Element* res1280 = documents->at("options_menu")->GetElementById("res1280x720")) {
+            res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 1280, 720));
+        }
 
-    if (Rml::Element* res1920 = documents->at("options_menu")->GetElementById("res1920x1080")) {
-        res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 1920, 1080));
-    }
+        if (Rml::Element* res1920 = documents->at("options_menu")->GetElementById("res1920x1080")) {
+            res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 1920, 1080));
+        }
 
-    // Display mode options
-    if (Rml::Element* windowed = documents->at("options_menu")->GetElementById("modeWindowed")) {
-        windowed->AddEventListener(Rml::EventId::Click,
-            new SetDisplayModeListener(window, uiComponent, DisplayMode::WINDOWED));
-        SDL_Log("Windowed mode listener registered");
-    }
+        // Display mode options
+        if (Rml::Element* windowed = documents->at("options_menu")->GetElementById("modeWindowed")) {
+            windowed->AddEventListener(Rml::EventId::Click,
+                new SetDisplayModeListener(window, uiComponent, DisplayMode::WINDOWED));
+            SDL_Log("Windowed mode listener registered");
+        }
 
-    if (Rml::Element* borderless = documents->at("options_menu")->GetElementById("modeBorderless")) {
-        borderless->AddEventListener(Rml::EventId::Click,
-            new SetDisplayModeListener(window, uiComponent, DisplayMode::BORDERLESS_FULLSCREEN));
-        SDL_Log("Borderless fullscreen listener registered");
-    }
+        if (Rml::Element* borderless = documents->at("options_menu")->GetElementById("modeBorderless")) {
+            borderless->AddEventListener(Rml::EventId::Click,
+                new SetDisplayModeListener(window, uiComponent, DisplayMode::BORDERLESS_FULLSCREEN));
+            SDL_Log("Borderless fullscreen listener registered");
+        }
 
-    if (Rml::Element* fullscreen = documents->at("options_menu")->GetElementById("modeFullscreen")) {
-        fullscreen->AddEventListener(Rml::EventId::Click,
-            new SetDisplayModeListener(window, uiComponent, DisplayMode::FULLSCREEN));
-        SDL_Log("Fullscreen listener registered");
-    }
+        if (Rml::Element* fullscreen = documents->at("options_menu")->GetElementById("modeFullscreen")) {
+            fullscreen->AddEventListener(Rml::EventId::Click,
+                new SetDisplayModeListener(window, uiComponent, DisplayMode::FULLSCREEN));
+            SDL_Log("Fullscreen listener registered");
+        }
 
-    if (Rml::Element* button = documents->at("options_menu")->GetElementById("displayModeButton")) {
-        button->AddEventListener(Rml::EventId::Click,
-            new ToggleDropdownListener(window, uiComponent, "displayModeDropdown"));
-    }
+        if (Rml::Element* button = documents->at("options_menu")->GetElementById("displayModeButton")) {
+            button->AddEventListener(Rml::EventId::Click,
+                new ToggleDropdownListener(window, uiComponent, "displayModeDropdown"));
+        }
 
-    // Volume sliders
-    if (Rml::Element* masterSlider = documents->at("options_menu")->GetElementById("masterSlider")) {
-        masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window, uiComponent));
-    }
+        // Volume sliders
+        if (Rml::Element* masterSlider = documents->at("options_menu")->GetElementById("masterSlider")) {
+            masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window, uiComponent));
+        }
 
-    if (Rml::Element* musicSlider = documents->at("options_menu")->GetElementById("musicSlider")) {
-        musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window, uiComponent));
-    }
+        if (Rml::Element* musicSlider = documents->at("options_menu")->GetElementById("musicSlider")) {
+            musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window, uiComponent));
+        }
 
-    if (Rml::Element* sfxSlider = documents->at("options_menu")->GetElementById("sfxSlider")) {
-        sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window, uiComponent));
-    }
-    if (Rml::Element* backButton = documents->at("options_menu")->GetElementById("backButton")) {
-        SDL_Log("Back button found! Setting up listener...");
-        backButton->AddEventListener(Rml::EventId::Click, new BackButtonListener(window, uiComponent));
+        if (Rml::Element* sfxSlider = documents->at("options_menu")->GetElementById("sfxSlider")) {
+            sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window, uiComponent));
+        }
 
-        // Check button position
-        auto position = backButton->GetAbsoluteOffset();
-        SDL_Log("Back button position: x=%f, y=%f", position.x, position.y);
-
-        // Check if it's visible
-        SDL_Log("Back button visible: %s", backButton->IsVisible() ? "yes" : "no");
-    } else {
-        SDL_Log("ERROR: Back button NOT found in options_menu!");
+        optionsListenersRegistered = true;
     }
 
     documents->at("main_menu")->Hide();
@@ -447,60 +439,65 @@ void PauseSettingsButtonListener::ProcessEvent(Rml::Event&) {
         return;
     }
 
-    // Setup all button listeners for settings menu
-    if (Rml::Element* backButton = documents->at("settings_menu")->GetElementById("backButton_settings")) {
-        backButton->AddEventListener(Rml::EventId::Click, new SettingsBackButtonListener(window, uiComponent));
-    }
+    // Setup all button listeners for settings menu - only once
+    static bool settingsListenersRegistered = false;
+    if (!settingsListenersRegistered) {
+        if (Rml::Element* backButton = documents->at("settings_menu")->GetElementById("backButton_settings")) {
+            backButton->AddEventListener(Rml::EventId::Click, new SettingsBackButtonListener(window, uiComponent));
+        }
 
-    if (Rml::Element* resButton = documents->at("settings_menu")->GetElementById("resolutionButton")) {
-        resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window, uiComponent, "resolutionDropdown"));
-    }
+        if (Rml::Element* resButton = documents->at("settings_menu")->GetElementById("resolutionButton")) {
+            resButton->AddEventListener(Rml::EventId::Click, new ToggleDropdownListener(window, uiComponent, "resolutionDropdown"));
+        }
 
-    // Resolution options
-    if (Rml::Element* res640 = documents->at("settings_menu")->GetElementById("res640x360")) {
-        res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 640, 360));
-    }
+        // Resolution options
+        if (Rml::Element* res640 = documents->at("settings_menu")->GetElementById("res640x360")) {
+            res640->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 640, 360));
+        }
 
-    if (Rml::Element* res1280 = documents->at("settings_menu")->GetElementById("res1280x720")) {
-        res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 1280, 720));
-    }
+        if (Rml::Element* res1280 = documents->at("settings_menu")->GetElementById("res1280x720")) {
+            res1280->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 1280, 720));
+        }
 
-    if (Rml::Element* res1920 = documents->at("settings_menu")->GetElementById("res1920x1080")) {
-        res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 1920, 1080));
-    }
+        if (Rml::Element* res1920 = documents->at("settings_menu")->GetElementById("res1920x1080")) {
+            res1920->AddEventListener(Rml::EventId::Click, new SetResolutionListener(window, uiComponent, 1920, 1080));
+        }
 
-    // Display mode options
-    if (Rml::Element* windowed = documents->at("settings_menu")->GetElementById("modeWindowed")) {
-        windowed->AddEventListener(Rml::EventId::Click,
-            new SetDisplayModeListener(window, uiComponent, DisplayMode::WINDOWED));
-    }
+        // Display mode options
+        if (Rml::Element* windowed = documents->at("settings_menu")->GetElementById("modeWindowed")) {
+            windowed->AddEventListener(Rml::EventId::Click,
+                new SetDisplayModeListener(window, uiComponent, DisplayMode::WINDOWED));
+        }
 
-    if (Rml::Element* borderless = documents->at("settings_menu")->GetElementById("modeBorderless")) {
-        borderless->AddEventListener(Rml::EventId::Click,
-            new SetDisplayModeListener(window, uiComponent, DisplayMode::BORDERLESS_FULLSCREEN));
-    }
+        if (Rml::Element* borderless = documents->at("settings_menu")->GetElementById("modeBorderless")) {
+            borderless->AddEventListener(Rml::EventId::Click,
+                new SetDisplayModeListener(window, uiComponent, DisplayMode::BORDERLESS_FULLSCREEN));
+        }
 
-    if (Rml::Element* fullscreen = documents->at("settings_menu")->GetElementById("modeFullscreen")) {
-        fullscreen->AddEventListener(Rml::EventId::Click,
-            new SetDisplayModeListener(window, uiComponent, DisplayMode::FULLSCREEN));
-    }
+        if (Rml::Element* fullscreen = documents->at("settings_menu")->GetElementById("modeFullscreen")) {
+            fullscreen->AddEventListener(Rml::EventId::Click,
+                new SetDisplayModeListener(window, uiComponent, DisplayMode::FULLSCREEN));
+        }
 
-    if (Rml::Element* button = documents->at("settings_menu")->GetElementById("displayModeButton")) {
-        button->AddEventListener(Rml::EventId::Click,
-            new ToggleDropdownListener(window, uiComponent, "displayModeDropdown"));
-    }
+        if (Rml::Element* button = documents->at("settings_menu")->GetElementById("displayModeButton")) {
+            button->AddEventListener(Rml::EventId::Click,
+                new ToggleDropdownListener(window, uiComponent, "displayModeDropdown"));
+        }
 
-    // Volume sliders
-    if (Rml::Element* masterSlider = documents->at("settings_menu")->GetElementById("masterSlider")) {
-        masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window, uiComponent));
-    }
+        // Volume sliders
+        if (Rml::Element* masterSlider = documents->at("settings_menu")->GetElementById("masterSlider")) {
+            masterSlider->AddEventListener(Rml::EventId::Change, new MasterVolumeListener(window, uiComponent));
+        }
 
-    if (Rml::Element* musicSlider = documents->at("settings_menu")->GetElementById("musicSlider")) {
-        musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window, uiComponent));
-    }
+        if (Rml::Element* musicSlider = documents->at("settings_menu")->GetElementById("musicSlider")) {
+            musicSlider->AddEventListener(Rml::EventId::Change, new MusicVolumeListener(window, uiComponent));
+        }
 
-    if (Rml::Element* sfxSlider = documents->at("settings_menu")->GetElementById("sfxSlider")) {
-        sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window, uiComponent));
+        if (Rml::Element* sfxSlider = documents->at("settings_menu")->GetElementById("sfxSlider")) {
+            sfxSlider->AddEventListener(Rml::EventId::Change, new SFXVolumeListener(window, uiComponent));
+        }
+
+        settingsListenersRegistered = true;
     }
 
     documents->at("pause_menu")->Hide();
