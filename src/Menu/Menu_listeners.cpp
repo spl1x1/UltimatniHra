@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <charconv>
 #include <cmath>
+#include <sstream>
+#include <algorithm>
 
 inline UIComponent* getUI(Window* win) {
     return win->data.uiComponent.get();
@@ -839,13 +841,60 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
         if (window) {
             auto* inventory = window->data.uiComponent->getInventoryController();
             if (inventory) {
-                // Create a test wooden sword with icon
-                auto sword = ItemFactory::createSword(MaterialType::WOOD);
-                if (sword) {
-                    sword->setIconPath("textures/items/wooden_sword.png");
-                    inventory->addItem(std::move(sword));
-                    printf("Added Wooden Sword to inventory\n");
+                // Parse item name and amount from args (e.g. "stone_sword", "iron_axe 5")
+                std::string itemName = "wood_sword";
+                int amount = 1;
+
+                if (!args.empty()) {
+                    std::istringstream iss(args);
+                    std::string amountStr;
+                    iss >> itemName >> amountStr;
+
+                    // Convert item name to lowercase
+                    std::transform(itemName.begin(), itemName.end(), itemName.begin(), ::tolower);
+
+                    // Parse amount if provided
+                    if (!amountStr.empty()) {
+                        std::from_chars(amountStr.data(), amountStr.data() + amountStr.size(), amount);
+                        if (amount <= 0) amount = 1;
+                    }
                 }
+
+                // Parse material and type from item name (e.g. "stone_sword" -> stone, sword)
+                size_t underscorePos = itemName.find('_');
+                if (underscorePos == std::string::npos) {
+                    printf("Invalid item format: %s (use: material_type, e.g. stone_sword)\n", itemName.c_str());
+                    return;
+                }
+
+                std::string materialStr = itemName.substr(0, underscorePos);
+                std::string weaponType = itemName.substr(underscorePos + 1);
+
+                // Parse material
+                MaterialType material = MaterialType::WOOD;
+                if (materialStr == "wood" || materialStr == "wooden") material = MaterialType::WOOD;
+                else if (materialStr == "stone") material = MaterialType::STONE;
+                else if (materialStr == "iron") material = MaterialType::IRON;
+                else if (materialStr == "steel") material = MaterialType::STEEL;
+
+                // Create weapons based on amount
+                for (int i = 0; i < amount; i++) {
+                    std::unique_ptr<Item> item;
+                    if (weaponType == "sword") item = ItemFactory::createSword(material);
+                    else if (weaponType == "axe") item = ItemFactory::createAxe(material);
+                    else if (weaponType == "pickaxe") item = ItemFactory::createPickaxe(material);
+                    else if (weaponType == "bow") item = ItemFactory::createBow(material);
+                    else {
+                        printf("Unknown weapon type: %s (use: sword, axe, pickaxe, bow)\n", weaponType.c_str());
+                        return;
+                    }
+
+                    if (item) {
+                        inventory->addItem(std::move(item));
+                    }
+                }
+
+                printf("Added %d x %s to inventory\n", amount, itemName.c_str());
 
                 // Also show the inventory
                 inventory->show();

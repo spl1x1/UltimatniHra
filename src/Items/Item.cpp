@@ -131,7 +131,7 @@ Material::Material(const std::string& name, MaterialType tier)
         case MaterialType::LEATHER: value = 5; break;
         case MaterialType::IRON: value = 10; break;
         case MaterialType::STEEL: value = 25; break;
-        case MaterialType::DRAGON_SCALE: value = 100; break;
+        case MaterialType::DRAGONSCALE: value = 100; break;
         default: value = 1; break;
     }
 }
@@ -155,19 +155,19 @@ namespace ItemFactory {
             case MaterialType::LEATHER: return "Leather";
             case MaterialType::IRON: return "Iron";
             case MaterialType::STEEL: return "Steel";
-            case MaterialType::DRAGON_SCALE: return "Dragon Scale";
+            case MaterialType::DRAGONSCALE: return "Dragon Scale";
             default: return "Unknown";
         }
     }
 
     std::string getMaterialPrefix(const MaterialType tier) {
         switch (tier) {
-            case MaterialType::WOOD: return "wooden";
+            case MaterialType::WOOD: return "wood";
             case MaterialType::STONE: return "stone";
             case MaterialType::LEATHER: return "leather";
             case MaterialType::IRON: return "iron";
             case MaterialType::STEEL: return "steel";
-            case MaterialType::DRAGON_SCALE: return "dragon_scale";
+            case MaterialType::DRAGONSCALE: return "dragonscale";
             default: return "unknown";
         }
     }
@@ -271,7 +271,7 @@ namespace ItemFactory {
             case MaterialType::LEATHER: def = 3; dur = 100; break;
             case MaterialType::IRON: def = 5; dur = 180; break;
             case MaterialType::STEEL: def = 8; dur = 300; break;
-            case MaterialType::DRAGON_SCALE: def = 15; dur = 500; break;
+            case MaterialType::DRAGONSCALE: def = 15; dur = 500; break;
             default: def = 2; dur = 60; break;
         }
 
@@ -288,7 +288,7 @@ namespace ItemFactory {
             case MaterialType::LEATHER: def = 5; dur = 120; break;
             case MaterialType::IRON: def = 10; dur = 220; break;
             case MaterialType::STEEL: def = 16; dur = 380; break;
-            case MaterialType::DRAGON_SCALE: def = 25; dur = 650; break;
+            case MaterialType::DRAGONSCALE: def = 25; dur = 650; break;
             default: def = 3; dur = 80; break;
         }
 
@@ -305,7 +305,7 @@ namespace ItemFactory {
             case MaterialType::LEATHER: def = 4; dur = 110; break;
             case MaterialType::IRON: def = 8; dur = 200; break;
             case MaterialType::STEEL: def = 13; dur = 340; break;
-            case MaterialType::DRAGON_SCALE: def = 20; dur = 600; break;
+            case MaterialType::DRAGONSCALE: def = 20; dur = 600; break;
             default: def = 2; dur = 70; break;
         }
 
@@ -322,7 +322,7 @@ namespace ItemFactory {
             case MaterialType::LEATHER: def = 2; dur = 90; break;
             case MaterialType::IRON: def = 4; dur = 160; break;
             case MaterialType::STEEL: def = 7; dur = 280; break;
-            case MaterialType::DRAGON_SCALE: def = 12; dur = 480; break;
+            case MaterialType::DRAGONSCALE: def = 12; dur = 480; break;
             default: def = 1; dur = 50; break;
         }
 
