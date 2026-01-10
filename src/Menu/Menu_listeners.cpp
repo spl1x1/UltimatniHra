@@ -876,6 +876,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
                 else if (materialStr == "stone") material = MaterialType::STONE;
                 else if (materialStr == "iron") material = MaterialType::IRON;
                 else if (materialStr == "steel") material = MaterialType::STEEL;
+                else if (materialStr == "dragonscale") material = MaterialType::DRAGONSCALE;
 
                 // Create weapons based on amount
                 for (int i = 0; i < amount; i++) {

@@ -236,6 +236,7 @@ namespace ItemFactory {
             case MaterialType::STONE: baseDmg = 10; dur = 90; atkSpd = 1.3f; break;
             case MaterialType::IRON: baseDmg = 15; dur = 180; atkSpd = 1.5f; break;
             case MaterialType::STEEL: baseDmg = 22; dur = 300; atkSpd = 1.7f; break;
+        case MaterialType::DRAGONSCALE: baseDmg = 30; dur = 500; atkSpd = 1.8f; break;
             default: baseDmg = 6; dur = 50; atkSpd = 1.2f; break;
         }
 
