@@ -873,6 +873,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
                 // Parse material
                 MaterialType material = MaterialType::WOOD;
                 if (materialStr == "wood" || materialStr == "wooden") material = MaterialType::WOOD;
+                else if (materialStr == "leather") material = MaterialType::LEATHER;
                 else if (materialStr == "stone") material = MaterialType::STONE;
                 else if (materialStr == "iron") material = MaterialType::IRON;
                 else if (materialStr == "steel") material = MaterialType::STEEL;
@@ -885,6 +886,11 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
                     else if (weaponType == "axe") item = ItemFactory::createAxe(material);
                     else if (weaponType == "pickaxe") item = ItemFactory::createPickaxe(material);
                     else if (weaponType == "bow") item = ItemFactory::createBow(material);
+                    else if (weaponType == "helmet") item = ItemFactory::createHelmet(material);
+                    else if (weaponType == "chestplate") item = ItemFactory::createChestplate(material);
+                    else if (weaponType == "leggings") item = ItemFactory::createLeggings(material);
+                    else if (weaponType == "boots") item = ItemFactory::createBoots(material);
+
                     else {
                         printf("Unknown weapon type: %s (use: sword, axe, pickaxe, bow)\n", weaponType.c_str());
                         return;
