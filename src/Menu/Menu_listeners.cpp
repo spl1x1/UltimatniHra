@@ -13,6 +13,8 @@
 #include <cmath>
 #include <sstream>
 #include <algorithm>
+#include <functional>
+#include <cstdlib>
 
 inline UIComponent* getUI(Window* win) {
     return win->data.uiComponent.get();
@@ -576,28 +578,142 @@ void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
 CreateGameListener::CreateGameListener(Window* window, UIComponent* uiComponent, int slotId)
     : window(window), uiComponent(uiComponent), slotId(slotId) {}
 
+// Global variable to store the current slot being created
+static int g_pendingCreateSlot = -1;
+
 void CreateGameListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Create game in slot %d", slotId);
+    SDL_Log("Opening create world menu for slot %d", slotId);
 
-    SaveManager& sm = SaveManager::getInstance();
+    auto documents = uiComponent->getDocuments();
 
-    if (!sm.createNewSave(slotId, "New Adventure")) {
-        SDL_Log("Failed to create save in slot %d", slotId);
+    if (!documents->contains("create_world")) {
+        SDL_Log("create_world document not found!");
         return;
     }
 
-    // Set current slot so save works when quitting
-    sm.setCurrentSlot(slotId);
+    auto createWorldDoc = documents->at("create_world").get();
 
-    auto documents = uiComponent->getDocuments();
+    // Store the slot ID globally for the confirm listener
+    g_pendingCreateSlot = slotId;
+
+    // Clear any previous input values
+    if (Rml::Element* nameInput = createWorldDoc->GetElementById("world_name_input")) {
+        nameInput->SetAttribute("value", "");
+    }
+    if (Rml::Element* seedInput = createWorldDoc->GetElementById("seed_input")) {
+        seedInput->SetAttribute("value", "");
+    }
+
+    // Register listeners only once
+    static bool createWorldListenersRegistered = false;
+    if (!createWorldListenersRegistered) {
+        if (Rml::Element* createButton = createWorldDoc->GetElementById("create_world_button")) {
+            createButton->AddEventListener(Rml::EventId::Click,
+                new CreateWorldConfirmListener(window, uiComponent, -1)); // slotId comes from g_pendingCreateSlot
+        }
+        if (Rml::Element* backButton = createWorldDoc->GetElementById("back_button")) {
+            backButton->AddEventListener(Rml::EventId::Click,
+                new CreateWorldBackListener(window, uiComponent));
+        }
+        createWorldListenersRegistered = true;
+    }
+
     if (documents->contains("play_menu")) {
         documents->at("play_menu")->Hide();
     }
 
-    window->server->setSeed(std::rand());
+    createWorldDoc->Show();
+}
+
+// --------------------------------------------------
+// CreateWorldConfirmListener
+// --------------------------------------------------
+CreateWorldConfirmListener::CreateWorldConfirmListener(Window* window, UIComponent* uiComponent, int slotId)
+    : window(window), uiComponent(uiComponent), slotId(slotId) {}
+
+void CreateWorldConfirmListener::ProcessEvent(Rml::Event& event) {
+    // Use the global pending slot instead of stored slotId
+    int activeSlot = g_pendingCreateSlot;
+    if (activeSlot < 0) {
+        SDL_Log("Error: No pending slot for world creation");
+        return;
+    }
+    SDL_Log("Create world confirmed for slot %d", activeSlot);
+
+    auto documents = uiComponent->getDocuments();
+    auto createWorldDoc = documents->at("create_world").get();
+
+    // Get world name from input
+    std::string worldName = "New Adventure";
+    if (Rml::Element* nameInput = createWorldDoc->GetElementById("world_name_input")) {
+        Rml::String inputValue = nameInput->GetAttribute<Rml::String>("value", "");
+        if (!inputValue.empty()) {
+            worldName = inputValue.c_str();
+        }
+    }
+
+    // Get seed from input (if provided, otherwise random)
+    unsigned int seed = static_cast<unsigned int>(std::rand());
+    if (Rml::Element* seedInput = createWorldDoc->GetElementById("seed_input")) {
+        Rml::String seedValue = seedInput->GetAttribute<Rml::String>("value", "");
+        if (!seedValue.empty()) {
+            // Try to parse as number, otherwise use string hash
+            std::string seedStr = seedValue.c_str();
+            char* end;
+            unsigned long parsedSeed = std::strtoul(seedStr.c_str(), &end, 10);
+            if (*end == '\0' && end != seedStr.c_str()) {
+                // Successfully parsed as number
+                seed = static_cast<unsigned int>(parsedSeed);
+            } else {
+                // Use string hash as seed
+                seed = static_cast<unsigned int>(std::hash<std::string>{}(seedStr));
+            }
+        }
+    }
+
+    SDL_Log("Creating world '%s' with seed %u", worldName.c_str(), seed);
+
+    SaveManager& sm = SaveManager::getInstance();
+
+    if (!sm.createNewSave(activeSlot, worldName)) {
+        SDL_Log("Failed to create save in slot %d", activeSlot);
+        return;
+    }
+
+    // Set current slot so save works when quitting
+    sm.setCurrentSlot(activeSlot);
+
+    // Reset the pending slot
+    g_pendingCreateSlot = -1;
+
+    if (documents->contains("create_world")) {
+        documents->at("create_world")->Hide();
+    }
+
+    window->server->setSeed(seed);
     window->initGame();
 
-    Player::Create(window->server.get(), slotId);
+    Player::Create(window->server.get(), activeSlot);
+}
+
+// --------------------------------------------------
+// CreateWorldBackListener
+// --------------------------------------------------
+CreateWorldBackListener::CreateWorldBackListener(Window* window, UIComponent* uiComponent)
+    : window(window), uiComponent(uiComponent) {}
+
+void CreateWorldBackListener::ProcessEvent(Rml::Event&) {
+    SDL_Log("Back to play menu from create world");
+
+    auto documents = uiComponent->getDocuments();
+
+    if (documents->contains("create_world")) {
+        documents->at("create_world")->Hide();
+    }
+
+    if (documents->contains("play_menu")) {
+        documents->at("play_menu")->Show();
+    }
 }
 
 // --------------------------------------------------
