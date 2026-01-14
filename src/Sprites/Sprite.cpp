@@ -4,38 +4,48 @@
 
 #include "../../include/Sprites/Sprite.hpp"
 
-#include <fstream>
-#include <nlohmann/json.hpp>
 #include <utility>
+#include <simdjson.h>
 
 std::unordered_map<std::string,SpriteAnimationBinding::AnimationInfo> SpriteAnimationBinding::spriteMap{};
 std::set<std::string> SpriteAnimationBinding::loadedFiles{};
 
 
 void SpriteAnimationBinding::addBindings(const std::string &filePath) {
-    auto addFrame = [](const nlohmann::json& frameData) -> FrameNode {
-        FrameNode frameNode {
-            static_cast<float>(frameData.at("x").get<int>()),
-            static_cast<float>(frameData.at("y").get<int>())
-        };
-        return frameNode;
-    };
-    if (loadedFiles.contains(filePath)) return; //Skip already loaded files
-
+    if (loadedFiles.contains(filePath)) return;
     loadedFiles.insert(filePath);
-    auto file{std::ifstream(filePath)};
 
-    for (auto json{nlohmann::json::parse(file)}; const auto& [key, value] : json.items()) {
-        AnimationInfo animation;
-        auto frames{value.at("frames")};
-        auto frameCount{value.at("frameCount")};
-        for (int i{0}; i<frameCount; i++) {
-            animation.frames.push_back(addFrame(frames.at(i)));
+    simdjson::ondemand::parser parser;
+    const auto jsonContent{simdjson::padded_string::load(filePath)};
+    auto doc{parser.iterate(jsonContent)};
+
+    auto parseFrames = [](simdjson::ondemand::array frames, AnimationInfo& animation) {
+        for (auto frameData : frames) {
+            auto frame{frameData.get_object()};
+            animation.frames.push_back({
+            static_cast<float>(frame["x"].get_int64()),
+            static_cast<float>(frame["y"].get_int64())
+            });
         }
-        animation.frameCount = frameCount;
-        spriteMap.insert_or_assign(key,animation);
+    };
+
+    for (auto field : doc.get_object()) {
+        std::string_view key = field.unescaped_key();
+        simdjson::ondemand::object value = field.value().get_object();
+
+        AnimationInfo animation;
+        for (auto prop : value) {
+            std::string_view propKey = prop.unescaped_key();
+            if (propKey == "frames") {
+                parseFrames(prop.value().get_array(), animation);
+            } else if (propKey == "frameCount") {
+                animation.frameCount = static_cast<int>(prop.value().get_int64());
+            }
+        }
+        spriteMap.insert_or_assign(std::string(key), animation);
     }
 }
+
 
 SpriteAnimationBinding::AnimationInfo* SpriteAnimationBinding::getAnimationNode(const std::string& key) {
     return spriteMap.contains(key) ? &spriteMap[key] : nullptr;
@@ -136,7 +146,7 @@ SDL_FRect* SpriteRenderingContext::getFrameRect() {
 }
 
 SpriteRenderingContext::SpriteRenderingContext(const std::string& spriteJSONPath, std::string  texture,const float frameDuration ,const int spriteWidth, const int spriteHeight ,const Direction dir, const AnimationType anim, const int variant):
-textureName(std::move(texture)),activeAnimation(anim), activeDirection(dir), frameDuration(frameDuration), spriteWidth(spriteWidth), spriteHeight(spriteHeight), defaultVariant(variant)
+textureName(std::move(texture)),activeAnimation(anim), activeDirection(dir), defaultVariant(variant), frameDuration(frameDuration), spriteWidth(spriteWidth), spriteHeight(spriteHeight)
 {
     defaultDirection = dir;
     defaultAnimation = anim;
