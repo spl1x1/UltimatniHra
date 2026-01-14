@@ -11,13 +11,12 @@
 //
 
 class OreDepositSprite final : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("ore_deposits",  Direction::OMNI,0.0f, 1, 96, 96, 3);
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("assets/jsons/structures/ore_deposits.json","ore_deposits", 0.0f, 96, 96);
 public:
     //Interface Methods Implementation
     void Tick(float deltaTime) override {};
 
-    void setDirection(Direction newDirection)  override {};
-    void setAnimation(AnimationType newAnimation) override {};
+    void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) override {};
     void setVariant(int newVariant) override; //Sets ore type (iron, copper, gold)
     void setCurrentFrame(int newCurrentFrame) override;
 

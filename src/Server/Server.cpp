@@ -208,11 +208,11 @@ std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates botto
 
 void Server::Tick() {
     std::lock_guard lock(serverMutex);
-    for (auto &entity: _entities | std::views::values) {
+    for (const auto &entity: _entities | std::views::values) {
         if (!entity) continue;
         entity->Tick();
     }
-    for (auto &player: _players | std::views::values) {
+    for (const auto &player: _players | std::views::values) {
         if (!player) continue;
         player->Tick();
     }
@@ -298,11 +298,9 @@ void Server::generateStructures() {
     constexpr int commonOreVariants{2}; //Pocet variant rud, IRON, COPPER
     constexpr int rareOreVariants{3}; //Pocet variant IRON, COPPER, GOLD
 
-
     std::mt19937 mt(_seed );
     std::uniform_int_distribution dist(1,100);
     std::uniform_int_distribution<> oreDist(1,2); //Pro ruzne varianty rud
-
 
     auto TryToSpawnTree = [&](const biomeModifierInfo &biome, const Coordinates pos)-> bool {
         if (dist(mt) > TREEDENSITY* biome.treeDensityModifier) return false;
@@ -322,7 +320,7 @@ void Server::generateStructures() {
     auto process = [&](const int x, const int y){
         auto Biome = biomeModifierValues.at(0);
         const int biomeValue = getMapValue_unprotected(x, y, WorldData::BIOME_MAP);
-        const Coordinates coordinates {x*32.0f ,y*32.0f};
+        const Coordinates coordinates {static_cast<float>(x)*32.0f ,static_cast<float>(y)*32.0f};
         for (const auto& biomeInfo : biomeModifierValues) {
             if (biomeInfo.biomeId != biomeValue) continue;
             Biome = biomeInfo;

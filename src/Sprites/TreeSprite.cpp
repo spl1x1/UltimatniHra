@@ -16,11 +16,11 @@ RenderingContext TreeSprite::getRenderingContext() {
     return context;
 }
 
-void TreeSprite::Tick(float deltaTime) {
+void TreeSprite::Tick(const float deltaTime) {
     renderingContext.Tick(deltaTime);
 }
 
-void TreeSprite::setVariant(int newVariant) {
+void TreeSprite::setVariant(const int newVariant) {
     renderingContext.setVariant(newVariant);
 }
 

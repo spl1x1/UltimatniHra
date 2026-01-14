@@ -8,17 +8,12 @@ void PlayerSprite::Tick(float deltaTime) {
     renderingContext.Tick(deltaTime);
 }
 
-void PlayerSprite::setDirection(Direction newDirection) {
-    renderingContext.setDirection(newDirection);
-}
-void PlayerSprite::setAnimation(AnimationType newAnimation) {
-    renderingContext.setActiveAnimation(newAnimation);
+void PlayerSprite::PlayAnimation(const AnimationType newAnimation, const Direction direction, const bool ForceReset) {
+    renderingContext.PlayAnimation(newAnimation, direction, ForceReset);
 }
 
 std::tuple<std::string, SDL_FRect*> PlayerSprite::getFrame() {
     std::string texture = renderingContext.getTexture();
-    texture = renderingContext.attachActiveAnimation(texture);
-    texture = renderingContext.attachActiveDirection(texture);
     return  {texture, renderingContext.getFrameRect()};
 }
 
@@ -38,9 +33,5 @@ RenderingContext PlayerSprite::getRenderingContext() {
     context.rect = std::get<1>(frame);
 
     return context;
-}
-
-PlayerSprite::PlayerSprite() {
-    renderingContext.setActiveAnimation(AnimationType::IDLE);
 }
 

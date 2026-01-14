@@ -26,11 +26,11 @@ void Application::init() const{
 }
 
 void Application::run() const {
+    while (gameWindow->data.Running) {
+        gameWindow->tick();
+    }
+    Rml::Shutdown();
     try {
-        while (gameWindow->data.Running) {
-            gameWindow->tick();
-        }
-        Rml::Shutdown();
     }
     catch (const std::exception& e) {
         std::cerr << "Exception caught: " << e.what() << std::endl;

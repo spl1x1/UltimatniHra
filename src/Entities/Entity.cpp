@@ -39,23 +39,25 @@ RenderingContext EntityRenderingComponent::GetRenderingContext() const {
     return renderingContext;
 }
 
-void EntityRenderingComponent::SetDirectionBaseOnAngle(const int angle) const {
-    if (!sprite) return;
-
+Direction EntityRenderingComponent::GetDirectionBaseOnAngle(const int angle) {
     if ((angle >= 0 && angle <= 44) || (angle >= 316 && angle <= 360)) {
-        sprite->setDirection(Direction::DOWN);
-    } else if (angle >= 136 && angle <= 224) {
-        sprite->setDirection(Direction::UP);
-    } else if (angle >= 45 && angle <= 135) {
-        sprite->setDirection(Direction::RIGHT);
-    } else if (angle >= 225 && angle <= 315) {
-        sprite->setDirection(Direction::LEFT);
+        return Direction::DOWN;
     }
+    if (angle >= 136 && angle <= 224) {
+        return Direction::UP;
+    }
+    if (angle >= 45 && angle <= 135) {
+        return Direction::RIGHT;
+    }
+    if (angle >= 225 && angle <= 315) {
+        return Direction::LEFT;
+    }
+    return Direction::NONE;
 }
 
-void EntityRenderingComponent::SetAnimation(const AnimationType animation) const {
+void EntityRenderingComponent::PlayAnimation(const AnimationType animation, const Direction direction, const bool ForceReset) const {
     if (!sprite) return;
-    sprite->setAnimation(animation);
+    sprite->PlayAnimation(animation, direction, ForceReset);
 }
 
 EntityRenderingComponent::EntityRenderingComponent(std::unique_ptr<ISprite> sprite) :sprite(std::move(sprite)) {

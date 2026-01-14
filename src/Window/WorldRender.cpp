@@ -13,7 +13,7 @@ void WorldRender::GenerateTextures() const {
     window.loadSurfacesFromDirectory("assets/textures/world");
     window.loadTexturesFromDirectory("assets/textures/world/water");
     window.loadTexturesFromDirectory("assets/textures/structures");
-    window.loadTexturesFromDirectory("assets/textures/entities/player");
+    window.loadTexturesFromDirectory("assets/textures/entities");
     window.loadTexturesFromDirectory("assets/textures/gui");
     GenerateWorldTexture();
     //GenerateWaterTextures(); // Generace vody, textury jsou predgenerovany a nahrany ze slozky

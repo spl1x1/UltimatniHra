@@ -17,8 +17,12 @@ class WaterSprite {
     std::shared_mutex mutexSprite;
     static float lastDeltaTime; //To make sure we are not ticking multiple times per frame
 
-    //Sprite base data
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("water", Direction::OMNI,0.2f, 4, 32, 32);
+    int frameCount{4};
+    float frameDuration{0.2f}; // 5 FPS
+    float frameTime{0.0f};
+    int currentFrame{1};
+
+    std::string textureName{"water"};
 
     //Hidden Methods
     void tickInternal(float deltaTime);

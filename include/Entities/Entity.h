@@ -34,10 +34,10 @@ public:
     [[nodiscard]] Coordinates CalculateCenterOffset(IEntity& entity); //Returns offset to center sprite based on its dimensions and hitbox
 
     //Setters
-    void SetDirectionBaseOnAngle(int angle) const;
-    void SetAnimation(AnimationType animation) const;
+    void PlayAnimation(AnimationType animation, Direction direction, bool ForceReset) const;
 
     //Getters
+    static Direction GetDirectionBaseOnAngle(int angle) ;
     [[nodiscard]] RenderingContext GetRenderingContext() const;
 
 

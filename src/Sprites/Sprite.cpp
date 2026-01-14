@@ -4,20 +4,65 @@
 
 #include "../../include/Sprites/Sprite.hpp"
 
-#include <memory>
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include <utility>
 
-// SpriteRenderingContext methods
-void SpriteRenderingContext::Tick(float deltaTime) {
-        if (frameCount == 0) return;
-        frameTime += deltaTime;
-        if (frameTime >= frameDuration) {
-            frameTime -= frameDuration;
-            currentFrame++;
-            if (currentFrame > frameCount) {
-                currentFrame = 1;
-            }
+std::unordered_map<std::string,SpriteAnimationBinding::AnimationInfo> SpriteAnimationBinding::spriteMap{};
+std::set<std::string> SpriteAnimationBinding::loadedFiles{};
+
+
+void SpriteAnimationBinding::addBindings(const std::string &filePath) {
+    auto addFrame = [](const nlohmann::json& frameData) -> FrameNode {
+        FrameNode frameNode {
+            static_cast<float>(frameData.at("x").get<int>()),
+            static_cast<float>(frameData.at("y").get<int>())
+        };
+        return frameNode;
+    };
+    if (loadedFiles.contains(filePath)) return; //Skip already loaded files
+
+    loadedFiles.insert(filePath);
+    auto file{std::ifstream(filePath)};
+
+    for (auto json{nlohmann::json::parse(file)}; const auto& [key, value] : json.items()) {
+        AnimationInfo animation;
+        auto frames{value.at("frames")};
+        auto frameCount{value.at("frameCount")};
+        for (int i{0}; i<frameCount; i++) {
+            animation.frames.push_back(addFrame(frames.at(i)));
         }
+        animation.frameCount = frameCount;
+        spriteMap.insert_or_assign(key,animation);
+    }
+}
+
+SpriteAnimationBinding::AnimationInfo* SpriteAnimationBinding::getAnimationNode(const std::string& key) {
+    return spriteMap.contains(key) ? &spriteMap[key] : nullptr;
+}
+
+// SpriteRenderingContext methods
+void SpriteRenderingContext::ResetAnimation(SpriteAnimationBinding::AnimationInfo* animationNode) {
+    currentFrame = 1;
+    frameTime = 0.0f;
+    if (!animationNode) { //reset if nullptr
+        activeAnimation = defaultAnimation;
+        activeDirection = defaultDirection;
+        currentAnimationNode = SpriteAnimationBinding::getAnimationNode(buildKey());
+        return;
+    }
+    currentAnimationNode = animationNode;
+}
+
+
+void SpriteRenderingContext::Tick(const float deltaTime) {
+    if (currentAnimationNode->frameCount == 0) return;
+    frameTime += deltaTime;
+    if (frameTime >= frameDuration) {
+        frameTime -= frameDuration;
+        currentFrame++;
+        if (currentFrame > currentAnimationNode->frameCount) ResetAnimation(currentAnimationNode);
+    }
 }
 
 std::string SpriteRenderingContext::attachActiveAnimation(std::string& texture) const {
@@ -26,47 +71,54 @@ std::string SpriteRenderingContext::attachActiveAnimation(std::string& texture) 
 }
 
 std::string SpriteRenderingContext::attachActiveDirection(std::string& texture) const {
-    if (direction == Direction::OMNI) return texture;
-    return texture += "_" + SpriteContext::directionTypeToString(direction);
+    if (activeDirection == Direction::NONE) return texture;
+    return texture += "$" + SpriteContext::directionTypeToString(activeDirection);
 }
 
-std::string SpriteRenderingContext::attachFrameNumber(std::string& texture) const {
-    return texture += "_" + std::to_string(currentFrame);
+std::string SpriteRenderingContext::attachVariantNumber(std::string& texture) const {
+    if (activeVariant <= 1) return texture;
+    return texture += "@" + std::to_string(activeVariant);
 }
+
+std::string SpriteRenderingContext::buildKey() {
+    std::string key = textureName;
+    if (activeAnimation == AnimationType::NONE)activeAnimation = defaultAnimation;
+    attachActiveAnimation(key);
+    if (activeDirection == Direction::NONE) activeDirection = defaultDirection;
+    attachActiveDirection(key);
+    attachVariantNumber(key);
+    return key;
+}
+
+std::tuple<std::string,SDL_FRect*> SpriteRenderingContext::getFrame() {
+    return {getTexture(), getFrameRect()};
+}
+
+void SpriteRenderingContext::PlayAnimation(const AnimationType animationType, const Direction direction, const bool ForceReset) {
+    if (!ForceReset && animationType == activeAnimation && direction == activeDirection) return;
+    activeAnimation = animationType;
+    this->activeDirection = direction;
+    const auto key = buildKey();
+    const auto node{SpriteAnimationBinding::getAnimationNode(key)};
+    ResetAnimation(node);
+}
+
 
 std::string SpriteRenderingContext::getTexture() const {
     return textureName;
 }
 
-
-void SpriteRenderingContext::setFrameCount(int newFrameCount) {
-    frameCount = newFrameCount;
-    if (currentFrame > frameCount) {
-        currentFrame = 1;
-    }
-}
-
-void SpriteRenderingContext::setVariant(int newVariant) {
-    if (newVariant < 1 || newVariant > variantCount) return;
-    currentVariant = newVariant;
+void SpriteRenderingContext::setVariant(const int newVariant) {
+    activeVariant = newVariant;
+    ResetAnimation(SpriteAnimationBinding::getAnimationNode(buildKey()));
 }
 
 void SpriteRenderingContext::setCurrentFrame(int newCurrentFrame) {
-    if (newCurrentFrame < 1 || newCurrentFrame > frameCount) newCurrentFrame = 1;
     currentFrame = newCurrentFrame;
+    ResetAnimation(SpriteAnimationBinding::getAnimationNode(buildKey()));
 }
 
-void SpriteRenderingContext::setActiveAnimation(AnimationType newAnimation){
-    if (activeAnimation != newAnimation) {
-        activeAnimation = newAnimation;
-        currentFrame = 1;
-        frameTime = 0.0f;
-    }
-}
 
-void SpriteRenderingContext::setDirection(Direction newDirection){
-    direction = newDirection;
-}
 
 int SpriteRenderingContext::getWidth() const {
     return spriteWidth;
@@ -76,24 +128,23 @@ int SpriteRenderingContext::getHeight() const {
 }
 
 
-SDL_FRect* SpriteRenderingContext::getFrameRect() const {
-    float x = 0;
-    float y = 0;
-    if (currentFrame > 1) {
-        x = static_cast<float>((currentFrame - 1) * spriteWidth) + xOffset;
-    }
-    if (currentVariant > 1) {
-        y += static_cast<float>((currentVariant - 1) * spriteHeight) + yOffset;
-    }
-    frameRect->x =x;
-    frameRect->y = y;
-    frameRect->w = static_cast<float>(spriteWidth);
-    frameRect->h = static_cast<float>(spriteHeight);
+SDL_FRect* SpriteRenderingContext::getFrameRect() {
+    if (!currentAnimationNode) currentAnimationNode = SpriteAnimationBinding::getAnimationNode(buildKey());
+    frameRect->x = currentAnimationNode->frames.at(currentFrame-1).x;
+    frameRect->y = currentAnimationNode->frames.at(currentFrame-1).y;
     return frameRect.get();
 }
 
-SpriteRenderingContext::SpriteRenderingContext(std::string textureName, const Direction direction , const float frameDuration, const int frameCount, const int spriteWidth, const int spriteHeight, const int variants, const int currentVariant, const float xOffset, const float yOffset)
-: textureName(std::move(textureName)), direction(direction), frameCount(frameCount), frameDuration(frameDuration), currentFrame(1), yOffset(yOffset), spriteWidth(spriteWidth), spriteHeight(spriteHeight), variantCount(variants), currentVariant(currentVariant), xOffset(xOffset){}
+SpriteRenderingContext::SpriteRenderingContext(const std::string& spriteJSONPath, std::string  texture,const float frameDuration ,const int spriteWidth, const int spriteHeight ,const Direction dir, const AnimationType anim, const int variant):
+textureName(std::move(texture)),activeAnimation(anim), activeDirection(dir), frameDuration(frameDuration), spriteWidth(spriteWidth), spriteHeight(spriteHeight), defaultVariant(variant)
+{
+    defaultDirection = dir;
+    defaultAnimation = anim;
+    SpriteAnimationBinding::addBindings(spriteJSONPath);
+    currentAnimationNode = SpriteAnimationBinding::getAnimationNode(buildKey());
+    frameRect->w = static_cast<float>(spriteWidth);
+    frameRect->h = static_cast<float>(spriteHeight);
+}
 
 
 
@@ -103,10 +154,10 @@ std::string SpriteContext::animationTypeToString(const AnimationType type) {
         case AnimationType::NONE: return "NONE";
         case AnimationType::IDLE: return "IDLE";
         case AnimationType::RUNNING: return "RUNNING";
-        case AnimationType::ATTACK1: return "ATTACK1";
-        case AnimationType::ATTACK2: return "ATTACK2";
+        case AnimationType::ATTACK: return "ATTACK";
         case AnimationType::INTERACT: return "INTERACT";
-        case AnimationType::DYING: return "DYING";
+        case AnimationType::HURT: return "HURT";
+        case AnimationType::DEATH: return "DEATH";
         default: return "";
     }
 }

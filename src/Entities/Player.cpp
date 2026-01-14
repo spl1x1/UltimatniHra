@@ -13,13 +13,13 @@
 void Player::Tick() {
     const auto oldCoords{_entityLogicComponent.GetCoordinates()};
     const auto deltaTime = _server->getDeltaTime_unprotected();
-    _entityRenderingComponent.SetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
+    const auto dir = EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
     _entityRenderingComponent.Tick(deltaTime);
     _entityLogicComponent.Tick(_server, *this);
     if (oldCoords.x == _entityLogicComponent.GetCoordinates().x && oldCoords.y == _entityLogicComponent.GetCoordinates().y)
-        _entityRenderingComponent.SetAnimation(AnimationType::IDLE);
+        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, dir, false);
     else
-        _entityRenderingComponent.SetAnimation(AnimationType::RUNNING);
+        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, dir, false);
 }
 
 RenderingContext Player::GetRenderingContext() {
@@ -51,12 +51,12 @@ void Player::Save(Server* server) {
 
 void Player::Move(float dX, float dY) {
     const auto oldCoords{_entityLogicComponent.GetCoordinates()};
+    const auto dir{EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle())};
     _entityLogicComponent.Move(_server->getDeltaTime(),dX,dY, _entityCollisionComponent, _server);
-    _entityRenderingComponent.SetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
     if (oldCoords.x == _entityLogicComponent.GetCoordinates().x && oldCoords.y == _entityLogicComponent.GetCoordinates().y)
-        _entityRenderingComponent.SetAnimation(AnimationType::IDLE);
+        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, dir, false);
     else
-        _entityRenderingComponent.SetAnimation(AnimationType::RUNNING);
+        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, dir, false);
 }
 
 
@@ -66,7 +66,6 @@ void Player::SetCoordinates(const Coordinates &newCoordinates) {
 
 void Player::SetAngle(const int newAngle) {
     _entityLogicComponent.SetAngle(newAngle);
-    _entityRenderingComponent.SetDirectionBaseOnAngle(newAngle);
 }
 
 void Player::SetSpeed(float newSpeed) {
@@ -75,7 +74,7 @@ void Player::SetSpeed(float newSpeed) {
 
 
 
-void Player::SetEntityCollision(bool disable) {
+void Player::SetEntityCollision(const bool disable) {
     _entityCollisionComponent.DisableCollision(disable);
 }
 

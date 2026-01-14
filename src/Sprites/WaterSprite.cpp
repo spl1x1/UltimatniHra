@@ -14,8 +14,7 @@ float WaterSprite::lastDeltaTime = 0.0f;
 
 std::tuple<std::string, SDL_FRect*> WaterSprite::getFrame() {
     std::shared_lock lock(mutexSprite);
-    std::string texture = renderingContext.getTexture();
-    texture= renderingContext.attachFrameNumber(texture);
+    const auto texture = textureName + "_" + std::to_string(currentFrame);
     return  std::tuple<std::string,SDL_FRect*>{texture, nullptr};
 }
 
@@ -24,9 +23,17 @@ int WaterSprite::getInstanceCount() {
     return static_cast<int>(instances.size());
 }
 
-void WaterSprite::tickInternal(float deltaTime) {
+void WaterSprite::tickInternal(const float deltaTime) {
     std::lock_guard lock(mutexSprite);
-    renderingContext.Tick(deltaTime);
+    if (frameCount == 0) return;
+    frameTime += deltaTime;
+    if (frameTime >= frameDuration) {
+        frameTime -= frameDuration;
+        currentFrame++;
+        if (currentFrame > frameCount) {
+            currentFrame = 1;
+        }
+    }
 }
 
 

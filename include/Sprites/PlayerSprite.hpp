@@ -7,16 +7,15 @@
 
 #include "Sprite.hpp"
 
-class PlayerSprite : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("player",Direction::DOWN ,0.1f, 8, 96, 96);
+class PlayerSprite final : public ISprite {
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("assets/jsons/entities/player.json","player",0.1f, 96, 96, Direction::DOWN, AnimationType::IDLE);
 public:
     //Interface Methods
     void Tick(float deltaTime) override;
 
 
     //Setters
-    void setDirection(Direction newDirection) override;
-    void setAnimation(AnimationType newAnimation) override;
+    void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) override;
     void setVariant(int newVariant) override {}
     void setCurrentFrame(int newCurrentFrame) override{};
 
@@ -25,8 +24,6 @@ public:
     [[nodiscard]] int getWidth() const override;
     [[nodiscard]] int getHeight() const override;
     RenderingContext getRenderingContext() override;
-
-    PlayerSprite();
 };
 
 

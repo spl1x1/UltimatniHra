@@ -1,0 +1,44 @@
+{
+    "ore_nodes_IDLE$OMNI": {
+        "frames": [
+            {
+                "x": 0,
+                "y": 0
+            },
+            {
+                "x": 96,
+                "y": 0
+            }
+        ],
+        "frameCount": 2,
+        "variant": 1
+    },
+    "ore_nodes_IDLE$OMNI@2": {
+        "frames": [
+            {
+                "x": 0,
+                "y": 96
+            },
+            {
+                "x": 96,
+                "y": 96
+            }
+        ],
+        "frameCount": 2,
+        "variant": 2
+    },
+    "ore_nodes_IDLE$OMNI@3": {
+        "frames": [
+            {
+                "x": 0,
+                "y": 192
+            },
+            {
+                "x": 96,
+                "y": 192
+            }
+        ],
+        "frameCount": 2,
+        "variant": 3
+    }
+}

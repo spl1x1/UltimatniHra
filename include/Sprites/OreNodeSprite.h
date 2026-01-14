@@ -6,14 +6,13 @@
 #define ORENODESPRITE_H
 #include "Sprite.hpp"
 
-class OreNodeSprite : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("ore_nodes",  Direction::OMNI,0.0f, 2, 96, 96, 3);
+class OreNodeSprite final : public ISprite {
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("assets/jsons/structures/ore_nodes.json","ore_nodes",0.0,96, 96);
 public:
     //Interface Methods Implementation
     void Tick(float deltaTime) override {};
 
-    void setDirection(Direction newDirection)  override {};
-    void setAnimation(AnimationType newAnimation) override {};
+    void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) override {};
     void setVariant(int newVariant) override; //Sets ore type (iron, copper, gold)
     void setCurrentFrame(int newCurrentFrame) override;
 
