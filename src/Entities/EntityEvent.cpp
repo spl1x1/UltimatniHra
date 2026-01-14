@@ -158,3 +158,15 @@ Event_ClickAttack::Event_ClickAttack(const int attackType , const int damage, Co
 std::unique_ptr<EntityEvent> Event_ClickAttack::Create(int attackType ,int damage, Coordinates coordinates) {
     return std::make_unique<Event_ClickAttack>(attackType, damage, coordinates);
 }
+
+Event_SetAngle::Event_SetAngle(int angle) {
+    this->type = Type::SET_ANGLE;
+    this->angle = angle;
+}
+bool Event_SetAngle::validate() const {
+    return angle >=0 && angle <360;
+}
+std::unique_ptr<EntityEvent> Event_SetAngle::Create(int angle) {
+    return std::make_unique<Event_SetAngle>(angle);
+}
+
