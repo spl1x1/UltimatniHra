@@ -216,10 +216,11 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
     this->coordinates.x = newX;
     this->coordinates.y = newY;
     SetAngleBasedOnMovement(dX, dY);
+
     return true;
 }
 
-void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, IEntity* entity, const Server* server) {
+void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, IEntity* entity) {
     const auto adjustment = entity->GetRenderingComponent()->CalculateCenterOffset(*entity);
     float diffX{targetX - coordinates.x - adjustment.x};
     float diffY{targetY - coordinates.y - adjustment.y};
@@ -231,9 +232,28 @@ void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, co
     diffX /= distance;
     diffY /= distance;
 
-    if (!Move(deltaTime, diffX, diffY, *entity->GetCollisionComponent(), server)) return;
+    if (!Move(deltaTime, diffX, diffY, *entity->GetCollisionComponent(), entity->GetServer())) return;
     queueUpEvents.emplace_back(Event_MoveTo::Create(targetX,targetY));
 }
+
+void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, const int damage) {
+    const auto angle{entity->GetLogicComponent()->GetAngle()};
+    const auto reach{entity->GetReach()};
+    const auto adjustment = entity->GetRenderingComponent()->CalculateCenterOffset(*entity);
+    const auto coordinates = entity->GetLogicComponent()->GetCoordinates();
+    const auto radianAngle = static_cast<float>(angle * M_PI / 180.0f);
+
+    const float attackX = coordinates.x + adjustment.x + std::sin(radianAngle) * reach;
+    const float attackY = coordinates.y + adjustment.y + std::cos(radianAngle) * reach;
+
+    entity->GetServer()->applyDamageAt(damage,{attackX, attackY}, entity->GetId());
+
+    const auto renderingComponent = entity->GetRenderingComponent();
+    const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(angle);
+    renderingComponent->PlayAnimation(AnimationType::ATTACK, direction, true);
+
+}
+
 
 //EntityHealthComponent methods
 void EntityHealthComponent::Heal(const int amount) {
@@ -285,17 +305,29 @@ void EventBindings::InitializeBindings() {
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::MOVE, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_Move*>(e);
-        entity->GetLogicComponent()->Move(data->GetDeltaTime(), data->dX, data->dY, *entity->GetCollisionComponent(), entity->GetServer());
+        const auto logicComponent = entity->GetLogicComponent();
+        const auto oldCoordinates{logicComponent->GetCoordinates()};
+
+        logicComponent->Move(data->GetDeltaTime(), data->dX, data->dY, *entity->GetCollisionComponent(), entity->GetServer());
+
+        const auto coordinates{logicComponent->GetCoordinates()};
+        const auto dir = EntityRenderingComponent::GetDirectionBaseOnAngle(logicComponent->GetAngle());
+        if (oldCoordinates.x == coordinates.x && oldCoordinates.y == coordinates.y)
+        entity->GetRenderingComponent()->PlayAnimation(AnimationType::IDLE, dir, false);
+        else
+        entity->GetRenderingComponent()->PlayAnimation(AnimationType::RUNNING, dir, false);
+
+
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::MOVE_TO, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_MoveTo*>(e);
-        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, entity, entity->GetServer());
+        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, entity);
 
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::CLICK_MOVE, [](IEntity* entity, const EntityEvent *e) {
        const auto data = dynamic_cast<const Event_ClickMove*>(e);
         entity->GetLogicComponent()->interrupted = true;
-        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, entity, entity->GetServer());
+        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, entity);
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::HEAL, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_Heal*>(e);

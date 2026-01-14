@@ -152,7 +152,7 @@ Event_ClickAttack::Event_ClickAttack(const int attackType , const int damage, Co
     this->type = Type::CLICK_ATTACK;
     this->damage = damage;
     this->attackType = attackType;
-    this->tile = coordinates;
+    this->coordinates = coordinates;
 }
 
 std::unique_ptr<EntityEvent> Event_ClickAttack::Create(int attackType ,int damage, Coordinates coordinates) {

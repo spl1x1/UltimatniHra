@@ -60,7 +60,7 @@ public:
     [[nodiscard]] int GetAngle() const override;
     [[nodiscard]] HitboxContext GetHitboxRenderingContext() const override;
     [[nodiscard]] int GetId() const override;
-    [[nodiscard]] float GetReach() const override;
+    [[nodiscard]] int GetReach() const override;
 
 
     EntityCollisionComponent* GetCollisionComponent() override;

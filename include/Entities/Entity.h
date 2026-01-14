@@ -91,6 +91,7 @@ class EntityLogicComponent {
     int angle{0};
     float speed{0};
     bool interrupted{false};
+    bool blockInputs{false};
 
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
@@ -107,7 +108,8 @@ public:
 
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
-    void MoveTo(float deltaTime, float targetX, float targetY,IEntity* entity, const Server* server);
+    void MoveTo(float deltaTime, float targetX, float targetY,IEntity* entity);
+    static void PerformAttack(IEntity* entity, int attackType, int damage);
     void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
     void AddEvent(std::unique_ptr<EntityEvent> eventData);
 
@@ -180,7 +182,7 @@ public:
     [[nodiscard]] virtual int GetAngle() const = 0;
     [[nodiscard]] virtual HitboxContext GetHitboxRenderingContext() const = 0;
     [[nodiscard]] virtual int GetId() const = 0;
-    [[nodiscard]] virtual float GetReach() const = 0;
+    [[nodiscard]] virtual int GetReach() const = 0;
 
 
     //Entity component getters

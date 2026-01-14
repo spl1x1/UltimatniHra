@@ -59,34 +59,7 @@ void Window::handleMouseInputs() const {
     SDL_MouseButtonFlags mousestates = SDL_GetMouseState(nullptr, nullptr);
 
     if ((mousestates^SDL_BUTTON_LMASK) == 0) {
-        Coordinates cooridinates = {data.mousePosition.x/32, data.mousePosition.y/32};
-        int value = server->getMapValue(
-            static_cast<int>(cooridinates.x),
-            static_cast<int>(cooridinates.y) ,
-            WorldData::BIOME_MAP
-        );
-        SDL_Log("Tile X: %d, Tile Y: %d",
-                static_cast<int>(cooridinates.x),
-                static_cast<int>(cooridinates.y));
-        SDL_Log("Biome ID: %d",
-                value);
-        value = server->getMapValue(
-            static_cast<int>(cooridinates.x),
-            static_cast<int>(cooridinates.y) ,
-            WorldData::COLLISION_MAP
-        );
-        SDL_Log("Collision ID at tile: %d", value);
-        if (value > 0) {
-            auto structure = server->getStructure(value);
-            SDL_Log("Structure Type: %d", structure->getType());
-            auto renderingContext = structure->GetRenderingContext();
-            SDL_Log("Structure variant: %.2f  %.2f ",
-                renderingContext.rect->x, renderingContext.rect->y);
-            SDL_Log("Rendering context w, h: %.2f %.2f",
-                renderingContext.rect->w, renderingContext.rect->h);
-            SDL_Log("Structure texture: %s",
-                renderingContext.textureName.c_str());
-        }
+        server->playerUpdate(Event_ClickAttack::Create(1,10,{data.mousePosition.x +16, data.mousePosition.y +16}));
     }
     if ((mousestates ^ SDL_BUTTON_RMASK) == 0) {
         server->playerUpdate(Event_ClickMove::Create(data.mousePosition.x +16, data.mousePosition.y +16));

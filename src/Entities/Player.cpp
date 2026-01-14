@@ -11,15 +11,9 @@
 //PlayerNew
 
 void Player::Tick() {
-    const auto oldCoords{_entityLogicComponent.GetCoordinates()};
     const auto deltaTime = _server->getDeltaTime_unprotected();
-    const auto dir = EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
     _entityRenderingComponent.Tick(deltaTime);
     _entityLogicComponent.Tick(_server, *this);
-    if (oldCoords.x == _entityLogicComponent.GetCoordinates().x && oldCoords.y == _entityLogicComponent.GetCoordinates().y)
-        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, dir, false);
-    else
-        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, dir, false);
 }
 
 RenderingContext Player::GetRenderingContext() {
@@ -106,6 +100,10 @@ HitboxContext Player::GetHitboxRenderingContext() const {
 
 int Player::GetId() const {
     return id;
+}
+
+int Player::GetReach() const {
+    return reach;
 }
 
 EntityCollisionComponent * Player::GetCollisionComponent() {
