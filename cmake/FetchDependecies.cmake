@@ -19,7 +19,7 @@ add_library(SDL::SDL ALIAS SDL3-static )
 add_library(SDL_image::SDL_image ALIAS SDL3_image-static)
 
 #other libs
-CPMAddPackage("gh:nlohmann/json#55f9368")
+CPMAddPackage("gh:simdjson/simdjson#8b69401")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
 CPMAddPackage("gh:ocornut/imgui#683f916")
 #CPMAddPackage("gh:ValveSoftware/GameNetworkingSockets#fa569cb") #nepouzivame sockets knihovna
@@ -35,8 +35,8 @@ endif()
 target_link_libraries(LibsBundle INTERFACE
         SDL3::SDL3
         SDL3_image::SDL3_image
-        nlohmann_json::nlohmann_json
         RmlUi::RmlUi
+        simdjson::simdjson
 )
 
 
