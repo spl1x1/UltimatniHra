@@ -158,6 +158,10 @@ float EntityLogicComponent::GetSpeed() const {
     return speed;
 }
 
+bool EntityLogicComponent::IsInterrupted() const {
+    return lockTime > 0.0f;
+}
+
 
 void EntityLogicComponent::SetAngleBasedOnMovement(const float dX, const float dY) {
     angle = static_cast<int>(std::floor(std::atan2(dX, dY) * 180.0f / M_PI));
@@ -188,6 +192,13 @@ void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
         if (event->validate()) EventBindings::Callback(&entity, event);
     }; //Process event at index
 
+    auto updateLockTime = [&](const float deltaTime) {
+        if (lockTime > 0.0f) {
+            lockTime -= deltaTime;
+            if (lockTime < 0.0f) lockTime = 0.0f;
+        }
+    };
+
     for (auto &e : queueUpEvents) {
         events.emplace_back(std::move(e));
     }
@@ -199,6 +210,7 @@ void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
     events.clear();
     interruptedEvents.clear();
     interrupted = false;
+    updateLockTime(dt);
 }
 
 void EntityLogicComponent::AddEvent(std::unique_ptr<EntityEvent> eventData) {
@@ -206,6 +218,7 @@ void EntityLogicComponent::AddEvent(std::unique_ptr<EntityEvent> eventData) {
 }
 
 bool EntityLogicComponent::Move(const float deltaTime, const float dX,const float dY, EntityCollisionComponent &collisionComponent, const Server* server) {
+    if (lockTime > 0.0f) return false;
     const float newX{coordinates.x + dX * speed* deltaTime};
     const float newY{coordinates.y + dY * speed * deltaTime};
 
@@ -221,6 +234,7 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
 }
 
 void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, IEntity* entity) {
+    if (lockTime > 0.0f) return;
     const auto adjustment = entity->GetRenderingComponent()->CalculateCenterOffset(*entity);
     float diffX{targetX - coordinates.x - adjustment.x};
     float diffY{targetY - coordinates.y - adjustment.y};
@@ -237,6 +251,7 @@ void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, co
 }
 
 void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, const int damage) {
+    lockTime = 0.5f; //Example lock time for attack
     const auto angle{entity->GetLogicComponent()->GetAngle()};
     const auto reach{entity->GetReach()};
     const auto adjustment = entity->GetRenderingComponent()->CalculateCenterOffset(*entity);
@@ -246,12 +261,11 @@ void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, 
     const float attackX = coordinates.x + adjustment.x + std::sin(radianAngle) * reach;
     const float attackY = coordinates.y + adjustment.y + std::cos(radianAngle) * reach;
 
-    entity->GetServer()->applyDamageAt(damage,{attackX, attackY}, entity->GetId());
+    entity->GetServer()->applyDamageAt_unprotected(damage,{attackX, attackY} );
 
     const auto renderingComponent = entity->GetRenderingComponent();
     const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(angle);
     renderingComponent->PlayAnimation(AnimationType::ATTACK, direction, true);
-
 }
 
 
@@ -305,18 +319,7 @@ void EventBindings::InitializeBindings() {
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::MOVE, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_Move*>(e);
-        const auto logicComponent = entity->GetLogicComponent();
-        const auto oldCoordinates{logicComponent->GetCoordinates()};
-
-        logicComponent->Move(data->GetDeltaTime(), data->dX, data->dY, *entity->GetCollisionComponent(), entity->GetServer());
-
-        const auto coordinates{logicComponent->GetCoordinates()};
-        const auto dir = EntityRenderingComponent::GetDirectionBaseOnAngle(logicComponent->GetAngle());
-        if (oldCoordinates.x == coordinates.x && oldCoordinates.y == coordinates.y)
-        entity->GetRenderingComponent()->PlayAnimation(AnimationType::IDLE, dir, false);
-        else
-        entity->GetRenderingComponent()->PlayAnimation(AnimationType::RUNNING, dir, false);
-
+        entity->GetLogicComponent()->Move(data->GetDeltaTime(), data->dX, data->dY, *entity->GetCollisionComponent(), entity->GetServer());
 
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::MOVE_TO, [](IEntity* entity, const EntityEvent *e) {
@@ -340,12 +343,11 @@ void EventBindings::InitializeBindings() {
     instance->bindings.insert_or_assign(EntityEvent::Type::ATTACK, [](IEntity* entity, const EntityEvent *e) {
         const auto server{entity->GetServer()};
         const auto data =  dynamic_cast<const Event_Attack*>(e);
-        server->applyDamageAt(data->damage, entity->GetLogicComponent()->GetCoordinates());
+        server->applyDamageAt_unprotected(data->damage, entity->GetLogicComponent()->GetCoordinates());
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::CLICK_ATTACK, [](IEntity* entity, const EntityEvent *e) {
-        const auto server{entity->GetServer()};
         const auto data =  dynamic_cast<const Event_ClickAttack*>(e);
-        server->applyDamageAt(data->damage, data->coordinates);
+        entity->GetLogicComponent()->PerformAttack(entity, data->attackType, data->damage);
     });
 
 }

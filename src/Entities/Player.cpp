@@ -12,8 +12,20 @@
 
 void Player::Tick() {
     const auto deltaTime = _server->getDeltaTime_unprotected();
+    const auto oldCoordinates = _entityLogicComponent.GetCoordinates();
     _entityRenderingComponent.Tick(deltaTime);
     _entityLogicComponent.Tick(_server, *this);
+    const auto newCoordinates = _entityLogicComponent.GetCoordinates();
+    if (_entityLogicComponent.IsInterrupted()) return;
+
+    if (oldCoordinates.x != newCoordinates.x || oldCoordinates.y != newCoordinates.y) {
+        const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
+        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, direction, false);
+    } else {
+        const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
+        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, direction, false);
+    }
+
 }
 
 RenderingContext Player::GetRenderingContext() {
@@ -41,16 +53,6 @@ void Player::Save(Server* server) {
     if (currentSlot >= 0) {
         SaveManager::getInstance().saveGame(currentSlot, server);
     }
-}
-
-void Player::Move(float dX, float dY) {
-    const auto oldCoords{_entityLogicComponent.GetCoordinates()};
-    const auto dir{EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle())};
-    _entityLogicComponent.Move(_server->getDeltaTime(),dX,dY, _entityCollisionComponent, _server);
-    if (oldCoords.x == _entityLogicComponent.GetCoordinates().x && oldCoords.y == _entityLogicComponent.GetCoordinates().y)
-        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, dir, false);
-    else
-        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, dir, false);
 }
 
 void Player::SetId(const int newId) {

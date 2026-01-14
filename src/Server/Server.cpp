@@ -61,6 +61,23 @@ bool Server::isPlayerColliding(int playerId) {
     return false; // Return false if entity not found
 }
 
+int Server::getNextEntityId() {return _nextEntityId++;}
+
+int Server::getNextPlayerId() {return _nextPlayerId++;}
+
+int Server::getNextStructureId() {
+    if (!reclaimedStructureIds.empty()) {
+        int id = reclaimedStructureIds.back();
+        reclaimedStructureIds.pop_back();
+        return id;
+    }
+    return ++_nextStructureId;
+}
+
+int Server::getNextDamageAreaId() {
+    return _nextDamageAreaId++;
+}
+
 void Server::setDeltaTime(float dt) {
     std::lock_guard lock(serverMutex);
     _deltaTime = dt;
@@ -207,44 +224,50 @@ std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates botto
     return StructureIdCache;
 }
 
-void Server::applyDamageAt(int damage, Coordinates position, const int entityId) {
-    auto tile{TileCoordinates{
+void Server::applyDamageAt_unprotected(int damage, Coordinates position, const int entityId) {
+    const auto tile{TileCoordinates{
         .x = static_cast<int>(std::floor(position.x / 32.0f)),
         .y = static_cast<int>(std::floor(position.y / 32.0f))
     }};
-    damageTiles.push_back({tile, damage, entityId});
+    SDL_Log("Applying %d damage at tile (%d, %d) from entity %d", damage, tile.x, tile.y, entityId);
+    damageTiles.push_back({tile, damage, entityId, getNextDamageAreaId()});
 }
 
 void Server::Tick() {
 
-    auto checkDamage = [this](const std::shared_ptr<IEntity>& entity) {
-        const auto coordinates{entity->GetCoordinates()};
-        const auto tile{TileCoordinates{
-            .x = static_cast<int>(std::floor(coordinates.x / 32.0f)),
-            .y = static_cast<int>(std::floor(coordinates.y / 32.0f))
-        }};
-        const auto entityId{entity->GetId()};
+    auto checkDamage = [this](const std::shared_ptr<IEntity>& entity) ->int {
+        const auto hitbox = entity->GetCollisionComponent()->GetHitbox();
+        std::set<int> appliedDamageIds{};
+        int totalDamage{0};
         for (const auto damageTile : damageTiles ) {
-            if (damageTile.tile.x == tile.x && damageTile.tile.y == tile.y) {
-                if (damageTile.entityId == entityId) continue;
-                entity->GetHealthComponent()->TakeDamage(damageTile.damage);
+            if (damageTile.entityId == entity->GetId() || appliedDamageIds.contains(damageTile.damageInstatnceId)) continue; //Entity nemuze ublizit sama sobe
+            if (hitbox->corners[0].x > (damageTile.tile.x +1) *32.0f || hitbox->corners[1].x < damageTile.tile.x *32.0f
+                || hitbox->corners[0].y > (damageTile.tile.y +1) *32.0f || hitbox->corners[2].y < damageTile.tile.y *32.0f) {
+                continue;
             }
+            totalDamage += damageTile.damage;
+            appliedDamageIds.insert(damageTile.damageInstatnceId);
         }
+        return totalDamage;
     };
 
     std::lock_guard lock(serverMutex);
     for (const auto &entity: _entities | std::views::values) {
         if (!entity) continue;
-        entity->Tick();
         checkDamage(entity);
+        entity->Tick();
     }
     for (const auto &player: _players | std::views::values) {
         if (!player) continue;
+        const int damage = checkDamage(player);
+        if (damage > 0) {
+            playerUpdate(Event_Damage::Create(damage), player->GetId());
+        }
         player->Tick();
-        checkDamage(player);
     }
 
     damageTiles.clear();
+    _nextDamageAreaId = 0;
 }
 
 std::map<int,std::shared_ptr<IEntity>> Server::getPlayers() {

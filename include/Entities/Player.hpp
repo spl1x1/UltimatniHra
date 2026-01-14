@@ -27,6 +27,7 @@ class Player final : public IEntity {
     Server* _server;
     int id{};
     int reach{64}; //Player reach in pixels
+    bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes)
 
 public:
     //Interface methods implementation
@@ -36,9 +37,6 @@ public:
     static void Create(Server* server, int slotId) ;
     static void Load(Server* server, int slotId);
     static void Save(Server* server);
-
-    //Entity actions
-    void Move(float dX, float dY) override;
 
     //Setters
     void SetId(int newId) override;

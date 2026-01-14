@@ -91,7 +91,8 @@ class EntityLogicComponent {
     int angle{0};
     float speed{0};
     bool interrupted{false};
-    bool blockInputs{false};
+    float lockTime{0};
+    float currentTime{0};
 
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
@@ -105,11 +106,12 @@ public:
     void SetSpeed(float newSpeed);
     [[nodiscard]] float GetSpeed() const;
 
+    bool IsInterrupted() const;
 
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
     void MoveTo(float deltaTime, float targetX, float targetY,IEntity* entity);
-    static void PerformAttack(IEntity* entity, int attackType, int damage);
+    void PerformAttack(IEntity* entity, int attackType, int damage);
     void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
     void AddEvent(std::unique_ptr<EntityEvent> eventData);
 
@@ -159,9 +161,6 @@ public:
     //Interface methods
     virtual void Tick() = 0;
     virtual RenderingContext GetRenderingContext() = 0;
-
-    //Entity actions
-    virtual void Move(float dX, float dY) = 0;
 
     //Setters
     virtual void SetId(int newId) = 0;
