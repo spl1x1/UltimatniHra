@@ -6,6 +6,8 @@
 #define ENTITYEVENT_H
 #include <memory>
 
+#include "../Application/dataStructures.h"
+
 //Abstract event class for entity events
 class EntityEvent {
 public:
@@ -32,6 +34,7 @@ public:
         INTERRUPT,
         // data = float x, float y, player specific event
         CLICK_MOVE,
+        CLICK_ATTACK,
         //interupts type of event sent right after
         INTERRUPT_SPECIFIC
     };
@@ -114,6 +117,28 @@ public:
     [[nodiscard]] bool validate() const override;
     [[nodiscard]] static std::unique_ptr<EntityEvent> Create(Type eventType);
 };
+
+class Event_Attack final : public EntityEvent {
+public:
+    int damage{-1};
+    int attackType{-1}; //To be defined later
+
+    explicit Event_Attack(int attackType, int damage);
+    [[nodiscard]] bool validate() const override;
+    [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(int attackType, int damage);
+};
+
+class Event_ClickAttack final : public EntityEvent {
+public:
+    int damage{-1};
+    int attackType{-1}; //To be defined later
+    Coordinates coordinates{};
+
+    explicit Event_ClickAttack(int attackType, int damage, Coordinates coordinates);
+    [[nodiscard]] bool validate() const override;
+    [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(int attackType, int damage, Coordinates coordinates);
+};
+
 
 
 #endif //ENTITYEVENT_H

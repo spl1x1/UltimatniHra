@@ -25,6 +25,8 @@ class Player final : public IEntity {
     EntityInventoryComponent _entityInventoryComponent = EntityInventoryComponent();
 
     Server* _server;
+    int id{};
+    int reach{64}; //Player reach in pixels
 
 public:
     //Interface methods implementation
@@ -39,6 +41,7 @@ public:
     void Move(float dX, float dY) override;
 
     //Setters
+    void SetId(int newId) override;
     void SetCoordinates(const Coordinates &newCoordinates) override;
     //Sets entity angle in degrees
     void SetAngle(int newAngle) override;
@@ -56,6 +59,8 @@ public:
     [[nodiscard]] CollisionStatus GetCollisionStatus() const override;
     [[nodiscard]] int GetAngle() const override;
     [[nodiscard]] HitboxContext GetHitboxRenderingContext() const override;
+    [[nodiscard]] int GetId() const override;
+    [[nodiscard]] float GetReach() const override;
 
 
     EntityCollisionComponent* GetCollisionComponent() override;

@@ -42,7 +42,8 @@ class Server : public std::enable_shared_from_this<Server> {
     int _nextStructureId = 0; // 0 zatim neni vyhrazeno
     std::vector<int> reclaimedStructureIds{}; //Pro pripad ze budeme chtit reclaimovat
 
-    std::set<int> EntityIdCache; //Cache pro rychlejsi hledani entit v oblasti, set protoze nechceme duplikaty
+    std::set<int> StructureIdCache; //Cache pro rychlejsi hledani entit v oblasti, set protoze nechceme duplikaty
+    std::vector<DamageArea> damageTiles{}; //List souradnic kde se aplikuje damage, aby se neaplikovala vicekrat na stejne misto v jednom ticku
 
     struct cacheValidity {
         bool isCacheValid{false};
@@ -100,6 +101,7 @@ public:
     void Tick(); //Tick serveru, zatim tickuje sprity TODO: implementovat, nezapomenout na thread safety
     void playerUpdate(std::unique_ptr<EntityEvent> e, int playerId = 0); //Tick pro hrace TODO: implementovat, nezapomenout na thread safety
     std::set<int> getStructuresInArea(Coordinates topLeft, Coordinates bootomLeft); //Vraci ID vsech entit v dane oblasti TODO: implementovat, nezapomenout na thread safety
+    void applyDamageAt(int damage, Coordinates position, int entityId = -1); //Aplikuje damage vsem entitam v okoli dane pozice TODO: implementovat, nezapomenout na thread safety
 
 
     void addEntity(Coordinates coordinates, EntityType type); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety

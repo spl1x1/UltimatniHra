@@ -13,6 +13,11 @@ struct Coordinates {
     float y = 0;
 };
 
+struct TileCoordinates {
+    int x = 0;
+    int y = 0;
+};
+
 struct CollisionStatus{
     bool colliding;
     bool collisionDisabled;
@@ -44,5 +49,12 @@ enum class OreType {
     GOLD
     // more types in future
 };
+
+struct DamageArea {
+    TileCoordinates tile;
+    int damage{};
+    int entityId{-1}; // ID of the entity that caused the damage
+};
+
 
 #endif //ULTIMATNIHRA_DATASTRUCTURES_H
