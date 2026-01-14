@@ -56,9 +56,29 @@ void Window::loadConfig() {
 
 void Window::handleMouseInputs() const {
     if (!data.drawMousePreview) return;
+
+    auto CalculateMouseAngle = [](const float mouseX, const float mouseY, const float playerX, const float playerY) -> int {
+        auto angle = static_cast<int>(std::atan2(mouseX - playerX,
+                                                 mouseY - playerY) * 180.0f / M_PI);
+        if (angle < 0) angle += 360;
+        return angle;
+    };
+
     SDL_MouseButtonFlags mousestates = SDL_GetMouseState(nullptr, nullptr);
 
     if ((mousestates^SDL_BUTTON_LMASK) == 0) {
+        const auto player = server->getPlayer(0);
+        const auto playerPos = player->GetCoordinates();
+        const auto adjustment = player->GetRenderingComponent()->CalculateCenterOffset(*player);
+        Coordinates playerCoords{
+            .x = playerPos.x + adjustment.x,
+            .y = playerPos.y + adjustment.y
+        };
+        const auto angle = CalculateMouseAngle(data.mousePosition.x +16, data.mousePosition.y +16,
+                                         playerCoords.x,
+                                         playerCoords.y);
+        SDL_Log("Mouse angle: %d", angle);
+        server->playerUpdate(Event_SetAngle::Create(angle));
         server->playerUpdate(Event_ClickAttack::Create(1,10,{data.mousePosition.x +16, data.mousePosition.y +16}));
     }
     if ((mousestates ^ SDL_BUTTON_RMASK) == 0) {

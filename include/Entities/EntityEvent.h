@@ -36,7 +36,8 @@ public:
         CLICK_MOVE,
         CLICK_ATTACK,
         //interupts type of event sent right after
-        INTERRUPT_SPECIFIC
+        INTERRUPT_SPECIFIC,
+        SET_ANGLE
     };
 protected:
     Type type{Type::NONE};
@@ -138,6 +139,18 @@ public:
     [[nodiscard]] bool validate() const override;
     [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(int attackType, int damage, Coordinates coordinates);
 };
+
+class Event_SetAngle final : public EntityEvent {
+public:
+    int angle{0};
+
+    explicit Event_SetAngle(int angle);
+    [[nodiscard]] bool validate() const override;
+    [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(int angle);
+};
+
+
+
 
 
 

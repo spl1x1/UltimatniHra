@@ -349,6 +349,10 @@ void EventBindings::InitializeBindings() {
         const auto data =  dynamic_cast<const Event_ClickAttack*>(e);
         entity->GetLogicComponent()->PerformAttack(entity, data->attackType, data->damage);
     });
+    instance->bindings.insert_or_assign(EntityEvent::Type::SET_ANGLE, [](IEntity* entity, const EntityEvent *e) {
+        const auto data =  dynamic_cast<const Event_SetAngle*>(e);
+        entity->GetLogicComponent()->SetAngle(data->angle);
+    });
 
 }
 
