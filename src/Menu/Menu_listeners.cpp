@@ -11,6 +11,10 @@
 #include <cstdio>
 #include <charconv>
 #include <cmath>
+#include <sstream>
+#include <algorithm>
+#include <functional>
+#include <cstdlib>
 
 inline UIComponent* getUI(Window* win) {
     return win->data.uiComponent.get();
@@ -574,28 +578,142 @@ void QuitGameButtonListener::ProcessEvent(Rml::Event&) {
 CreateGameListener::CreateGameListener(Window* window, UIComponent* uiComponent, int slotId)
     : window(window), uiComponent(uiComponent), slotId(slotId) {}
 
+// Global variable to store the current slot being created
+static int g_pendingCreateSlot = -1;
+
 void CreateGameListener::ProcessEvent(Rml::Event&) {
-    SDL_Log("Create game in slot %d", slotId);
+    SDL_Log("Opening create world menu for slot %d", slotId);
 
-    SaveManager& sm = SaveManager::getInstance();
+    auto documents = uiComponent->getDocuments();
 
-    if (!sm.createNewSave(slotId, "New Adventure")) {
-        SDL_Log("Failed to create save in slot %d", slotId);
+    if (!documents->contains("create_world")) {
+        SDL_Log("create_world document not found!");
         return;
     }
 
-    // Set current slot so save works when quitting
-    sm.setCurrentSlot(slotId);
+    auto createWorldDoc = documents->at("create_world").get();
 
-    auto documents = uiComponent->getDocuments();
+    // Store the slot ID globally for the confirm listener
+    g_pendingCreateSlot = slotId;
+
+    // Clear any previous input values
+    if (Rml::Element* nameInput = createWorldDoc->GetElementById("world_name_input")) {
+        nameInput->SetAttribute("value", "");
+    }
+    if (Rml::Element* seedInput = createWorldDoc->GetElementById("seed_input")) {
+        seedInput->SetAttribute("value", "");
+    }
+
+    // Register listeners only once
+    static bool createWorldListenersRegistered = false;
+    if (!createWorldListenersRegistered) {
+        if (Rml::Element* createButton = createWorldDoc->GetElementById("create_world_button")) {
+            createButton->AddEventListener(Rml::EventId::Click,
+                new CreateWorldConfirmListener(window, uiComponent, -1)); // slotId comes from g_pendingCreateSlot
+        }
+        if (Rml::Element* backButton = createWorldDoc->GetElementById("back_button")) {
+            backButton->AddEventListener(Rml::EventId::Click,
+                new CreateWorldBackListener(window, uiComponent));
+        }
+        createWorldListenersRegistered = true;
+    }
+
     if (documents->contains("play_menu")) {
         documents->at("play_menu")->Hide();
     }
 
-    window->server->setSeed(std::rand());
+    createWorldDoc->Show();
+}
+
+// --------------------------------------------------
+// CreateWorldConfirmListener
+// --------------------------------------------------
+CreateWorldConfirmListener::CreateWorldConfirmListener(Window* window, UIComponent* uiComponent, int slotId)
+    : window(window), uiComponent(uiComponent), slotId(slotId) {}
+
+void CreateWorldConfirmListener::ProcessEvent(Rml::Event& event) {
+    // Use the global pending slot instead of stored slotId
+    int activeSlot = g_pendingCreateSlot;
+    if (activeSlot < 0) {
+        SDL_Log("Error: No pending slot for world creation");
+        return;
+    }
+    SDL_Log("Create world confirmed for slot %d", activeSlot);
+
+    auto documents = uiComponent->getDocuments();
+    auto createWorldDoc = documents->at("create_world").get();
+
+    // Get world name from input
+    std::string worldName = "New Adventure";
+    if (Rml::Element* nameInput = createWorldDoc->GetElementById("world_name_input")) {
+        Rml::String inputValue = nameInput->GetAttribute<Rml::String>("value", "");
+        if (!inputValue.empty()) {
+            worldName = inputValue.c_str();
+        }
+    }
+
+    // Get seed from input (if provided, otherwise random)
+    unsigned int seed = static_cast<unsigned int>(std::rand());
+    if (Rml::Element* seedInput = createWorldDoc->GetElementById("seed_input")) {
+        Rml::String seedValue = seedInput->GetAttribute<Rml::String>("value", "");
+        if (!seedValue.empty()) {
+            // Try to parse as number, otherwise use string hash
+            std::string seedStr = seedValue.c_str();
+            char* end;
+            unsigned long parsedSeed = std::strtoul(seedStr.c_str(), &end, 10);
+            if (*end == '\0' && end != seedStr.c_str()) {
+                // Successfully parsed as number
+                seed = static_cast<unsigned int>(parsedSeed);
+            } else {
+                // Use string hash as seed
+                seed = static_cast<unsigned int>(std::hash<std::string>{}(seedStr));
+            }
+        }
+    }
+
+    SDL_Log("Creating world '%s' with seed %u", worldName.c_str(), seed);
+
+    SaveManager& sm = SaveManager::getInstance();
+
+    if (!sm.createNewSave(activeSlot, worldName)) {
+        SDL_Log("Failed to create save in slot %d", activeSlot);
+        return;
+    }
+
+    // Set current slot so save works when quitting
+    sm.setCurrentSlot(activeSlot);
+
+    // Reset the pending slot
+    g_pendingCreateSlot = -1;
+
+    if (documents->contains("create_world")) {
+        documents->at("create_world")->Hide();
+    }
+
+    window->server->setSeed(seed);
     window->initGame();
 
-    Player::Create(window->server.get(), slotId);
+    Player::Create(window->server.get(), activeSlot);
+}
+
+// --------------------------------------------------
+// CreateWorldBackListener
+// --------------------------------------------------
+CreateWorldBackListener::CreateWorldBackListener(Window* window, UIComponent* uiComponent)
+    : window(window), uiComponent(uiComponent) {}
+
+void CreateWorldBackListener::ProcessEvent(Rml::Event&) {
+    SDL_Log("Back to play menu from create world");
+
+    auto documents = uiComponent->getDocuments();
+
+    if (documents->contains("create_world")) {
+        documents->at("create_world")->Hide();
+    }
+
+    if (documents->contains("play_menu")) {
+        documents->at("play_menu")->Show();
+    }
 }
 
 // --------------------------------------------------
@@ -839,13 +957,67 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
         if (window) {
             auto* inventory = window->data.uiComponent->getInventoryController();
             if (inventory) {
-                // Create a test wooden sword with icon
-                auto sword = ItemFactory::createSword(MaterialType::WOOD);
-                if (sword) {
-                    sword->setIconPath("textures/items/wooden_sword.png");
-                    inventory->addItem(std::move(sword));
-                    printf("Added Wooden Sword to inventory\n");
+                // Parse item name and amount from args (e.g. "stone_sword", "iron_axe 5")
+                std::string itemName = "wood_sword";
+                int amount = 1;
+
+                if (!args.empty()) {
+                    std::istringstream iss(args);
+                    std::string amountStr;
+                    iss >> itemName >> amountStr;
+
+                    // Convert item name to lowercase
+                    std::transform(itemName.begin(), itemName.end(), itemName.begin(), ::tolower);
+
+                    // Parse amount if provided
+                    if (!amountStr.empty()) {
+                        std::from_chars(amountStr.data(), amountStr.data() + amountStr.size(), amount);
+                        if (amount <= 0) amount = 1;
+                    }
                 }
+
+                // Parse material and type from item name (e.g. "stone_sword" -> stone, sword)
+                size_t underscorePos = itemName.find('_');
+                if (underscorePos == std::string::npos) {
+                    printf("Invalid item format: %s (use: material_type, e.g. stone_sword)\n", itemName.c_str());
+                    return;
+                }
+
+                std::string materialStr = itemName.substr(0, underscorePos);
+                std::string weaponType = itemName.substr(underscorePos + 1);
+
+                // Parse material
+                MaterialType material = MaterialType::WOOD;
+                if (materialStr == "wood" || materialStr == "wooden") material = MaterialType::WOOD;
+                else if (materialStr == "leather") material = MaterialType::LEATHER;
+                else if (materialStr == "stone") material = MaterialType::STONE;
+                else if (materialStr == "iron") material = MaterialType::IRON;
+                else if (materialStr == "steel") material = MaterialType::STEEL;
+                else if (materialStr == "dragonscale") material = MaterialType::DRAGONSCALE;
+
+                // Create weapons based on amount
+                for (int i = 0; i < amount; i++) {
+                    std::unique_ptr<Item> item;
+                    if (weaponType == "sword") item = ItemFactory::createSword(material);
+                    else if (weaponType == "axe") item = ItemFactory::createAxe(material);
+                    else if (weaponType == "pickaxe") item = ItemFactory::createPickaxe(material);
+                    else if (weaponType == "bow") item = ItemFactory::createBow(material);
+                    else if (weaponType == "helmet") item = ItemFactory::createHelmet(material);
+                    else if (weaponType == "chestplate") item = ItemFactory::createChestplate(material);
+                    else if (weaponType == "leggings") item = ItemFactory::createLeggings(material);
+                    else if (weaponType == "boots") item = ItemFactory::createBoots(material);
+
+                    else {
+                        printf("Unknown weapon type: %s (use: sword, axe, pickaxe, bow)\n", weaponType.c_str());
+                        return;
+                    }
+
+                    if (item) {
+                        inventory->addItem(std::move(item));
+                    }
+                }
+
+                printf("Added %d x %s to inventory\n", amount, itemName.c_str());
 
                 // Also show the inventory
                 inventory->show();

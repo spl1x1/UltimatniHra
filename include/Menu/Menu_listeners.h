@@ -195,6 +195,30 @@ private:
     int slotId;
 };
 
+// ===================================================================
+// CREATE WORLD MENU LISTENERS
+// ===================================================================
+class CreateWorldConfirmListener : public Rml::EventListener {
+public:
+    CreateWorldConfirmListener(Window* window, UIComponent* uiComponent, int slotId);
+    void ProcessEvent(Rml::Event&) override;
+
+private:
+    Window* window;
+    UIComponent* uiComponent;
+    int slotId;
+};
+
+class CreateWorldBackListener : public Rml::EventListener {
+public:
+    CreateWorldBackListener(Window* window, UIComponent* uiComponent);
+    void ProcessEvent(Rml::Event&) override;
+
+private:
+    Window* window;
+    UIComponent* uiComponent;
+};
+
 // --- Load Game ---
 class LoadGameListener : public Rml::EventListener {
 public:

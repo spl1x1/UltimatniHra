@@ -279,7 +279,7 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     break;
             }
 #endif
-            if (keycode == SDLK_Q) {
+            if (keycode == SDLK_TAB) {
                 bool inGame = !documents.at("main_menu")->IsVisible() &&
                               !documents.at("pause_menu")->IsVisible() &&
                               !blockInput;

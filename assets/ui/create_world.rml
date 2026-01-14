@@ -1,0 +1,25 @@
+<rml>
+    <head>
+        <title>Create World</title>
+        <link type="text/rcss" href="create_world.rcss" />
+    </head>
+    <body>
+        <div class="create-world-container">
+            <div class="content-wrapper">
+                <h1>Create New World</h1>
+                <div class="input-group">
+                    <label for="world_name_input">World Name:</label>
+                    <input type="text" id="world_name_input" placeholder="Enter world name"/>
+                </div>
+                <div class="input-group">
+                    <label for="seed_input">Seed (optional):</label>
+                    <input type="text" id="seed_input" placeholder="Enter seed"/>
+                </div>
+                <div class="button-container">
+                    <div id="create_world_button" class="create-button">Create World</div>
+                    <div id="back_button" class="back-button">Back</div>
+                </div>
+            </div>
+        </div>
+    </body>
+</rml>

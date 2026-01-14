@@ -229,7 +229,19 @@ void InventoryController::updateItemDisplay(int slotIndex) {
 
     // Add icon if path is set
     if (!item->getIconPath().empty()) {
-        itemHTML += "<img class='item-icon' src='" + item->getIconPath() + "'/>";
+        // RmlUI resolves paths relative to document location (assets/ui/)
+        // Icons are stored at "assets/textures/items/..."
+        // Use relative path from assets/ui/ to assets/textures/
+        std::string iconPath = item->getIconPath();
+        if (iconPath.rfind("assets/", 0) == 0) {
+            // Go up from assets/ui/ to assets/, then into textures/
+            iconPath = "../" + iconPath.substr(7);
+        }
+        // Also handle paths without assets/ prefix
+        else if (iconPath.rfind("textures/", 0) == 0) {
+            iconPath = "../" + iconPath;
+        }
+        itemHTML += "<img class='item-icon' src='" + iconPath + "'/>";
     } else {
         // Fallback to text name if no icon
         itemHTML += "<span class='item-name'>" + item->getName() + "</span>";
