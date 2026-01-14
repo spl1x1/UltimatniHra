@@ -886,11 +886,38 @@ void ConsoleEventListener::ProcessEvent(Rml::Event& event) {
             }
         }
     }
+    // Handle arrow keys for command history
+    else if (event.GetType() == "keydown" && handler) {
+        int key = event.GetParameter<int>("key_identifier", 0);
+        Rml::Element* input = event.GetTargetElement()->GetOwnerDocument()->GetElementById("console-input");
+
+        if (key == Rml::Input::KI_UP) {
+            // Previous command in history
+            std::string prevCmd = handler->GetPreviousCommand();
+            if (!prevCmd.empty() && input) {
+                input->SetAttribute("value", prevCmd.c_str());
+            }
+            event.StopPropagation();
+        }
+        else if (key == Rml::Input::KI_DOWN) {
+            // Next command in history
+            std::string nextCmd = handler->GetNextCommand();
+            if (input) {
+                input->SetAttribute("value", nextCmd.c_str());
+            }
+            event.StopPropagation();
+        }
+    }
 }
 
-void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
+void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
     printf("Console command: %s\n", command.c_str());
-    //TODO: @LukasKaplanek logika pak sem
+
+    // Add to history
+    if (handler) {
+        handler->AddToHistory(command.c_str());
+    }
+
     std::string cmd = command.c_str();
     if (cmd.empty() || cmd[0] != '/') {
         printf("Error: Commands must start with '/'\n");
@@ -1006,9 +1033,36 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
                     else if (weaponType == "chestplate") item = ItemFactory::createChestplate(material);
                     else if (weaponType == "leggings") item = ItemFactory::createLeggings(material);
                     else if (weaponType == "boots") item = ItemFactory::createBoots(material);
-
+                    // Amulets - parse effect value from material string (e.g. "10_amulet" or "speed_amulet")
+                    else if (weaponType == "amulet") {
+                        int effectValue = 10; // default
+                        // Try to parse material as number for effect value
+                        auto result = std::from_chars(materialStr.data(), materialStr.data() + materialStr.size(), effectValue);
+                        if (result.ec != std::errc()) {
+                            // Not a number, try as amulet type
+                            if (materialStr == "speed") {
+                                item = ItemFactory::createSpeedAmulet(effectValue);
+                            } else if (materialStr == "damage") {
+                                item = ItemFactory::createDamageAmulet(effectValue);
+                            } else if (materialStr == "armour" || materialStr == "armor") {
+                                item = ItemFactory::createArmourAmulet(effectValue);
+                            } else {
+                                printf("Unknown amulet type: %s (use: speed, damage, armour)\n", materialStr.c_str());
+                                return;
+                            }
+                        } else {
+                            // Number provided, need amulet type as third arg
+                            printf("For amulets use: /itemshow <type>_amulet [amount]\n");
+                            printf("  Types: speed, damage, armour\n");
+                            printf("  Example: /itemshow speed_amulet 2\n");
+                            return;
+                        }
+                    }
                     else {
-                        printf("Unknown weapon type: %s (use: sword, axe, pickaxe, bow)\n", weaponType.c_str());
+                        printf("Unknown item type: %s\n", weaponType.c_str());
+                        printf("  Weapons: sword, axe, pickaxe, bow\n");
+                        printf("  Armour: helmet, chestplate, leggings, boots\n");
+                        printf("  Amulets: speed_amulet, damage_amulet, armour_amulet\n");
                         return;
                     }
 
@@ -1049,12 +1103,16 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
 
     else if (commandName == "help") {
         printf("Available commands:\n");
-        printf("  /rmlshow <name>  - Show an RML document\n");
-        printf("  /rmlhide <name>  - Hide an RML document\n");
-        printf("  /rmllist      - List all loaded documents\n");
-        printf("  /itemshow        - Add test item to inventory\n");
-        printf("/damageplayer <amount>        - Sends damage event to server\n");
-        printf("  /help            - Show this help message\n");
+        printf("  /rmlshow <name>     - Show an RML document\n");
+        printf("  /rmlhide <name>     - Hide an RML document\n");
+        printf("  /rmllist            - List all loaded documents\n");
+        printf("  /itemshow <item> [amount] - Add item to inventory\n");
+        printf("      Items: <material>_<type>\n");
+        printf("      Materials: wood, stone, leather, iron, steel, dragonscale\n");
+        printf("      Types: sword, axe, pickaxe, bow, helmet, chestplate, leggings, boots\n");
+        printf("      Amulets: speed_amulet, damage_amulet, armour_amulet\n");
+        printf("  /damageplayer <amount> - Sends damage event to player\n");
+        printf("  /help               - Show this help message\n");
     }
     else {
         printf("Unknown command: %s\n", commandName.c_str());
@@ -1062,7 +1120,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) const {
     }
 }
 
-ConsoleHandler::ConsoleHandler() : document(nullptr) {
+ConsoleHandler::ConsoleHandler() : document(nullptr), windowPtr(nullptr), visible(false), historyIndex(-1) {
 }
 
 ConsoleHandler::~ConsoleHandler() {
@@ -1075,8 +1133,10 @@ void ConsoleHandler::Setup(Rml::ElementDocument* console_doc, Window* window) {
     if (!console_doc) return;
 
     document = console_doc;
+    windowPtr = window;
 
     listener.SetWindow(window);
+    listener.SetHandler(this);
 
     Rml::Element* send_btn = document->GetElementById("send-button");
     if (send_btn) {
@@ -1086,13 +1146,103 @@ void ConsoleHandler::Setup(Rml::ElementDocument* console_doc, Window* window) {
     Rml::Element* input = document->GetElementById("console-input");
     if (input) {
         input->AddEventListener("keydown", &listener);
-        input->Focus();
     }
 
     document->Hide();
+    visible = false;
 }
 
 ConsoleHandler& ConsoleHandler::GetInstance() {
     static ConsoleHandler instance;
     return instance;
+}
+
+void ConsoleHandler::Show() {
+    if (!document) return;
+
+    document->Show();
+    visible = true;
+
+    if (windowPtr) {
+        windowPtr->data.inMenu = true;
+    }
+
+    if (Rml::Element* input = document->GetElementById("console-input")) {
+        // Clear the input field when opening console
+        input->SetAttribute("value", "");
+        input->Focus();
+    }
+
+    // Reset history index when opening console
+    historyIndex = -1;
+
+    SDL_Log("Console shown");
+}
+
+void ConsoleHandler::Hide() {
+    if (!document) return;
+
+    document->Hide();
+    visible = false;
+
+    if (windowPtr) {
+        windowPtr->data.inMenu = false;
+    }
+
+    SDL_Log("Console hidden");
+}
+
+void ConsoleHandler::Toggle() {
+    if (visible) {
+        Hide();
+    } else {
+        Show();
+    }
+}
+
+void ConsoleHandler::AddToHistory(const std::string& command) {
+    if (command.empty()) return;
+
+    // Don't add duplicate of most recent command
+    if (!commandHistory.empty() && commandHistory.back() == command) {
+        return;
+    }
+
+    commandHistory.push_back(command);
+
+    // Trim history if too large
+    if (commandHistory.size() > MAX_HISTORY) {
+        commandHistory.erase(commandHistory.begin());
+    }
+
+    // Reset history index
+    historyIndex = -1;
+}
+
+std::string ConsoleHandler::GetPreviousCommand() {
+    if (commandHistory.empty()) return "";
+
+    if (historyIndex == -1) {
+        // Start from the most recent command
+        historyIndex = static_cast<int>(commandHistory.size()) - 1;
+    } else if (historyIndex > 0) {
+        // Move to older command
+        historyIndex--;
+    }
+
+    return commandHistory[historyIndex];
+}
+
+std::string ConsoleHandler::GetNextCommand() {
+    if (commandHistory.empty() || historyIndex == -1) return "";
+
+    if (historyIndex < static_cast<int>(commandHistory.size()) - 1) {
+        // Move to newer command
+        historyIndex++;
+        return commandHistory[historyIndex];
+    } else {
+        // At the end of history, clear the input
+        historyIndex = -1;
+        return "";
+    }
 }

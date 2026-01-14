@@ -6,6 +6,8 @@
 #define ULTIMATNIHRA_MENU_LISTENERS_H
 
 #include <RmlUi/Core.h>
+#include <vector>
+#include <string>
 
 #include "UIComponent.h"
 #include "../Window/Window.h"
@@ -260,13 +262,17 @@ private:
 // CONSOLE LISTENERS
 // ===================================================================
 
+class ConsoleHandler;
+
 class ConsoleEventListener : public Rml::EventListener {
 private:
     Window* window = nullptr;
-    void ProcessCommand(const Rml::String& command) const;
+    ConsoleHandler* handler = nullptr;
+    void ProcessCommand(const Rml::String& command);
 
 public:
     void SetWindow(Window* win) { window = win; }
+    void SetHandler(ConsoleHandler* h) { handler = h; }
     void ProcessEvent(Rml::Event& event) override;
 };
 
@@ -277,10 +283,27 @@ public:
     void Setup(Rml::ElementDocument* console_doc, Window* window);
     static ConsoleHandler& GetInstance();
 
+    // Visibility management
+    bool IsVisible() const { return visible; }
+    void Show();
+    void Hide();
+    void Toggle();
+
+    // Command history
+    void AddToHistory(const std::string& command);
+    std::string GetPreviousCommand();
+    std::string GetNextCommand();
+
     Rml::ElementDocument* document;
 
 private:
     ConsoleEventListener listener;
+    Window* windowPtr = nullptr;
+    bool visible = false;
 
+    // Command history
+    std::vector<std::string> commandHistory;
+    int historyIndex = -1;
+    static constexpr int MAX_HISTORY = 50;
 };
 #endif //ULTIMATNIHRA_MENU_LISTENERS_H

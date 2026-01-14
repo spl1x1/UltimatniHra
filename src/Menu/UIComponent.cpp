@@ -240,26 +240,16 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                 case SDL_SCANCODE_F1: {
                     if (blockInput) break;
                     auto& consoleHandler = ConsoleHandler::GetInstance();
-                    if (consoleHandler.document) {
-                        if (consoleHandler.document->IsVisible()) {
-                            consoleHandler.document->Hide();
-                            SDL_Log("Console hidden");
-                            windowClass->data.inMenu = false;
-                        }
-                        else {
-                            consoleHandler.document->Show();
-                            SDL_Log("Console show");
-                            windowClass->data.inMenu = true;
-                            if (Rml::Element* input = consoleHandler.document->GetElementById("console-input")) {
-                                input->Focus();
-                            }
-                        }
-                    }
+                    consoleHandler.Toggle();
                     break;
                 }
                 case SDL_SCANCODE_ESCAPE: {
                     if (documents.at("main_menu")->IsVisible()) break;
-                    if (documents.at("console")->IsVisible()) documents.at("console")->Hide();
+                    auto& consoleHandler = ConsoleHandler::GetInstance();
+                    if (consoleHandler.IsVisible()) {
+                        consoleHandler.Hide();
+                        break;
+                    }
                     blockInput = !blockInput;
                     if (blockInput) {
                         SDL_Log("Game paused, input blocked.");
