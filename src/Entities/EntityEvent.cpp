@@ -120,7 +120,41 @@ std::unique_ptr<EntityEvent> Event_InterruptSpecific::Create(Type eventType) {
     return std::make_unique<Event_InterruptSpecific>(eventType);
 }
 
+
 Event_InterruptSpecific::Event_InterruptSpecific(const Type eventType) {
     this->eventToInterrupt = eventType;
     this->type = Type::INTERRUPT_SPECIFIC;
+}
+
+bool Event_Attack::validate() const {
+    if (damage<0) return false;
+    return validateDeltaTime();
+}
+
+Event_Attack::Event_Attack(const int attackType , const int damage) {
+    this->type = Type::ATTACK;
+    this->damage = damage;
+    this->attackType = attackType;
+}
+
+std::unique_ptr<EntityEvent> Event_Attack::Create(int attackType ,int damage) {
+    return std::make_unique<Event_Attack>(attackType, damage);
+}
+
+
+bool Event_ClickAttack::validate() const {
+    if (damage<0) return false;
+    if (coordinates.x <0 || coordinates.y <0) return false;
+    return validateDeltaTime();
+}
+
+Event_ClickAttack::Event_ClickAttack(const int attackType , const int damage, Coordinates coordinates) {
+    this->type = Type::CLICK_ATTACK;
+    this->damage = damage;
+    this->attackType = attackType;
+    this->tile = coordinates;
+}
+
+std::unique_ptr<EntityEvent> Event_ClickAttack::Create(int attackType ,int damage, Coordinates coordinates) {
+    return std::make_unique<Event_ClickAttack>(attackType, damage, coordinates);
 }

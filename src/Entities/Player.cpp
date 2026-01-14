@@ -59,6 +59,10 @@ void Player::Move(float dX, float dY) {
         _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, dir, false);
 }
 
+void Player::SetId(const int newId) {
+    id = newId;
+}
+
 
 void Player::SetCoordinates(const Coordinates &newCoordinates) {
     _entityLogicComponent.SetCoordinates(newCoordinates);
@@ -98,6 +102,10 @@ HitboxContext Player::GetHitboxRenderingContext() const {
     auto context = _entityCollisionComponent.GetHitboxContext();
     context.coordinates = _entityLogicComponent.GetCoordinates();
     return context;
+}
+
+int Player::GetId() const {
+    return id;
 }
 
 EntityCollisionComponent * Player::GetCollisionComponent() {

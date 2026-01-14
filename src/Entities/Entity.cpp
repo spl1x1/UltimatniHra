@@ -305,6 +305,16 @@ void EventBindings::InitializeBindings() {
         const auto data =  dynamic_cast<const Event_Damage*>(e);
         entity->GetHealthComponent()->TakeDamage(data->amount);
     });
+    instance->bindings.insert_or_assign(EntityEvent::Type::ATTACK, [](IEntity* entity, const EntityEvent *e) {
+        const auto server{entity->GetServer()};
+        const auto data =  dynamic_cast<const Event_Attack*>(e);
+        server->applyDamageAt(data->damage, entity->GetLogicComponent()->GetCoordinates());
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::CLICK_ATTACK, [](IEntity* entity, const EntityEvent *e) {
+        const auto server{entity->GetServer()};
+        const auto data =  dynamic_cast<const Event_ClickAttack*>(e);
+        server->applyDamageAt(data->damage, data->coordinates);
+    });
 
 }
 

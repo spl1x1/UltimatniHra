@@ -90,8 +90,9 @@ void Server::setMapValue_unprotected(int x, int y, WorldData::MapType mapType, i
 
 void Server::addPlayer(const std::shared_ptr<IEntity>& player) {
     std::lock_guard lock(serverMutex);
-    int newId = getNextPlayerId();
+    const int newId = getNextPlayerId();
     _players[newId] = player;
+    player->SetId(newId);
 }
 
 void Server::addEntity(const std::shared_ptr<IEntity>& entity) {
@@ -184,12 +185,12 @@ std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates botto
 
 
     if (cacheValidityData.isCacheValid) {
-        return EntityIdCache;
+        return StructureIdCache;
     }
 
     SDL_Log("Refreshing structure ID cache");
     cacheValidityData.lastPlayerPos = topLeft;
-    EntityIdCache.clear();
+    StructureIdCache.clear();
     const int rangeXMin = static_cast<int>(std::floor((topLeft.x) / 32.0f)) - cacheValidityData.rangeForCacheUpdate/32;
     const int rangeYMin = static_cast<int>(std::floor((topLeft.y) / 32.0f)) - cacheValidityData.rangeForCacheUpdate/32;
     const int rangeXMax = static_cast<int>(std::ceil((bottomRight.x) / 32.0f)) + cacheValidityData.rangeForCacheUpdate/32;
@@ -199,23 +200,51 @@ std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates botto
         if (x < 0 || x >= MAPSIZE) continue;
         for (int y = rangeYMin; y <= rangeYMax; y++) {
             if (y < 0 || y >= MAPSIZE) continue;
-            if (int id = getMapValue_unprotected(x, y, WorldData::COLLISION_MAP); id > 0)  EntityIdCache.emplace(id);
+            if (int id = getMapValue_unprotected(x, y, WorldData::COLLISION_MAP); id > 0)  StructureIdCache.emplace(id);
         }
     }
     cacheValidityData.isCacheValid = true;
-    return EntityIdCache;
+    return StructureIdCache;
+}
+
+void Server::applyDamageAt(int damage, Coordinates position, const int entityId) {
+    auto tile{TileCoordinates{
+        .x = static_cast<int>(std::floor(position.x / 32.0f)),
+        .y = static_cast<int>(std::floor(position.y / 32.0f))
+    }};
+    damageTiles.push_back({tile, damage, entityId});
 }
 
 void Server::Tick() {
+
+    auto checkDamage = [this](const std::shared_ptr<IEntity>& entity) {
+        const auto coordinates{entity->GetCoordinates()};
+        const auto tile{TileCoordinates{
+            .x = static_cast<int>(std::floor(coordinates.x / 32.0f)),
+            .y = static_cast<int>(std::floor(coordinates.y / 32.0f))
+        }};
+        const auto entityId{entity->GetId()};
+        for (const auto damageTile : damageTiles ) {
+            if (damageTile.tile.x == tile.x && damageTile.tile.y == tile.y) {
+                if (damageTile.entityId == entityId) continue;
+                entity->GetHealthComponent()->TakeDamage(damageTile.damage);
+            }
+        }
+    };
+
     std::lock_guard lock(serverMutex);
     for (const auto &entity: _entities | std::views::values) {
         if (!entity) continue;
         entity->Tick();
+        checkDamage(entity);
     }
     for (const auto &player: _players | std::views::values) {
         if (!player) continue;
         player->Tick();
+        checkDamage(player);
     }
+
+    damageTiles.clear();
 }
 
 std::map<int,std::shared_ptr<IEntity>> Server::getPlayers() {

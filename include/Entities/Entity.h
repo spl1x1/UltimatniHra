@@ -162,6 +162,7 @@ public:
     virtual void Move(float dX, float dY) = 0;
 
     //Setters
+    virtual void SetId(int newId) = 0;
     virtual void SetCoordinates(const Coordinates &newCoordinates) = 0;
     //Sets entity angle in degrees
     virtual void SetAngle(int newAngle) = 0;
@@ -178,6 +179,9 @@ public:
     [[nodiscard]] virtual CollisionStatus GetCollisionStatus() const = 0;
     [[nodiscard]] virtual int GetAngle() const = 0;
     [[nodiscard]] virtual HitboxContext GetHitboxRenderingContext() const = 0;
+    [[nodiscard]] virtual int GetId() const = 0;
+    [[nodiscard]] virtual float GetReach() const = 0;
+
 
     //Entity component getters
 
