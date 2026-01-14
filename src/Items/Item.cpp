@@ -146,6 +146,35 @@ std::string Material::getDisplayInfo() const {
     return oss.str();
 }
 
+Amulet::Amulet(const std::string& name, AmuletType aType, int effect)
+    : Item(name, "A magical amulet", ItemType::AMULET, 0, false, 1),
+      amuletType(aType), effectValue(effect) {
+    value = effectValue * 20;
+}
+
+void Amulet::use(Player* player) {
+    // equip logic will be handled by inventory
+}
+
+std::string Amulet::getDisplayInfo() const {
+    std::ostringstream oss;
+    oss << name << "\n";
+
+    switch (amuletType) {
+        case AmuletType::SPEED:
+            oss << "+" << effectValue << "% movement speed";
+            break;
+        case AmuletType::DAMAGE:
+            oss << "+" << effectValue << " damage";
+            break;
+        case AmuletType::ARMOUR:
+            oss << "+" << effectValue << " armour";
+            break;
+    }
+
+    return oss.str();
+}
+
 namespace ItemFactory {
 
     std::string getMaterialName(const MaterialType tier) {
@@ -188,6 +217,10 @@ namespace ItemFactory {
 
     std::string getMaterialIconPath(MaterialType material) {
         return ITEMS_ICON_BASE + getMaterialPrefix(material) + ".png";
+    }
+
+    std::string getAmuletIconPath(const std::string& amuletType) {
+        return ITEMS_ICON_BASE + amuletType + "_amulet.png";
     }
 
     std::unique_ptr<Weapon> createAxe(MaterialType material) {
@@ -370,6 +403,25 @@ namespace ItemFactory {
         auto material = std::make_unique<Material>(name, tier);
         material->setIconPath(getMaterialIconPath(tier));
         return material;
+    }
+
+    // Amulets
+    std::unique_ptr<Amulet> createSpeedAmulet(int speedBonus) {
+        auto amulet = std::make_unique<Amulet>("Speed Amulet", AmuletType::SPEED, speedBonus);
+        amulet->setIconPath(getAmuletIconPath("speed"));
+        return amulet;
+    }
+
+    std::unique_ptr<Amulet> createDamageAmulet(int damageBonus) {
+        auto amulet = std::make_unique<Amulet>("Damage Amulet", AmuletType::DAMAGE, damageBonus);
+        amulet->setIconPath(getAmuletIconPath("damage"));
+        return amulet;
+    }
+
+    std::unique_ptr<Amulet> createArmourAmulet(int armourBonus) {
+        auto amulet = std::make_unique<Amulet>("Armour Amulet", AmuletType::ARMOUR, armourBonus);
+        amulet->setIconPath(getAmuletIconPath("armour"));
+        return amulet;
     }
 
 }

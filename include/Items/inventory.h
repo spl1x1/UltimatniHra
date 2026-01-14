@@ -8,9 +8,20 @@
 #pragma once
 #include <RmlUi/Core.h>
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <memory>
 #include "Item.h"
+
+// Equipment slot types for validation
+enum class EquipmentSlotType {
+    HELMET,
+    CHESTPLATE,
+    LEGGINGS,
+    BOOTS,
+    AMULET,
+    INVENTORY  // Regular inventory slot
+};
 
 class UIComponent;
 class Window;
@@ -48,7 +59,9 @@ public:
 
     // Click-based item moving
     void onSlotClicked(int slotIndex);
+    void onEquipmentSlotClicked(const std::string& slotId);
     int getSelectedSlot() const { return selectedSlot; }
+    std::string getSelectedEquipmentSlot() const { return selectedEquipmentSlot; }
 
     // Get item at slot (returns nullptr if empty)
     Item* getItem(int slotIndex);
@@ -66,12 +79,25 @@ private:
     int totalSlots = 20;
     bool visible = false;
 
-    int selectedSlot = -1;  // Currently selected slot for moving
+    int selectedSlot = -1;  // Currently selected inventory slot for moving
+    std::string selectedEquipmentSlot;  // Currently selected equipment slot
+
+    // Equipment slot management
+    std::unordered_map<std::string, std::unique_ptr<Item>> equipmentItems; // slot_id -> item
+    std::map<std::string, EquipmentSlotType> equipmentSlotTypes;
 
     void setupSlotListeners();
+    void setupEquipmentSlots();
     void updateSlotHighlight(int slotIndex, bool selected);
+    void updateEquipmentSlotHighlight(const std::string& slotId, bool selected);
     int findEmptySlot();
     int findStackableSlot(Item* item); // Find slot with same stackable item
+
+    // Equipment slot validation
+    bool canEquipToSlot(const std::string& slotId, Item* item);
+    bool isEquipmentSlot(const std::string& slotId);
+    void updateEquipmentDisplay(const std::string& slotId);
+    void clearEquipmentSlot(const std::string& slotId);
 };
 
 

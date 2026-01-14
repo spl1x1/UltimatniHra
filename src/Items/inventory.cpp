@@ -38,6 +38,7 @@ InventoryController::InventoryController(Window* window, UIComponent* uiComponen
         }
 
         setupSlotListeners();
+        setupEquipmentSlots();
         document->Hide();
     } else {
         SDL_Log("InventoryController: inventory document NOT found!");
@@ -63,6 +64,7 @@ void InventoryController::show() {
         document->Show();
         visible = true;
         selectedSlot = -1;  // Clear selection when opening
+        selectedEquipmentSlot.clear();
     }
 }
 
@@ -74,6 +76,10 @@ void InventoryController::hide() {
         if (selectedSlot != -1) {
             updateSlotHighlight(selectedSlot, false);
             selectedSlot = -1;
+        }
+        if (!selectedEquipmentSlot.empty()) {
+            updateEquipmentSlotHighlight(selectedEquipmentSlot, false);
+            selectedEquipmentSlot.clear();
         }
     }
 }
@@ -169,14 +175,48 @@ bool InventoryController::moveItem(int fromSlot, int toSlot) {
 }
 
 void InventoryController::onSlotClicked(int slotIndex) {
-    SDL_Log("Slot %d clicked, selectedSlot = %d", slotIndex, selectedSlot);
+    SDL_Log("Inventory slot %d clicked, selectedSlot = %d, selectedEquipmentSlot = %s",
+            slotIndex, selectedSlot, selectedEquipmentSlot.c_str());
+
+    // If an equipment slot is selected, try to move from equipment to inventory
+    if (!selectedEquipmentSlot.empty()) {
+        auto equipIt = equipmentItems.find(selectedEquipmentSlot);
+        if (equipIt != equipmentItems.end()) {
+            // Clear equipment slot highlight
+            updateEquipmentSlotHighlight(selectedEquipmentSlot, false);
+            std::string oldEquipSlot = selectedEquipmentSlot;
+            selectedEquipmentSlot.clear();
+
+            // Check if inventory slot has an item
+            auto invIt = items.find(slotIndex);
+            if (invIt == items.end()) {
+                // Empty inventory slot - move equipment item here
+                items[slotIndex] = std::move(equipIt->second);
+                equipmentItems.erase(equipIt);
+                clearEquipmentSlot(oldEquipSlot);
+                updateItemDisplay(slotIndex);
+                SDL_Log("Moved item from equipment %s to inventory slot %d", oldEquipSlot.c_str(), slotIndex);
+            } else {
+                // Inventory slot has item - try to swap if valid
+                if (canEquipToSlot(oldEquipSlot, invIt->second.get())) {
+                    std::swap(equipIt->second, invIt->second);
+                    updateEquipmentDisplay(oldEquipSlot);
+                    updateItemDisplay(slotIndex);
+                    SDL_Log("Swapped items between equipment %s and inventory slot %d", oldEquipSlot.c_str(), slotIndex);
+                } else {
+                    SDL_Log("Cannot swap - item type doesn't match equipment slot");
+                }
+            }
+        }
+        return;
+    }
 
     if (selectedSlot == -1) {
         // No slot selected yet - select this one if it has an item
         if (items.find(slotIndex) != items.end()) {
             selectedSlot = slotIndex;
             updateSlotHighlight(slotIndex, true);
-            SDL_Log("Selected slot %d", slotIndex);
+            SDL_Log("Selected inventory slot %d", slotIndex);
         }
     } else {
         // A slot is already selected
@@ -334,17 +374,266 @@ int InventoryController::countItems(ItemType type) const {
     return count;
 }
 
+void InventoryController::setupEquipmentSlots() {
+    // Define equipment slot types
+    equipmentSlotTypes["slot_helmet"] = EquipmentSlotType::HELMET;
+    equipmentSlotTypes["slot_chestplate"] = EquipmentSlotType::CHESTPLATE;
+    equipmentSlotTypes["slot_leggings"] = EquipmentSlotType::LEGGINGS;
+    equipmentSlotTypes["slot_boots"] = EquipmentSlotType::BOOTS;
+    equipmentSlotTypes["slot_amulet_0"] = EquipmentSlotType::AMULET;
+    equipmentSlotTypes["slot_amulet_1"] = EquipmentSlotType::AMULET;
+
+    // Add click listeners to equipment slots
+    for (const auto& [slotId, slotType] : equipmentSlotTypes) {
+        auto slot = document->GetElementById(slotId.c_str());
+        if (slot) {
+            slot->AddEventListener(Rml::EventId::Click, slotListener.get());
+        }
+    }
+    SDL_Log("InventoryController: Set up %zu equipment slots", equipmentSlotTypes.size());
+}
+
+bool InventoryController::isEquipmentSlot(const std::string& slotId) {
+    return equipmentSlotTypes.find(slotId) != equipmentSlotTypes.end();
+}
+
+bool InventoryController::canEquipToSlot(const std::string& slotId, Item* item) {
+    if (!item) return false;
+
+    auto it = equipmentSlotTypes.find(slotId);
+    if (it == equipmentSlotTypes.end()) return false;
+
+    EquipmentSlotType slotType = it->second;
+
+    // Check if item type matches slot type
+    switch (slotType) {
+        case EquipmentSlotType::HELMET:
+            if (item->getType() == ItemType::ARMOUR) {
+                auto* armour = dynamic_cast<Armour*>(item);
+                return armour && armour->getArmourType() == ArmourType::HELMET;
+            }
+            return false;
+
+        case EquipmentSlotType::CHESTPLATE:
+            if (item->getType() == ItemType::ARMOUR) {
+                auto* armour = dynamic_cast<Armour*>(item);
+                return armour && armour->getArmourType() == ArmourType::CHESTPLATE;
+            }
+            return false;
+
+        case EquipmentSlotType::LEGGINGS:
+            if (item->getType() == ItemType::ARMOUR) {
+                auto* armour = dynamic_cast<Armour*>(item);
+                return armour && armour->getArmourType() == ArmourType::LEGGINGS;
+            }
+            return false;
+
+        case EquipmentSlotType::BOOTS:
+            if (item->getType() == ItemType::ARMOUR) {
+                auto* armour = dynamic_cast<Armour*>(item);
+                return armour && armour->getArmourType() == ArmourType::BOOTS;
+            }
+            return false;
+
+        case EquipmentSlotType::AMULET:
+            return item->getType() == ItemType::AMULET;
+
+        case EquipmentSlotType::INVENTORY:
+        default:
+            return true;  // Anything can go in inventory
+    }
+}
+
+void InventoryController::onEquipmentSlotClicked(const std::string& slotId) {
+    SDL_Log("Equipment slot %s clicked, selectedSlot = %d, selectedEquipmentSlot = %s",
+            slotId.c_str(), selectedSlot, selectedEquipmentSlot.c_str());
+
+    // If an inventory slot is selected, try to equip the item
+    if (selectedSlot != -1) {
+        auto invIt = items.find(selectedSlot);
+        if (invIt != items.end()) {
+            // Check if the item can go in this equipment slot
+            if (canEquipToSlot(slotId, invIt->second.get())) {
+                // Clear inventory slot highlight
+                updateSlotHighlight(selectedSlot, false);
+                int oldInvSlot = selectedSlot;
+                selectedSlot = -1;
+
+                // Check if equipment slot already has an item
+                auto equipIt = equipmentItems.find(slotId);
+                if (equipIt == equipmentItems.end()) {
+                    // Empty equipment slot - move inventory item here
+                    equipmentItems[slotId] = std::move(invIt->second);
+                    items.erase(invIt);
+                    clearSlot(oldInvSlot);
+                    updateEquipmentDisplay(slotId);
+                    SDL_Log("Equipped item from slot %d to %s", oldInvSlot, slotId.c_str());
+                } else {
+                    // Equipment slot has item - swap
+                    std::swap(invIt->second, equipIt->second);
+                    updateItemDisplay(oldInvSlot);
+                    updateEquipmentDisplay(slotId);
+                    SDL_Log("Swapped items between inventory slot %d and equipment %s", oldInvSlot, slotId.c_str());
+                }
+            } else {
+                SDL_Log("Cannot equip - item type doesn't match equipment slot %s", slotId.c_str());
+            }
+        }
+        return;
+    }
+
+    // No inventory slot selected - handle equipment slot selection
+    if (selectedEquipmentSlot.empty()) {
+        // No equipment slot selected yet - select this one if it has an item
+        if (equipmentItems.find(slotId) != equipmentItems.end()) {
+            selectedEquipmentSlot = slotId;
+            updateEquipmentSlotHighlight(slotId, true);
+            SDL_Log("Selected equipment slot %s", slotId.c_str());
+        }
+    } else {
+        // An equipment slot is already selected
+        if (selectedEquipmentSlot == slotId) {
+            // Clicked same slot - deselect
+            updateEquipmentSlotHighlight(selectedEquipmentSlot, false);
+            selectedEquipmentSlot.clear();
+            SDL_Log("Deselected equipment slot");
+        } else {
+            // Clicked different equipment slot - try to swap if both have items and types match
+            auto fromIt = equipmentItems.find(selectedEquipmentSlot);
+            auto toIt = equipmentItems.find(slotId);
+
+            updateEquipmentSlotHighlight(selectedEquipmentSlot, false);
+            std::string oldEquipSlot = selectedEquipmentSlot;
+            selectedEquipmentSlot.clear();
+
+            if (fromIt != equipmentItems.end()) {
+                if (toIt == equipmentItems.end()) {
+                    // Target slot is empty - check if item type matches
+                    if (canEquipToSlot(slotId, fromIt->second.get())) {
+                        equipmentItems[slotId] = std::move(fromIt->second);
+                        equipmentItems.erase(fromIt);
+                        clearEquipmentSlot(oldEquipSlot);
+                        updateEquipmentDisplay(slotId);
+                        SDL_Log("Moved item from equipment %s to %s", oldEquipSlot.c_str(), slotId.c_str());
+                    } else {
+                        SDL_Log("Cannot move - item type doesn't match target equipment slot");
+                    }
+                } else {
+                    // Both slots have items - check if swap is valid
+                    if (canEquipToSlot(slotId, fromIt->second.get()) &&
+                        canEquipToSlot(oldEquipSlot, toIt->second.get())) {
+                        std::swap(fromIt->second, toIt->second);
+                        updateEquipmentDisplay(oldEquipSlot);
+                        updateEquipmentDisplay(slotId);
+                        SDL_Log("Swapped items between equipment %s and %s", oldEquipSlot.c_str(), slotId.c_str());
+                    } else {
+                        SDL_Log("Cannot swap - item types don't match equipment slots");
+                    }
+                }
+            }
+        }
+    }
+}
+
+void InventoryController::updateEquipmentDisplay(const std::string& slotId) {
+    if (!document) return;
+
+    auto slotElement = document->GetElementById(slotId.c_str());
+    if (!slotElement) return;
+
+    auto it = equipmentItems.find(slotId);
+    if (it == equipmentItems.end()) return;
+
+    Item* item = it->second.get();
+
+    // Create item visual with icon if available
+    std::string itemHTML = "<div class='inventory-item'>";
+
+    // Add icon if path is set
+    if (!item->getIconPath().empty()) {
+        std::string iconPath = item->getIconPath();
+        if (iconPath.rfind("assets/", 0) == 0) {
+            iconPath = "../" + iconPath.substr(7);
+        } else if (iconPath.rfind("textures/", 0) == 0) {
+            iconPath = "../" + iconPath;
+        }
+        itemHTML += "<img class='item-icon' src='" + iconPath + "'/>";
+    } else {
+        itemHTML += "<span class='item-name'>" + item->getName() + "</span>";
+    }
+
+    itemHTML += "</div>";
+
+    slotElement->SetInnerRML(itemHTML.c_str());
+    slotElement->SetClass("occupied", true);
+}
+
+void InventoryController::clearEquipmentSlot(const std::string& slotId) {
+    if (!document) return;
+
+    auto slotElement = document->GetElementById(slotId.c_str());
+    if (!slotElement) return;
+
+    // Restore the original slot icon based on slot type
+    std::string iconHTML;
+    auto it = equipmentSlotTypes.find(slotId);
+    if (it != equipmentSlotTypes.end()) {
+        switch (it->second) {
+            case EquipmentSlotType::HELMET:
+                iconHTML = "<div class='slot-icon helmet-icon'></div>";
+                break;
+            case EquipmentSlotType::CHESTPLATE:
+                iconHTML = "<div class='slot-icon chestplate-icon'></div>";
+                break;
+            case EquipmentSlotType::LEGGINGS:
+                iconHTML = "<div class='slot-icon leggings-icon'></div>";
+                break;
+            case EquipmentSlotType::BOOTS:
+                iconHTML = "<div class='slot-icon boots-icon'></div>";
+                break;
+            case EquipmentSlotType::AMULET:
+                iconHTML = "<div class='slot-icon amulet-icon'></div>";
+                break;
+            default:
+                break;
+        }
+    }
+
+    slotElement->SetInnerRML(iconHTML.c_str());
+    slotElement->SetClass("occupied", false);
+    slotElement->SetClass("selected", false);
+}
+
+void InventoryController::updateEquipmentSlotHighlight(const std::string& slotId, bool selected) {
+    if (!document) return;
+
+    auto slotElement = document->GetElementById(slotId.c_str());
+    if (slotElement) {
+        slotElement->SetClass("selected", selected);
+    }
+}
+
 // Slot Click Listener Implementation
 void InventorySlotListener::ProcessEvent(Rml::Event& event) {
     auto element = event.GetCurrentElement();
     if (!element) return;
 
-    // Get slot index from element id (format: "slot_X")
+    // Get slot id from element
     auto id = element->GetId();
     std::string idStr(id.begin(), id.end());
 
-    if (idStr.find("slot_") == 0) {
-        int slotIndex = std::stoi(idStr.substr(5));
-        controller->onSlotClicked(slotIndex);
+    // Check if this is an equipment slot or inventory slot
+    if (idStr == "slot_helmet" || idStr == "slot_chestplate" ||
+        idStr == "slot_leggings" || idStr == "slot_boots" ||
+        idStr.find("slot_amulet_") == 0) {
+        controller->onEquipmentSlotClicked(idStr);
+    } else if (idStr.find("slot_") == 0) {
+        // Inventory slot (format: "slot_X" where X is a number)
+        try {
+            int slotIndex = std::stoi(idStr.substr(5));
+            controller->onSlotClicked(slotIndex);
+        } catch (...) {
+            // Not a valid inventory slot number
+        }
     }
 }

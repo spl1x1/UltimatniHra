@@ -14,6 +14,7 @@ enum class ItemType {
     ARMOUR,
     MATERIAL,
     CONSUMABLE,
+    AMULET,
 };
 enum class WeaponType {
     AXE,
@@ -40,6 +41,11 @@ enum class ConsumableType {
     HEALTH_POTION,
     DAMAGE_BOOST,
     SPEED_BOOST,
+};
+enum class AmuletType {
+    SPEED,
+    DAMAGE,
+    ARMOUR,
 };
 
 class Item {
@@ -140,6 +146,18 @@ public:
     void use(Player* player) override;
     [[nodiscard]] std::string getDisplayInfo() const override;
 };
+
+class Amulet : public Item {
+private:
+    AmuletType amuletType;
+    int effectValue;
+public:
+    Amulet(const std::string& name, AmuletType aType, int effect);
+    [[nodiscard]] AmuletType getAmuletType() const { return amuletType; }
+    [[nodiscard]] int getEffectValue() const { return effectValue; }
+    void use(Player* player) override;
+    [[nodiscard]] std::string getDisplayInfo() const override;
+};
 namespace ItemFactory {
     // Weapons
     std::unique_ptr<Weapon> createAxe(MaterialType material);
@@ -160,6 +178,11 @@ namespace ItemFactory {
 
     // Materials
     std::unique_ptr<Material> createMaterial(MaterialType tier);
+
+    // Amulets
+    std::unique_ptr<Amulet> createSpeedAmulet(int speedBonus);
+    std::unique_ptr<Amulet> createDamageAmulet(int damageBonus);
+    std::unique_ptr<Amulet> createArmourAmulet(int armourBonus);
 
     // Helper to get material name
     std::string getMaterialName(MaterialType tier);

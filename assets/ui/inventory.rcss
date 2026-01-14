@@ -8,53 +8,147 @@ body {
 
 #inventory-container {
     position: absolute;
-    width: 300dp;
+    width: 220dp;
     background-color: #2c3e50;
-    border: 3dp solid #ecf0f1;
-    /*padding: 10dp;*/
-}
-
-.inventory-header {
-    margin-bottom: 10dp;
-    padding-bottom: 8dp;
-    border-bottom: 2dp solid #ecf0f1;
-}
-
-.inventory-header h2 {
-    color: white;
-    font-size: 24dp;
-    margin: 0;
-    padding: 0;
-    display: inline-block;
+    border: 2dp solid #ecf0f1;
+    padding: 5dp;
 }
 
 .close-button {
-    width: 30dp;
-    height: 30dp;
-    line-height: 30dp;
+    width: 20dp;
+    height: 20dp;
+    line-height: 20dp;
     text-align: center;
-    font-size: 28dp;
+    font-size: 18dp;
     color: white;
     background-color: #e74c3c;
-    display: inline-block;
-    float: right;
+    position: absolute;
+    top: -10dp;
+    right: -10dp;
+    cursor: pointer;
 }
 
 .close-button:hover {
     background-color: #c0392b;
 }
 
+.equipment-slots {
+    width: 210dp;
+    margin-bottom: 5dp;
+    padding-bottom: 5dp;
+    border-bottom: 1dp solid #7f8c8d;
+    display: flex;
+    flex-direction: row;
+    gap: 10dp;
+}
+
+.armor-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 2dp;
+    padding-right: 10dp;
+    border-right: 1dp solid #7f8c8d;
+}
+
+.amulet-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 2dp;
+    justify-content: center;
+}
+
+.equipment-slot {
+    width: 38dp;
+    height: 38dp;
+    background-color: #2a3a4a;
+    border: 2dp solid #5a6a7a;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+}
+
+.equipment-slot:hover {
+    background-color: #3a4a5a;
+    border-color: #8a9aaa;
+}
+
+.armor-slot {
+    border-color: #3498db;
+}
+
+.armor-slot:hover {
+    border-color: #5dade2;
+}
+
+.amulet-slot {
+    border-color: #9b59b6;
+}
+
+.amulet-slot:hover {
+    border-color: #bb8fce;
+}
+
+.equipment-slot.occupied {
+    border-color: #00ff99;
+}
+
+/* Slot icon backgrounds */
+.slot-icon {
+    width: 30dp;
+    height: 30dp;
+    opacity: 0.3;
+    position: absolute;
+    align-content: center;
+    align-items: center;
+    pointer-events: none;
+    padding-left: 7dp;
+    padding-top: 7dp;
+}
+
+/* Helmet icon */
+.helmet-icon {
+    decorator: image(/assets/textures/gui/helmet.svg);
+}
+
+/* Chestplate icon */
+.chestplate-icon {
+    decorator: image(/assets/textures/gui/chestplate.svg);
+}
+
+/* Leggings icon */
+.leggings-icon {
+    decorator: image(/assets/textures/gui/leggings.svg);
+}
+
+/* Boots icon */
+.boots-icon {
+    decorator: image(/assets/textures/gui/boots.svg);
+}
+
+/* Amulet icon */
+.amulet-icon {
+    decorator: image(/assets/textures/gui/amulet.svg);
+}
+
+/* Hide icon when slot is occupied */
+.equipment-slot.occupied .slot-icon {
+    display: none;
+}
+
 .inventory-grid {
-    width: 268dp;
+    width: 210dp;
 }
 
 .inventory-slot {
-    width: 60dp;
-    height: 60dp;
+    width: 38dp;
+    height: 38dp;
     background-color: #34495e;
-    border: 2dp solid #7f8c8d;
-    margin: 3dp;
+    border: 1dp solid #7f8c8d;
+    margin: 2dp;
     display: inline-block;
+    position: relative;
 }
 
 .inventory-slot:hover {
@@ -84,9 +178,9 @@ body {
 }
 
 .item-icon {
-    width: 48dp;
-    height: 48dp;
-    margin: 4dp auto;
+    width: 32dp;
+    height: 32dp;
+    margin: 2dp auto;
     display: block;
     image-rendering: pixelated;
 }
@@ -106,28 +200,4 @@ body {
     color: #ffff00;
     font-size: 11dp;
     font-weight: bold;
-}
-
-.inventory-info {
-    background-color: #34495e;
-    padding: 10dp;
-    margin-top: 10dp;
-    min-height: 60dp;
-}
-
-.inventory-info p {
-    color: white;
-    margin: 2dp 0dp;
-    font-size: 14dp;
-}
-
-#selected_item_name {
-    font-weight: bold;
-    font-size: 16dp;
-    color: #00ff99;
-}
-
-#selected_item_desc {
-    color: #bdc3c7;
-    font-size: 13dp;
 }

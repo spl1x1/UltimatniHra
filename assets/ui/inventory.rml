@@ -4,13 +4,32 @@
         <link type="text/rcss" href="inventory.rcss"/>
     </head>
     <body>
-    <h1>Inventory</h1>
     <div id="inventory-container">
-        <div class="inventory-header">
-
-            <div class="close-button" id="inventory_close">×</div>
+        <div class="close-button" id="inventory_close">×</div>
+        <div class="equipment-slots">
+            <div class="armor-slots">
+                <div class="equipment-slot armor-slot" id="slot_helmet" data-type="helmet">
+                    <div class="slot-icon helmet-icon"></div>
+                </div>
+                <div class="equipment-slot armor-slot" id="slot_chestplate" data-type="chestplate">
+                    <div class="slot-icon chestplate-icon"></div>
+                </div>
+                <div class="equipment-slot armor-slot" id="slot_leggings" data-type="leggings">
+                    <div class="slot-icon leggings-icon"></div>
+                </div>
+                <div class="equipment-slot armor-slot" id="slot_boots" data-type="boots">
+                    <div class="slot-icon boots-icon"></div>
+                </div>
+            </div>
+            <div class="amulet-slots">
+                <div class="equipment-slot amulet-slot" id="slot_amulet_0" data-type="amulet">
+                    <div class="slot-icon amulet-icon"></div>
+                </div>
+                <div class="equipment-slot amulet-slot" id="slot_amulet_1" data-type="amulet">
+                    <div class="slot-icon amulet-icon"></div>
+                </div>
+            </div>
         </div>
-
         <div class="inventory-grid" id="inventory_grid">
             <div class="inventory-slot" id="slot_0"></div>
             <div class="inventory-slot" id="slot_1"></div>
@@ -35,11 +54,6 @@
             <div class="inventory-slot" id="slot_17"></div>
             <div class="inventory-slot" id="slot_18"></div>
             <div class="inventory-slot" id="slot_19"></div>
-        </div>
-
-        <div class="inventory-info">
-            <p id="selected_item_name">Select an item</p>
-            <p id="selected_item_desc"></p>
         </div>
     </div>
 
