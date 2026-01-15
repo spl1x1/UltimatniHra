@@ -32,6 +32,15 @@ Coordinates EntityRenderingComponent::CalculateCenterOffset(IEntity& entity) {
     return offset = hitboxCenter;
 }
 
+std::string EntityRenderingComponent::TypeToString(EntityType type) {
+    switch (type) {
+        case EntityType::PLAYER:
+            return "PLAYER";
+        default:
+            return "UNKNOWN";
+    }
+}
+
 RenderingContext EntityRenderingComponent::GetRenderingContext() const {
     if (!sprite) return RenderingContext{};
 

@@ -116,6 +116,10 @@ int Player::GetReach() const {
     return reach;
 }
 
+EntityType Player::GetType() const {
+    return EntityType::PLAYER;
+}
+
 EntityCollisionComponent * Player::GetCollisionComponent() {
     return &_entityCollisionComponent;
 }

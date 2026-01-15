@@ -213,17 +213,26 @@ int Server::calculateAngle(Coordinates center, Coordinates point) {
         return angle;
 }
 
-std::string Server::getTileInfo(const float x, const float y) {
+std::vector<std::string> Server::getTileInfo(const float x, const float y) {
     std::shared_lock lock(serverMutex);
     const int tileX{static_cast<int>(std::floor(x / 32.0f))};
     const int tileY{static_cast<int>(std::floor(y / 32.0f))};
     const auto mapValue{worldData.getMapValue(tileX, tileY, WorldData::COLLISION_MAP)};
-    if ( mapValue<= 0)
-        return "";
 
-    const auto structure {getStructure(mapValue)};
+     std::vector<std::string> text;
 
-    return StructureRenderingComponent::TypeToString(structure->getType());
+    for (const auto& [id, entity] : entities) {
+        const auto entityPos{entity->GetEntityCenter()};
+        const int entityTileX{static_cast<int>(std::floor(entityPos.x / 32.0f))};
+        const int entityTileY{static_cast<int>(std::floor(entityPos.y / 32.0f))};
+        if (entityTileX == tileX && entityTileY == tileY) {
+            text.emplace_back(EntityRenderingComponent::TypeToString(entity->GetType()));
+        }
+    }
+
+    if ( mapValue> 0) text.emplace_back(StructureRenderingComponent::TypeToString(getStructure(mapValue)->getType()));
+
+    return text;
 }
 
 void Server::Tick() {

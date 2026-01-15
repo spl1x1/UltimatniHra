@@ -91,7 +91,7 @@ public:
     std::set<int> getStructuresInArea(Coordinates topLeft, Coordinates bootomLeft); //Vraci ID vsech entit v dane oblasti TODO: implementovat, nezapomenout na thread safety
     void applyDamageAt_unprotected(int damage, const std::vector<Coordinates>& positions, int entityId = -1); //Aplikuje damage vsem entitam v okoli dane pozice, non thread safe
     static int calculateAngle(Coordinates center, Coordinates point); //Vypocita uhel mezi dvema objekty, nemusi byt thread safe
-    std::string getTileInfo(float x, float y);
+    std::vector<std::string> getTileInfo(float x, float y);
 
     void addEntity(Coordinates coordinates, EntityType type); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
     void addEntity(const std::shared_ptr<IEntity>& entity); //Prida na server entitu

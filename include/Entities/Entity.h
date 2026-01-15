@@ -22,6 +22,11 @@
 class IEntity;
 class EventBindings;
 
+enum class EntityType {
+    PLAYER,
+    SLIME
+};
+
 class EntityRenderingComponent {
     friend class EventBindings;
 
@@ -32,6 +37,7 @@ class EntityRenderingComponent {
 public:
     void Tick(float deltaTime) const;
     [[nodiscard]] Coordinates CalculateCenterOffset(IEntity& entity); //Returns offset to center sprite based on its dimensions and hitbox
+    static std::string TypeToString(EntityType type);
 
     //Setters
     void PlayAnimation(AnimationType animation, Direction direction, int variant, bool ForceReset = false) const;
@@ -66,7 +72,6 @@ public:
     bool CheckCollision(float newX, float newY, const Server* server);
     [[nodiscard]] bool CheckCollisionAt(float newX, float newY, const Server* server) const;
     [[nodiscard]] bool CheckPoint(Coordinates coordinates, IEntity& entity) const;
-
 
     //Setters
     void SetHitbox(const HitboxData &hitbox);
@@ -186,6 +191,7 @@ public:
     [[nodiscard]] virtual HitboxContext GetHitboxRenderingContext() const = 0;
     [[nodiscard]] virtual int GetId() const = 0;
     [[nodiscard]] virtual int GetReach() const = 0;
+    [[nodiscard]] virtual EntityType GetType() const = 0;
 
 
     //Entity component getters

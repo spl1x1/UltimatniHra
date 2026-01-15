@@ -198,8 +198,9 @@ void Window::renderHud() {
         renderAt(cursor);
 
         const auto tileInfo{server->getTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
-        if (!tileInfo.empty())
-            drawTextAt(tileInfo, {data.mouseData.x, data.mouseData.y + 32.0f}, SDL_Color{255,255,255,255});
+        for (int i{0}; i < static_cast<int>(tileInfo.size()); ++i) {
+            drawTextAt(tileInfo.at(i), {data.mouseData.x, data.mouseData.y + 32.0f + static_cast<float>(i)*16.0f}, SDL_Color{255,255,255,255});
+        }
     }
 
     const auto playerHealth = server->getPlayer()->GetHealthComponent()->GetHealth();

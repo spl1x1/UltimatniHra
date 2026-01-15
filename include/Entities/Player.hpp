@@ -61,6 +61,7 @@ public:
     [[nodiscard]] HitboxContext GetHitboxRenderingContext() const override;
     [[nodiscard]] int GetId() const override;
     [[nodiscard]] int GetReach() const override;
+    [[nodiscard]] EntityType GetType() const override;
 
     EntityCollisionComponent* GetCollisionComponent() override;
     //Get EntityLogicComponent
