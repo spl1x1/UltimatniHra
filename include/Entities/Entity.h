@@ -34,12 +34,12 @@ public:
     [[nodiscard]] Coordinates CalculateCenterOffset(IEntity& entity); //Returns offset to center sprite based on its dimensions and hitbox
 
     //Setters
-    void PlayAnimation(AnimationType animation, Direction direction, bool ForceReset) const;
+    void PlayAnimation(AnimationType animation, Direction direction, int variant, bool ForceReset = false) const;
 
     //Getters
     static Direction GetDirectionBaseOnAngle(int angle) ;
     [[nodiscard]] RenderingContext GetRenderingContext() const;
-
+    [[nodiscard]] std::tuple<float,int> GetFrameTimeAndCount() const;
 
     //Constructor
     explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite);
@@ -65,6 +65,8 @@ public:
     //Check collision with structures, entities can collide with each other
     bool CheckCollision(float newX, float newY, const Server* server);
     [[nodiscard]] bool CheckCollisionAt(float newX, float newY, const Server* server) const;
+    [[nodiscard]] bool CheckPoint(Coordinates coordinates, IEntity& entity) const;
+
 
     //Setters
     void SetHitbox(const HitboxData &hitbox);
@@ -176,6 +178,8 @@ public:
 
     //Returns true entity coordinates (sprite center)
     [[nodiscard]] virtual Coordinates GetCoordinates() const = 0;
+    //Returns entity center coordinates
+    [[nodiscard]] virtual Coordinates GetEntityCenter() = 0;
     //Returns entity collision status
     [[nodiscard]] virtual CollisionStatus GetCollisionStatus() const = 0;
     [[nodiscard]] virtual int GetAngle() const = 0;

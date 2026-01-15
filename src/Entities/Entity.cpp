@@ -35,8 +35,12 @@ Coordinates EntityRenderingComponent::CalculateCenterOffset(IEntity& entity) {
 RenderingContext EntityRenderingComponent::GetRenderingContext() const {
     if (!sprite) return RenderingContext{};
 
-    auto renderingContext = sprite->getRenderingContext();
+    auto renderingContext = sprite->GetRenderingContext();
     return renderingContext;
+}
+
+std::tuple<float, int> EntityRenderingComponent::GetFrameTimeAndCount() const {
+     return sprite ? sprite->GetFrameTimeAndCount() : std::make_tuple(0.0f, 0);
 }
 
 Direction EntityRenderingComponent::GetDirectionBaseOnAngle(const int angle) {
@@ -44,6 +48,7 @@ Direction EntityRenderingComponent::GetDirectionBaseOnAngle(const int angle) {
         return Direction::DOWN;
     }
     if (angle >= 136 && angle <= 224) {
+
         return Direction::UP;
     }
     if (angle >= 45 && angle <= 135) {
@@ -55,8 +60,9 @@ Direction EntityRenderingComponent::GetDirectionBaseOnAngle(const int angle) {
     return Direction::NONE;
 }
 
-void EntityRenderingComponent::PlayAnimation(const AnimationType animation, const Direction direction, const bool ForceReset) const {
+void EntityRenderingComponent::PlayAnimation(const AnimationType animation, const Direction direction, const int variant, const bool ForceReset) const {
     if (!sprite) return;
+    sprite->SetVariant(variant);
     sprite->PlayAnimation(animation, direction, ForceReset);
 }
 
@@ -112,9 +118,8 @@ bool EntityCollisionComponent::CheckCollision(const float newX, const float newY
             || tileY >= MAPSIZE
             || server->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
             _hitbox.colliding = true;
-        }
+            }
     };
-
     std::ranges::for_each(_hitbox.corners, evaluatePoint);
     return _hitbox.colliding;
 }
@@ -136,6 +141,18 @@ bool EntityCollisionComponent::CheckCollisionAt(const float newX, const float ne
 
     std::ranges::for_each(_hitbox.corners, evaluatePoint);
     return result;
+}
+
+bool EntityCollisionComponent::CheckPoint(const Coordinates coordinates, IEntity& entity ) const {
+    const auto entityPosition = entity.GetLogicComponent()->GetCoordinates();
+    const Coordinates Points[2] ={
+        {_hitbox.corners[0].x + entityPosition.x, _hitbox.corners[0].y + entityPosition.y}, // TOP_LEFT
+        {_hitbox.corners[3].x + entityPosition.x, _hitbox.corners[3].y + entityPosition.y}  // BOTTOM_LEFT
+    };
+    if ((coordinates.x >= Points[0].x && coordinates.x <= Points[1].x)
+        && (coordinates.y >= Points[0].y && coordinates.x <= Points[1].y))
+        return true; //Point is inside hitbox
+    return false;
 }
 
 //EntityMovementComponent methods
@@ -251,21 +268,46 @@ void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, co
 }
 
 void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, const int damage) {
-    lockTime = 0.5f; //Example lock time for attack
-    const auto angle{entity->GetLogicComponent()->GetAngle()};
-    const auto reach{entity->GetReach()};
-    const auto adjustment = entity->GetRenderingComponent()->CalculateCenterOffset(*entity);
-    const auto coordinates = entity->GetLogicComponent()->GetCoordinates();
-    const auto radianAngle = static_cast<float>(angle * M_PI / 180.0f);
-
-    const float attackX = coordinates.x + adjustment.x + std::sin(radianAngle) * reach;
-    const float attackY = coordinates.y + adjustment.y + std::cos(radianAngle) * reach;
-
-    entity->GetServer()->applyDamageAt_unprotected(damage,{attackX, attackY} );
-
+    if (attackType < 0) return;
     const auto renderingComponent = entity->GetRenderingComponent();
     const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(angle);
-    renderingComponent->PlayAnimation(AnimationType::ATTACK, direction, true);
+    renderingComponent->PlayAnimation(AnimationType::ATTACK, direction, attackType,true);
+    const auto frameInfo{renderingComponent->GetFrameTimeAndCount()};
+    lockTime = std::get<0>(frameInfo)* static_cast<float>(std::get<1>(frameInfo)); //Example lock time for attack
+    const auto reach{entity->GetReach()};
+    const auto entityCenter{entity->GetEntityCenter()};
+
+    std::vector<Coordinates> attackPoints;
+    int circleStart{0};
+    int circleEnd{360};
+
+    if (direction == Direction::UP) {
+        circleStart = 180;
+        circleEnd = 360;
+    }
+    else if (direction == Direction::DOWN) {
+        circleStart = 0;
+        circleEnd = 180;
+    }
+    else if (direction == Direction::LEFT) {
+        circleStart = 90;
+        circleEnd = 270;
+    }
+    else if (direction == Direction::RIGHT) {
+        circleStart = 270;
+        circleEnd = 450;
+    }
+
+    attackPoints.reserve(circleEnd - circleStart);
+    for (int i{circleStart}; i < circleEnd; ++i) {
+        const auto rad = static_cast<float>(i * M_PI / 180.0f);
+        attackPoints.push_back({
+            entityCenter.x + std::cos(rad) * static_cast<float>(reach),
+            entityCenter.y + std::sin(rad) * static_cast<float>(reach)
+        });
+    }
+
+    entity->GetServer()->applyDamageAt_unprotected(damage, attackPoints);
 }
 
 
@@ -341,9 +383,8 @@ void EventBindings::InitializeBindings() {
         entity->GetHealthComponent()->TakeDamage(data->amount);
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::ATTACK, [](IEntity* entity, const EntityEvent *e) {
-        const auto server{entity->GetServer()};
         const auto data =  dynamic_cast<const Event_Attack*>(e);
-        server->applyDamageAt_unprotected(data->damage, entity->GetLogicComponent()->GetCoordinates());
+        entity->GetLogicComponent()->PerformAttack(entity, data->attackType, data->damage);
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::CLICK_ATTACK, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_ClickAttack*>(e);

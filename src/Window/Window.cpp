@@ -54,36 +54,50 @@ void Window::loadConfig() {
     }
 }
 
-void Window::handleMouseInputs() const {
-    if (!data.drawMousePreview) return;
+void Window::handleMouseInputs() {
+    auto sendLeftClickInput = [&]() {
+        const Coordinates point{data.mouseData.x+16,data.mouseData.y+16}; //Center of the tile
+        server->playerUpdate(Event_SetAngle::Create(Server::calculateAngle(server->getPlayer()->GetEntityCenter(), point)));
 
-    auto CalculateMouseAngle = [](const float mouseX, const float mouseY, const float playerX, const float playerY) -> int {
-        auto angle = static_cast<int>(std::atan2(mouseX - playerX,
-                                                 mouseY - playerY) * 180.0f / M_PI);
-        if (angle < 0) angle += 360;
-        return angle;
+        if (data.mouseData.currentLeftHoldTime > 0.5f) {
+            server->playerUpdate(Event_ClickAttack::Create(2,10,point));
+            return;
+        }
+        server->playerUpdate(Event_ClickAttack::Create(1,10,point));
     };
 
-    SDL_MouseButtonFlags mousestates = SDL_GetMouseState(nullptr, nullptr);
+    auto sendRightClickInput = [&]() {
+        if (data.mouseData.currentRightHoldTime > 0.5f) {
+            SDL_Log("Right Click Hold Input");
+            return;
+        }
+        server->playerUpdate(Event_ClickMove::Create(data.mouseData.x +16, data.mouseData.y +16));
+    };
 
-    if ((mousestates^SDL_BUTTON_LMASK) == 0) {
-        const auto player = server->getPlayer();
-        const auto playerPos = player->GetCoordinates();
-        const auto adjustment = player->GetRenderingComponent()->CalculateCenterOffset(*player);
-        Coordinates playerCoords{
-            .x = playerPos.x + adjustment.x,
-            .y = playerPos.y + adjustment.y
-        };
-        const auto angle = CalculateMouseAngle(data.mousePosition.x +16, data.mousePosition.y +16,
-                                         playerCoords.x,
-                                         playerCoords.y);
-        SDL_Log("Mouse angle: %d", angle);
-        server->playerUpdate(Event_SetAngle::Create(angle));
-        server->playerUpdate(Event_ClickAttack::Create(1,10,{data.mousePosition.x +16, data.mousePosition.y +16}));
+
+    const auto deltaTime{server->getDeltaTime()};
+    if (!data.drawMousePreview) return;
+    const SDL_MouseButtonFlags mouseStates = SDL_GetMouseState(nullptr, nullptr);
+
+    if ((mouseStates^SDL_BUTTON_LMASK) == 0) {;
+        data.mouseData.currentLeftHoldTime += deltaTime;
+        data.mouseData.leftButtonPressed = true;
     }
-    if ((mousestates ^ SDL_BUTTON_RMASK) == 0) {
-        server->playerUpdate(Event_ClickMove::Create(data.mousePosition.x +16, data.mousePosition.y +16));
+    else {
+        if (data.mouseData.leftButtonPressed) sendLeftClickInput();
+        data.mouseData.currentLeftHoldTime = 0.0f;
+        data.mouseData.leftButtonPressed = false;
+    };
+
+    if ((mouseStates ^ SDL_BUTTON_RMASK) == 0) {
+        data.mouseData.currentRightHoldTime += deltaTime;
+        data.mouseData.rightButtonPressed = true;
     }
+    else {
+        if (data.mouseData.rightButtonPressed) sendRightClickInput();
+        data.mouseData.currentRightHoldTime = 0.0f;
+        data.mouseData.rightButtonPressed = false;
+    };
 }
 
 void Window::handlePlayerInput() const {
@@ -145,13 +159,47 @@ void Window::drawHitbox(const HitboxContext& context) const {
     SDL_SetRenderDrawColor(data.Renderer, 0, 0 , 0, 255);
 }
 
+void Window::drawPointsAt(const std::vector<PointData> &points) const {
+    for (const auto& point : points) {
+        SDL_SetRenderDrawColor(data.Renderer, point.r, point.g, point.b, point.a);
+        SDL_RenderPoint(data.Renderer,
+                        static_cast<float>(std::lround(point.position.x - data.cameraRect->x)),
+                        static_cast<float>(std::lround(point.position.y - data.cameraRect->y)));
+    }
+    SDL_SetRenderDrawColor(data.Renderer, 0, 0 , 0, 255);
+}
+
+void Window::drawTextAt(const std::string &text, const Coordinates coordinates, const SDL_Color color) const {
+    const auto surface = TTF_RenderText_Solid(data.font, text.c_str(), text.length(), color);
+    const auto texture = SDL_CreateTextureFromSurface(data.Renderer, surface);
+
+    auto xCoordinates = coordinates.x - data.cameraRect->x;
+    const auto yCoordinates = coordinates.y - data.cameraRect->y;
+
+    if (texture->w > 32) xCoordinates -= static_cast<float>(std::floor((texture->w -32) /2)); //Center align if wider than 32px
+
+     const auto rectangle = SDL_FRect{
+        .x = xCoordinates,
+        .y= yCoordinates,
+        .w =static_cast<float>(surface->w),
+        .h = static_cast<float>(surface->h)
+    };
+    SDL_RenderTexture(data.Renderer, texture, nullptr, &rectangle);
+    SDL_DestroySurface(surface);
+    SDL_DestroyTexture(texture);
+}
+
 void Window::renderHud() {
     if (data.drawMousePreview) {
         RenderingContext cursor;
-        cursor.coordinates = {data.mousePosition.x,data.mousePosition.y};
+        cursor.coordinates = {data.mouseData.x,data.mouseData.y};
         cursor.rect = data.mousePreviewRect.get();
         cursor.textureName = "cursor";
         renderAt(cursor);
+
+        const auto tileInfo{server->getTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
+        if (!tileInfo.empty())
+            drawTextAt(tileInfo, {data.mouseData.x, data.mouseData.y + 32.0f}, SDL_Color{255,255,255,255});
     }
 
     const auto playerHealth = server->getPlayer()->GetHealthComponent()->GetHealth();
@@ -191,6 +239,23 @@ void Window::renderHud() {
 
 
 void Window::advanceFrame() {
+#ifdef DEBUG
+    auto AttackPoints = [this]()->std::vector<PointData> {
+        const auto damageAreas = server->getDamagePoints();
+        std::vector<PointData> points;
+        for (const auto& area : damageAreas) {
+            points.push_back(PointData{
+                .position = area.coordinates,
+                .r = 255,
+                .g = 0,
+                .b = 0,
+                .a = 255
+            });
+        }
+        return points;
+    };
+#endif
+
     const Uint64 current = SDL_GetPerformanceCounter();
     const float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
     server->setDeltaTime(deltaTime);
@@ -239,10 +304,12 @@ void Window::advanceFrame() {
         renderAt(struc->GetRenderingContext());
         struc->Tick(server->getDeltaTime());
 #ifdef DEBUG
-            if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(struc->GetHitboxContext());
+        if (data.uiComponent->getMenuData().debugOverlay) {
+            drawHitbox(struc->GetHitboxContext());
+            drawPointsAt(AttackPoints());
+        };
 #endif
     }
-
     renderHud();
     SDL_SetRenderTarget(data.Renderer, nullptr);
     SDL_RenderTexture(data.Renderer, textures.at("FinalTexture"), nullptr, nullptr);
@@ -374,8 +441,8 @@ void Window::HandleInputs() {
 
         float x,y;
         SDL_GetMouseState(&x, &y);
-        data.mousePosition.x = std::floor((x /data.scale + data.cameraRect->x) / 32.0f) * 32.0f;
-        data.mousePosition.y = std::floor((y / data.scale + data.cameraRect->y) / 32.0f) * 32.0f;
+        data.mouseData.x = std::floor((x /data.scale + data.cameraRect->x) / 32.0f) * 32.0f;
+        data.mouseData.y = std::floor((y / data.scale + data.cameraRect->y) / 32.0f) * 32.0f;
 
         data.uiComponent->HandleEvent(&event);
     }
@@ -474,7 +541,7 @@ void Window::initGame() {
 
     WaterSprite::Init();
     EventBindings::InitializeBindings();
-    SpriteAnimationBinding::init();
+    SpriteAnimationBinding::Init();
     Coordinates coordinates = server->getEntityPos(0);
 
     data.cameraRect->x = coordinates.x - cameraOffsetX;
@@ -496,7 +563,7 @@ void Window::initGame() {
     SDL_SetTextureScaleMode(textures.at("FinalTexture"), SDL_SCALEMODE_PIXELART);
 }
 
-void Window::init(const std::string& title, int width, int height) {
+void Window::init(const std::string& title, const int width, const int height) {
     data.initialized = true;
     data.Running = true;
     data.WINDOW_TITLE = title;
@@ -534,16 +601,6 @@ void Window::init(const std::string& title, int width, int height) {
     initDebugMenu();
 #endif
     data.uiComponent->Init();
-
-    int bbwidth, bbheight;
-    SDL_GetWindowSizeInPixels(data.Window, &bbwidth, &bbheight);
-    int count = 0;
-    SDL_GetFullscreenDisplayModes(SDL_GetDisplayForWindow(data.Window), &count);
-    SDL_Log("Display modes: %i", count);
-    SDL_Log("Window size: %ix%i", data.WINDOW_WIDTH, data.WINDOW_HEIGHT);
-    SDL_Log("Backbuffer size: %ix%i", bbwidth, bbheight);
-    SDL_Log("Logical rendering size: %ix%i", GAMERESW, GAMERESH);
-
     data.inMenu = true;
 
     if (data.uiComponent->getDocuments()->contains("main_menu")) {
@@ -552,12 +609,17 @@ void Window::init(const std::string& title, int width, int height) {
     if (data.uiComponent->getDocuments()->contains("console")) {
         ConsoleHandler::GetInstance().Setup(data.uiComponent->getDocuments()->at("console").get(),this);
     }
-
+    TTF_Init();
+    data.font = TTF_OpenFont("assets/fonts/AndyBold.ttf", 16);
+    if (!data.font) {
+        SDL_Log("Failed to load font: %s", SDL_GetError());
+    }
 }
 
 void Window::Destroy() {
     data.Running = false;
     data.initialized = false;
+    TTF_CloseFont(data.font);
 
     for (const auto &val: textures | std::views::values) {
         SDL_DestroyTexture(val);

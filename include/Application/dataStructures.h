@@ -38,9 +38,15 @@ struct HitboxContext {
     int  a = 255;
 };
 
-struct MousePosition {
+struct MouseData {
     float x{0.0f};
     float y{0.0f};
+
+    float currentLeftHoldTime{0.0f};
+    float currentRightHoldTime{0.0f};
+
+    bool leftButtonPressed{false};
+    bool rightButtonPressed{false};
 };
 
 enum class OreType {
@@ -51,9 +57,17 @@ enum class OreType {
 };
 
 struct DamageArea {
-    Coordinates tile;
+    Coordinates coordinates;
     int damage{};
     int entityId{-1}; // ID of the entity that caused the damage
+};
+
+struct PointData {
+    Coordinates position;
+    int r{0};
+    int g{0};
+    int b{0};
+    int a{255};
 };
 
 
