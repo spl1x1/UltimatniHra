@@ -7,7 +7,7 @@
 #include "Sprite.hpp"
 
 class TreeSprite final : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("assets/jsons/structures/tree.json","tree",0.2f, 96, 64, Direction::OMNI, AnimationType::IDLE);
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("tree",0.2f, 96, 64, Direction::OMNI, AnimationType::IDLE);
 public:
     //Interface Methods Implementation
     void Tick(float deltaTime) override;

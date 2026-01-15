@@ -69,10 +69,10 @@ public:
 private:
     static std::unordered_map<std::string,AnimationInfo> spriteMap;
     static std::set<std::string> loadedFiles;
+    static void addBindings(const std::string& filePath);
 
 public:
-
-    static void addBindings(const std::string& filePath);
+    static void init();
     static AnimationInfo* getAnimationNode(const std::string& key);
 };
 
@@ -125,7 +125,7 @@ public:
     std::tuple<std::string,SDL_FRect*> getFrame();
 
     //Constructor and Destructor
-    explicit SpriteRenderingContext(const std::string& spriteJSONPath, std::string  texture, float frameDuration, int spriteWidth, int spriteHeight, Direction dir = Direction::OMNI,AnimationType anim = AnimationType::IDLE, int variant = 1);
+    explicit SpriteRenderingContext(std::string  texture, float frameDuration, int spriteWidth, int spriteHeight, Direction dir = Direction::OMNI,AnimationType anim = AnimationType::IDLE, int variant = 1);
     ~SpriteRenderingContext() = default;
 };
 

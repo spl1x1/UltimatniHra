@@ -4,6 +4,7 @@
 
 #include "../../include/Sprites/Sprite.hpp"
 
+#include <filesystem>
 #include <utility>
 #include <simdjson.h>
 
@@ -12,6 +13,7 @@ std::set<std::string> SpriteAnimationBinding::loadedFiles{};
 
 
 void SpriteAnimationBinding::addBindings(const std::string &filePath) {
+    if (!filePath.ends_with(".json")) return;
     if (loadedFiles.contains(filePath)) return;
     loadedFiles.insert(filePath);
 
@@ -35,14 +37,31 @@ void SpriteAnimationBinding::addBindings(const std::string &filePath) {
 
         AnimationInfo animation;
         for (auto prop : value) {
-            std::string_view propKey = prop.unescaped_key();
-            if (propKey == "frames") {
+            if (const std::string_view propKey = prop.unescaped_key(); propKey == "frames") {
                 parseFrames(prop.value().get_array(), animation);
             } else if (propKey == "frameCount") {
                 animation.frameCount = static_cast<int>(prop.value().get_int64());
             }
         }
         spriteMap.insert_or_assign(std::string(key), animation);
+    }
+}
+
+void SpriteAnimationBinding::init() {
+    auto iterateOverDirectory= [&](const std::string& Directory)->std::vector<std::string>{
+        auto dirlist = std::vector<std::string>{};
+        for (const auto& entry : std::filesystem::directory_iterator(Directory)) {
+            std::string fileName = entry.path().string();
+            if (!entry.is_directory()) addBindings(entry.path().string());
+            else dirlist.emplace_back(entry.path().string());
+        }
+        return dirlist;
+    };
+
+    const auto pathToJsons{"assets/jsons"};
+    auto iter = iterateOverDirectory(pathToJsons);
+    for (const auto& entry : iter) {
+        iterateOverDirectory(entry);
     }
 }
 
@@ -145,12 +164,11 @@ SDL_FRect* SpriteRenderingContext::getFrameRect() {
     return frameRect.get();
 }
 
-SpriteRenderingContext::SpriteRenderingContext(const std::string& spriteJSONPath, std::string  texture,const float frameDuration ,const int spriteWidth, const int spriteHeight ,const Direction dir, const AnimationType anim, const int variant):
+SpriteRenderingContext::SpriteRenderingContext(std::string  texture,const float frameDuration ,const int spriteWidth, const int spriteHeight ,const Direction dir, const AnimationType anim, const int variant):
 textureName(std::move(texture)),activeAnimation(anim), activeDirection(dir), defaultVariant(variant), frameDuration(frameDuration), spriteWidth(spriteWidth), spriteHeight(spriteHeight)
 {
     defaultDirection = dir;
     defaultAnimation = anim;
-    SpriteAnimationBinding::addBindings(spriteJSONPath);
     currentAnimationNode = SpriteAnimationBinding::getAnimationNode(buildKey());
     frameRect->w = static_cast<float>(spriteWidth);
     frameRect->h = static_cast<float>(spriteHeight);

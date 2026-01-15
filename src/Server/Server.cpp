@@ -24,13 +24,6 @@ void Server::setEntityPos(int entityId, Coordinates newCoordinates) {
     }
 }
 
-void Server::setPlayerPos(int playerId, Coordinates newCoordinates) {
-    std::lock_guard lock(serverMutex);
-    if (_players.contains(playerId)) {
-        _players[playerId]->GetCoordinates() = newCoordinates;
-    }
-}
-
 void Server::setEntityCollision(int entityId, bool disable) {
     std::lock_guard lock(serverMutex);
     if (_entities.contains(entityId)) {
@@ -38,12 +31,6 @@ void Server::setEntityCollision(int entityId, bool disable) {
     }
 }
 
-void Server::setPlayerCollision(int playerId, bool disable) {
-    std::lock_guard lock(serverMutex);
-    if (_players.contains(playerId)) {
-        _players[playerId]->SetEntityCollision(disable);
-    }
-}
 
 bool Server::isEntityColliding(int entityId) {
     std::shared_lock lock(serverMutex);
@@ -53,17 +40,7 @@ bool Server::isEntityColliding(int entityId) {
     return false; // Return false if entity not found
 }
 
-bool Server::isPlayerColliding(int playerId) {
-    std::shared_lock lock(serverMutex);
-    if (_players.contains(playerId)) {
-        return _players[playerId]->GetCollisionStatus().colliding == true;
-    }
-    return false; // Return false if entity not found
-}
-
 int Server::getNextEntityId() {return _nextEntityId++;}
-
-int Server::getNextPlayerId() {return _nextPlayerId++;}
 
 int Server::getNextStructureId() {
     if (!reclaimedStructureIds.empty()) {
@@ -74,9 +51,6 @@ int Server::getNextStructureId() {
     return ++_nextStructureId;
 }
 
-int Server::getNextDamageAreaId() {
-    return _nextDamageAreaId++;
-}
 
 void Server::setDeltaTime(float dt) {
     std::lock_guard lock(serverMutex);
@@ -105,11 +79,11 @@ void Server::setMapValue_unprotected(int x, int y, WorldData::MapType mapType, i
     _worldData.updateMapValue(x,y, mapType, value);
 }
 
-void Server::addPlayer(const std::shared_ptr<IEntity>& player) {
+void Server::addLocalPlayer(const std::shared_ptr<Player>& player) {
     std::lock_guard lock(serverMutex);
-    const int newId = getNextPlayerId();
-    _players[newId] = player;
-    player->SetId(newId);
+    localPlayer = player;
+    _entities[0] = player;
+    player->SetId(0); //Local player always has ID 0
 }
 
 void Server::addEntity(const std::shared_ptr<IEntity>& entity) {
@@ -189,9 +163,7 @@ void Server::removeStructure(int structureId) {
 
 void Server::playerUpdate(std::unique_ptr<EntityEvent> e, int playerId) {
     std::lock_guard lock(serverMutex);
-    if (const auto playerEntity = dynamic_cast<Player*>(_players.at(playerId).get())) {
-        playerEntity->AddEvent(std::move(e));
-    }
+    if (localPlayer) localPlayer->AddEvent(std::move(e));
 }
 
 std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates bottomRight) {
@@ -225,12 +197,11 @@ std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates botto
 }
 
 void Server::applyDamageAt_unprotected(int damage, Coordinates position, const int entityId) {
-    const auto tile{TileCoordinates{
-        .x = static_cast<int>(std::floor(position.x / 32.0f)),
-        .y = static_cast<int>(std::floor(position.y / 32.0f))
-    }};
-    SDL_Log("Applying %d damage at tile (%d, %d) from entity %d", damage, tile.x, tile.y, entityId);
-    damageTiles.push_back({tile, damage, entityId, getNextDamageAreaId()});
+    damageTiles.emplace_back(DamageArea{
+        .tile = position,
+        .damage = damage,
+        .entityId = entityId,
+    });
 }
 
 void Server::Tick() {
@@ -239,14 +210,14 @@ void Server::Tick() {
         const auto hitbox = entity->GetCollisionComponent()->GetHitbox();
         std::set<int> appliedDamageIds{};
         int totalDamage{0};
-        for (const auto damageTile : damageTiles ) {
-            if (damageTile.entityId == entity->GetId() || appliedDamageIds.contains(damageTile.damageInstatnceId)) continue; //Entity nemuze ublizit sama sobe
-            if (hitbox->corners[0].x > (damageTile.tile.x +1) *32.0f || hitbox->corners[1].x < damageTile.tile.x *32.0f
-                || hitbox->corners[0].y > (damageTile.tile.y +1) *32.0f || hitbox->corners[2].y < damageTile.tile.y *32.0f) {
+        for (const auto damageTile : damageTiles) {
+            if (damageTile.entityId == entity->GetId() || appliedDamageIds.contains(damageTile.entityId)) continue; //Entity nemuze ublizit sama sobe
+            if (hitbox->corners[0].x > (static_cast<float>(damageTile.tile.x) +1) *32.0f || hitbox->corners[1].x < static_cast<float>(damageTile.tile.x) *32.0f
+                || hitbox->corners[0].y > (static_cast<float>(damageTile.tile.y) +1) *32.0f || hitbox->corners[2].y < static_cast<float>(damageTile.tile.y) *32.0f) {
                 continue;
             }
             totalDamage += damageTile.damage;
-            appliedDamageIds.insert(damageTile.damageInstatnceId);
+            appliedDamageIds.insert(damageTile.entityId);
         }
         return totalDamage;
     };
@@ -254,40 +225,18 @@ void Server::Tick() {
     std::lock_guard lock(serverMutex);
     for (const auto &entity: _entities | std::views::values) {
         if (!entity) continue;
-        checkDamage(entity);
+        const auto damage =checkDamage(entity);
+        entity->AddEvent(Event_Damage::Create(damage));
         entity->Tick();
-    }
-    for (const auto &player: _players | std::views::values) {
-        if (!player) continue;
-        const int damage = checkDamage(player);
-        if (damage > 0) {
-            playerUpdate(Event_Damage::Create(damage), player->GetId());
-        }
-        player->Tick();
     }
 
     damageTiles.clear();
-    _nextDamageAreaId = 0;
 }
 
-std::map<int,std::shared_ptr<IEntity>> Server::getPlayers() {
-    std::shared_lock lock(serverMutex);
-    return _players;
-}
 
-Coordinates Server::getPlayerPos(int playerId) {
+IEntity* Server::getPlayer() {
     std::shared_lock lock(serverMutex);
-    if (_players.contains(playerId)) {
-        return _players[playerId]->GetCoordinates();
-    }
-    return Coordinates{0.0f, 0.0f}; // Return a default value if entity not found
-}
-
-IEntity* Server::getPlayer(int playerId) {
-    std::shared_lock lock(serverMutex);
-    if (_players.contains(playerId)) {
-        return _players[playerId].get();
-    }
+    if (localPlayer) return localPlayer.get();
     return nullptr; // Return nullptr if entity not found
 }
 

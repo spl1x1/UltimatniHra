@@ -11,7 +11,7 @@
 //
 
 class OreDepositSprite final : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("assets/jsons/structures/ore_deposits.json","ore_deposits", 0.0f, 96, 96);
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("ore_deposits", 0.0f, 96, 96);
 public:
     //Interface Methods Implementation
     void Tick(float deltaTime) override {};

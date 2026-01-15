@@ -51,10 +51,9 @@ enum class OreType {
 };
 
 struct DamageArea {
-    TileCoordinates tile;
+    Coordinates tile;
     int damage{};
     int entityId{-1}; // ID of the entity that caused the damage
-    int damageInstatnceId{-1}; // Unique ID for this damage instance
 };
 
 

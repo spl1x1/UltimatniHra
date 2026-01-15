@@ -78,7 +78,7 @@ bool SaveManager::saveGame(int slotId, Server* server) {
     save.lastModified = std::time(nullptr);
 
     // Get player
-    IEntity* playerEntity = server->getPlayer(0);
+    IEntity* playerEntity = server->getPlayer();
     if (!playerEntity) {
         return false;
     }
@@ -124,12 +124,12 @@ bool SaveManager::loadGame(int slotId, Server* server) {
     SaveGame& save = saveSlots[slotId];
 
     // Get player
-    IEntity* playerEntity = server->getPlayer(0);
+    IEntity* playerEntity = server->getPlayer();
     if (!playerEntity) {
         return false;
     }
 
-    Player* player = dynamic_cast<Player*>(playerEntity);
+    auto* player = dynamic_cast<Player*>(playerEntity);
     if (!player) {
         return false;
     }

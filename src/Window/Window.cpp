@@ -67,7 +67,7 @@ void Window::handleMouseInputs() const {
     SDL_MouseButtonFlags mousestates = SDL_GetMouseState(nullptr, nullptr);
 
     if ((mousestates^SDL_BUTTON_LMASK) == 0) {
-        const auto player = server->getPlayer(0);
+        const auto player = server->getPlayer();
         const auto playerPos = player->GetCoordinates();
         const auto adjustment = player->GetRenderingComponent()->CalculateCenterOffset(*player);
         Coordinates playerCoords{
@@ -154,7 +154,7 @@ void Window::renderHud() {
         renderAt(cursor);
     }
 
-    const auto playerHealth = server->getPlayer(0)->GetHealthComponent()->GetHealth();
+    const auto playerHealth = server->getPlayer()->GetHealthComponent()->GetHealth();
 
     SDL_FRect rect;
     rect.x = 10.0f;
@@ -200,7 +200,7 @@ void Window::advanceFrame() {
 
     textures.at("FinalTexture");
     SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
-    Coordinates coords = server->getPlayerPos(0);
+    Coordinates coords = server->getPlayer()->GetCoordinates();
 
     data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
     data.cameraWaterRect->y += static_cast<float>(std::lround(coords.y - (data.cameraRect->y + cameraOffsetY)));
@@ -217,18 +217,18 @@ void Window::advanceFrame() {
     const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
     SDL_RenderTexture(data.Renderer, textures.at(texture), data.cameraWaterRect.get(), nullptr);
     SDL_RenderTexture(data.Renderer, textures.at("WorldMap"), data.cameraRect.get(), nullptr);
-    renderAt(server->getPlayer(0)->GetRenderingContext());
+    renderAt(server->getPlayer()->GetRenderingContext());
 
 #ifdef DEBUG
-    if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer(0)->GetHitboxRenderingContext());
+    if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer()->GetHitboxRenderingContext());
     if (data.lastCollisionState != data.collisionState) {
         server->playerUpdate(Event_ChangeCollision::Create());
         data.lastCollisionState = data.collisionState;
         SDL_Log("Collision state changed: %s", data.collisionState ? "ON" : "OFF");
     }
-    data.playerX = std::floor(coords.x);
-    data.playerY = std::floor(coords.y);
-    data.playerAngle = server->getPlayer(0)->GetLogicComponent()->GetAngle();
+    data.playerX = static_cast<int>(std::floor(coords.x));
+    data.playerY = static_cast<int>(std::floor(coords.y));
+    data.playerAngle = server->getPlayer()->GetLogicComponent()->GetAngle();
     dataModel.DirtyAllVariables();
 #endif
 
@@ -474,6 +474,7 @@ void Window::initGame() {
 
     WaterSprite::Init();
     EventBindings::InitializeBindings();
+    SpriteAnimationBinding::init();
     Coordinates coordinates = server->getEntityPos(0);
 
     data.cameraRect->x = coordinates.x - cameraOffsetX;

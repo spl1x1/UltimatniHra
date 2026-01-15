@@ -8,7 +8,7 @@
 #include "Sprite.hpp"
 
 class PlayerSprite final : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("assets/jsons/entities/player.json","player",0.1f, 96, 96, Direction::DOWN, AnimationType::IDLE);
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("player",0.1f, 96, 96, Direction::DOWN, AnimationType::IDLE);
 public:
     //Interface Methods
     void Tick(float deltaTime) override;

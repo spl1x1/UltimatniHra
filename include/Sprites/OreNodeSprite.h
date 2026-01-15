@@ -7,7 +7,7 @@
 #include "Sprite.hpp"
 
 class OreNodeSprite final : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("assets/jsons/structures/ore_nodes.json","ore_nodes",0.0,96, 96);
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("ore_nodes",0.0,96, 96);
 public:
     //Interface Methods Implementation
     void Tick(float deltaTime) override {};

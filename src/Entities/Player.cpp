@@ -36,14 +36,14 @@ RenderingContext Player::GetRenderingContext() {
 
 void Player::Create(Server* server, int slotId) {
     auto player = std::make_shared<Player>(server, server->getSpawnPoint());
-    server->addPlayer(player);
+    server->addLocalPlayer(player);
     SaveManager::getInstance().setCurrentSlot(slotId);
 }
 
 void Player::Load(Server* server, int slotId) {
     // TODO: Load player data from save
     auto player = std::make_shared<Player>(server, server->getSpawnPoint());
-    server->addPlayer(player);
+    server->addLocalPlayer(player);
 
     // Load saved data into player
     SaveManager::getInstance().loadGame(slotId, server);
