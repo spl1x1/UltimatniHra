@@ -4,29 +4,33 @@
 
 #include "../../include/Sprites/OreDepositSprite.h"
 
-void OreDepositSprite::setVariant(const int newVariant) {
-    renderingContext.setVariant(newVariant);
+std::tuple<float, int> OreDepositSprite::GetFrameTimeAndCount() {
+    return {0.0f,1};
 }
 
-void OreDepositSprite::setCurrentFrame(const int newCurrentFrame) {
-    renderingContext.setCurrentFrame(newCurrentFrame);
+void OreDepositSprite::SetVariant(const int newVariant) {
+    renderingContext.SetVariant(newVariant);
 }
 
-std::tuple<std::string, SDL_FRect*> OreDepositSprite::getFrame() {
-    return {renderingContext.getTexture(), renderingContext.getFrameRect()};
+void OreDepositSprite::SetCurrentFrame(const int newCurrentFrame) {
+    renderingContext.SetCurrentFrame(newCurrentFrame);
 }
 
-RenderingContext OreDepositSprite::getRenderingContext() {
+std::tuple<std::string, SDL_FRect*> OreDepositSprite::GetFrame() {
+    return {renderingContext.GetTexture(), renderingContext.GetFrameRect()};
+}
+
+RenderingContext OreDepositSprite::GetRenderingContext() {
     RenderingContext context;
-    context.textureName = renderingContext.getTexture();
-    context.rect = renderingContext.getFrameRect();
+    context.textureName = renderingContext.GetTexture();
+    context.rect = renderingContext.GetFrameRect();
     return context;
 }
 
-int OreDepositSprite::getWidth() const {
-    return renderingContext.getWidth();
+int OreDepositSprite::GetWidth() const {
+    return renderingContext.GetWidth();
 }
 
-int OreDepositSprite::getHeight() const {
-    return renderingContext.getHeight();
+int OreDepositSprite::GetHeight() const {
+    return renderingContext.GetHeight();
 }

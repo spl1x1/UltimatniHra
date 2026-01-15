@@ -4,6 +4,7 @@
 
 #include "../../include/Sprites/Sprite.hpp"
 
+#include <filesystem>
 #include <utility>
 #include <simdjson.h>
 
@@ -12,6 +13,7 @@ std::set<std::string> SpriteAnimationBinding::loadedFiles{};
 
 
 void SpriteAnimationBinding::addBindings(const std::string &filePath) {
+    if (!filePath.ends_with(".json")) return;
     if (loadedFiles.contains(filePath)) return;
     loadedFiles.insert(filePath);
 
@@ -35,8 +37,7 @@ void SpriteAnimationBinding::addBindings(const std::string &filePath) {
 
         AnimationInfo animation;
         for (auto prop : value) {
-            std::string_view propKey = prop.unescaped_key();
-            if (propKey == "frames") {
+            if (const std::string_view propKey = prop.unescaped_key(); propKey == "frames") {
                 parseFrames(prop.value().get_array(), animation);
             } else if (propKey == "frameCount") {
                 animation.frameCount = static_cast<int>(prop.value().get_int64());
@@ -46,8 +47,26 @@ void SpriteAnimationBinding::addBindings(const std::string &filePath) {
     }
 }
 
+void SpriteAnimationBinding::Init() {
+    auto iterateOverDirectory= [&](const std::string& Directory)->std::vector<std::string>{
+        auto dirlist = std::vector<std::string>{};
+        for (const auto& entry : std::filesystem::directory_iterator(Directory)) {
+            std::string fileName = entry.path().string();
+            if (!entry.is_directory()) addBindings(entry.path().string());
+            else dirlist.emplace_back(entry.path().string());
+        }
+        return dirlist;
+    };
 
-SpriteAnimationBinding::AnimationInfo* SpriteAnimationBinding::getAnimationNode(const std::string& key) {
+    const auto pathToJsons{"assets/jsons"};
+    auto iter = iterateOverDirectory(pathToJsons);
+    for (const auto& entry : iter) {
+        iterateOverDirectory(entry);
+    }
+}
+
+
+SpriteAnimationBinding::AnimationInfo* SpriteAnimationBinding::GetAnimationNode(const std::string& key) {
     return spriteMap.contains(key) ? &spriteMap[key] : nullptr;
 }
 
@@ -58,7 +77,7 @@ void SpriteRenderingContext::ResetAnimation(SpriteAnimationBinding::AnimationInf
     if (!animationNode) { //reset if nullptr
         activeAnimation = defaultAnimation;
         activeDirection = defaultDirection;
-        currentAnimationNode = SpriteAnimationBinding::getAnimationNode(buildKey());
+        currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());
         return;
     }
     currentAnimationNode = animationNode;
@@ -77,12 +96,12 @@ void SpriteRenderingContext::Tick(const float deltaTime) {
 
 std::string SpriteRenderingContext::attachActiveAnimation(std::string& texture) const {
     if (activeAnimation == AnimationType::NONE) return texture;
-    return texture += "_" + SpriteContext::animationTypeToString(activeAnimation);
+    return texture += "_" + SpriteContext::AnimationTypeToString(activeAnimation);
 }
 
 std::string SpriteRenderingContext::attachActiveDirection(std::string& texture) const {
     if (activeDirection == Direction::NONE) return texture;
-    return texture += "$" + SpriteContext::directionTypeToString(activeDirection);
+    return texture += "$" + SpriteContext::DirectionTypeToString(activeDirection);
 }
 
 std::string SpriteRenderingContext::attachVariantNumber(std::string& texture) const {
@@ -90,7 +109,7 @@ std::string SpriteRenderingContext::attachVariantNumber(std::string& texture) co
     return texture += "@" + std::to_string(activeVariant);
 }
 
-std::string SpriteRenderingContext::buildKey() {
+std::string SpriteRenderingContext::BuildKey() {
     std::string key = textureName;
     if (activeAnimation == AnimationType::NONE)activeAnimation = defaultAnimation;
     attachActiveAnimation(key);
@@ -100,58 +119,61 @@ std::string SpriteRenderingContext::buildKey() {
     return key;
 }
 
-std::tuple<std::string,SDL_FRect*> SpriteRenderingContext::getFrame() {
-    return {getTexture(), getFrameRect()};
+std::tuple<std::string,SDL_FRect*> SpriteRenderingContext::GetFrame() {
+    return {GetTexture(), GetFrameRect()};
 }
 
 void SpriteRenderingContext::PlayAnimation(const AnimationType animationType, const Direction direction, const bool ForceReset) {
     if (!ForceReset && animationType == activeAnimation && direction == activeDirection) return;
     activeAnimation = animationType;
     this->activeDirection = direction;
-    const auto key = buildKey();
-    const auto node{SpriteAnimationBinding::getAnimationNode(key)};
+    const auto key = BuildKey();
+    const auto node{SpriteAnimationBinding::GetAnimationNode(key)};
     ResetAnimation(node);
 }
 
+float SpriteRenderingContext::GetFrameDuration() const { return frameDuration; }
 
-std::string SpriteRenderingContext::getTexture() const {
+int SpriteRenderingContext::GetCurrentFrameCount() const { return  currentAnimationNode->frameCount; }
+
+
+std::string SpriteRenderingContext::GetTexture() const {
     return textureName;
 }
 
-void SpriteRenderingContext::setVariant(const int newVariant) {
+void SpriteRenderingContext::SetVariant(const int newVariant) {
     activeVariant = newVariant;
-    ResetAnimation(SpriteAnimationBinding::getAnimationNode(buildKey()));
+    ResetAnimation(SpriteAnimationBinding::GetAnimationNode(BuildKey()));
 }
 
-void SpriteRenderingContext::setCurrentFrame(int newCurrentFrame) {
+void SpriteRenderingContext::SetCurrentFrame(int newCurrentFrame) {
     currentFrame = newCurrentFrame;
-    ResetAnimation(SpriteAnimationBinding::getAnimationNode(buildKey()));
+    ResetAnimation(SpriteAnimationBinding::GetAnimationNode(BuildKey()));
 }
 
 
 
-int SpriteRenderingContext::getWidth() const {
+int SpriteRenderingContext::GetWidth() const {
     return spriteWidth;
 }
-int SpriteRenderingContext::getHeight() const {
+int SpriteRenderingContext::GetHeight() const {
     return spriteHeight;
 }
 
 
-SDL_FRect* SpriteRenderingContext::getFrameRect() {
-    if (!currentAnimationNode) currentAnimationNode = SpriteAnimationBinding::getAnimationNode(buildKey());
+SDL_FRect* SpriteRenderingContext::GetFrameRect() {
+    if (!currentAnimationNode) currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());
     frameRect->x = currentAnimationNode->frames.at(currentFrame-1).x;
     frameRect->y = currentAnimationNode->frames.at(currentFrame-1).y;
     return frameRect.get();
 }
 
-SpriteRenderingContext::SpriteRenderingContext(const std::string& spriteJSONPath, std::string  texture,const float frameDuration ,const int spriteWidth, const int spriteHeight ,const Direction dir, const AnimationType anim, const int variant):
+SpriteRenderingContext::SpriteRenderingContext(std::string  texture,const float frameDuration ,const int spriteWidth, const int spriteHeight ,const Direction dir, const AnimationType anim, const int variant):
 textureName(std::move(texture)),activeAnimation(anim), activeDirection(dir), defaultVariant(variant), frameDuration(frameDuration), spriteWidth(spriteWidth), spriteHeight(spriteHeight)
 {
     defaultDirection = dir;
     defaultAnimation = anim;
-    SpriteAnimationBinding::addBindings(spriteJSONPath);
-    currentAnimationNode = SpriteAnimationBinding::getAnimationNode(buildKey());
+    currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());
     frameRect->w = static_cast<float>(spriteWidth);
     frameRect->h = static_cast<float>(spriteHeight);
 }
@@ -159,7 +181,7 @@ textureName(std::move(texture)),activeAnimation(anim), activeDirection(dir), def
 
 
 // SpriteContext methods
-std::string SpriteContext::animationTypeToString(const AnimationType type) {
+std::string SpriteContext::AnimationTypeToString(const AnimationType type) {
     switch (type) {
         case AnimationType::NONE: return "NONE";
         case AnimationType::IDLE: return "IDLE";
@@ -172,7 +194,7 @@ std::string SpriteContext::animationTypeToString(const AnimationType type) {
     }
 }
 
-std::string SpriteContext::directionTypeToString(const Direction type) {
+std::string SpriteContext::DirectionTypeToString(const Direction type) {
     switch (type) {
         case Direction::DOWN: return "DOWN";
         case Direction::UP: return "UP";

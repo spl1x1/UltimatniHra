@@ -43,16 +43,17 @@ public:
     //Interface Methods
     virtual void Tick(float deltaTime) = 0;
     virtual void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) = 0;
+    virtual std::tuple<float,int> GetFrameTimeAndCount() = 0;
 
     //Setters
-    virtual void setVariant(int newVariant) = 0;
-    virtual void setCurrentFrame(int newCurrentFrame) = 0; //For special cases
+    virtual void SetVariant(int newVariant) = 0;
+    virtual void SetCurrentFrame(int newCurrentFrame) = 0; //For special cases
 
     //Getters
-    virtual std::tuple<std::string,SDL_FRect*> getFrame() = 0;
-    virtual RenderingContext getRenderingContext() = 0;
-    [[nodiscard]] virtual int getWidth() const = 0;
-    [[nodiscard]] virtual int getHeight() const = 0;
+    virtual std::tuple<std::string,SDL_FRect*> GetFrame() = 0;
+    virtual RenderingContext GetRenderingContext() = 0;
+    [[nodiscard]] virtual int GetWidth() const = 0;
+    [[nodiscard]] virtual int GetHeight() const = 0;
 };
 
 
@@ -69,11 +70,11 @@ public:
 private:
     static std::unordered_map<std::string,AnimationInfo> spriteMap;
     static std::set<std::string> loadedFiles;
+    static void addBindings(const std::string& filePath);
 
 public:
-
-    static void addBindings(const std::string& filePath);
-    static AnimationInfo* getAnimationNode(const std::string& key);
+    static void Init();
+    static AnimationInfo* GetAnimationNode(const std::string& key);
 };
 
 class SpriteRenderingContext {
@@ -110,30 +111,32 @@ public:
     //Methods
     void ResetAnimation(SpriteAnimationBinding::AnimationInfo* animationNode = nullptr);
     void Tick(float deltaTime);
-    [[nodiscard]] std::string getTexture() const;
-    [[nodiscard]] SDL_FRect* getFrameRect();
+    [[nodiscard]] std::string GetTexture() const;
+    [[nodiscard]] SDL_FRect* GetFrameRect();
 
     //Getters and Setters
-    void setVariant(int newVariant);
-    void setCurrentFrame(int newCurrentFrame); //For special cases
+    void SetVariant(int newVariant);
+    void SetCurrentFrame(int newCurrentFrame); //For special cases
     void PlayAnimation(AnimationType animationType, Direction direction, bool ForceReset); //Plays animation immediately
+    [[nodiscard]] float GetFrameDuration() const;
+    [[nodiscard]] int GetCurrentFrameCount() const;
 
-    [[nodiscard]] int getWidth() const;
-    [[nodiscard]] int getHeight() const;
+    [[nodiscard]] int GetWidth() const;
+    [[nodiscard]] int GetHeight() const;
 
-    [[nodiscard]] std::string buildKey();
-    std::tuple<std::string,SDL_FRect*> getFrame();
+    [[nodiscard]] std::string BuildKey();
+    std::tuple<std::string,SDL_FRect*> GetFrame();
 
     //Constructor and Destructor
-    explicit SpriteRenderingContext(const std::string& spriteJSONPath, std::string  texture, float frameDuration, int spriteWidth, int spriteHeight, Direction dir = Direction::OMNI,AnimationType anim = AnimationType::IDLE, int variant = 1);
+    explicit SpriteRenderingContext(std::string  texture, float frameDuration, int spriteWidth, int spriteHeight, Direction dir = Direction::OMNI,AnimationType anim = AnimationType::IDLE, int variant = 1);
     ~SpriteRenderingContext() = default;
 };
 
 class SpriteContext {
 public:
     //Static Methods
-    static std::string animationTypeToString(AnimationType type);
-    static std::string directionTypeToString(Direction type);
+    static std::string AnimationTypeToString(AnimationType type);
+    static std::string DirectionTypeToString(Direction type);
 };
 
 #endif //SPRITE_H

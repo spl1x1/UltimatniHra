@@ -20,10 +20,10 @@ void Player::Tick() {
 
     if (oldCoordinates.x != newCoordinates.x || oldCoordinates.y != newCoordinates.y) {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
-        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, direction, false);
+        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, direction, 1);
     } else {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
-        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, direction, false);
+        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, direction, 1);
     }
 
 }
@@ -36,14 +36,14 @@ RenderingContext Player::GetRenderingContext() {
 
 void Player::Create(Server* server, int slotId) {
     auto player = std::make_shared<Player>(server, server->getSpawnPoint());
-    server->addPlayer(player);
+    server->addLocalPlayer(player);
     SaveManager::getInstance().setCurrentSlot(slotId);
 }
 
 void Player::Load(Server* server, int slotId) {
     // TODO: Load player data from save
     auto player = std::make_shared<Player>(server, server->getSpawnPoint());
-    server->addPlayer(player);
+    server->addLocalPlayer(player);
 
     // Load saved data into player
     SaveManager::getInstance().loadGame(slotId, server);
@@ -86,6 +86,14 @@ Coordinates Player::GetCoordinates() const {
     return _entityLogicComponent.GetCoordinates();
 }
 
+Coordinates Player::GetEntityCenter() {
+    const auto adjustment{_entityRenderingComponent.CalculateCenterOffset(*this)};
+    auto coordinates {_entityLogicComponent.GetCoordinates()};
+    coordinates.x += adjustment.x;
+    coordinates.y += adjustment.y;
+    return coordinates;
+}
+
 CollisionStatus Player::GetCollisionStatus() const {
     return _entityCollisionComponent.GetCollisionStatus();
 }
@@ -106,6 +114,10 @@ int Player::GetId() const {
 
 int Player::GetReach() const {
     return reach;
+}
+
+EntityType Player::GetType() const {
+    return EntityType::PLAYER;
 }
 
 EntityCollisionComponent * Player::GetCollisionComponent() {

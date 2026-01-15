@@ -26,7 +26,7 @@ class Player final : public IEntity {
 
     Server* _server;
     int id{};
-    int reach{64}; //Player reach in pixels
+    int reach{32}; //Player reach in pixels
     bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes)
 
 public:
@@ -53,13 +53,15 @@ public:
 
     //Returns true entity coordinates (sprite center)
     [[nodiscard]] Coordinates GetCoordinates() const override;
+    //Returns entity center coordinates
+    [[nodiscard]] Coordinates GetEntityCenter() override;
     //Returns entity collision status
     [[nodiscard]] CollisionStatus GetCollisionStatus() const override;
     [[nodiscard]] int GetAngle() const override;
     [[nodiscard]] HitboxContext GetHitboxRenderingContext() const override;
     [[nodiscard]] int GetId() const override;
     [[nodiscard]] int GetReach() const override;
-
+    [[nodiscard]] EntityType GetType() const override;
 
     EntityCollisionComponent* GetCollisionComponent() override;
     //Get EntityLogicComponent

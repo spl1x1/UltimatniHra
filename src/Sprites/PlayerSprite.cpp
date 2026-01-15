@@ -8,27 +8,31 @@ void PlayerSprite::Tick(float deltaTime) {
     renderingContext.Tick(deltaTime);
 }
 
+std::tuple<float, int> PlayerSprite::GetFrameTimeAndCount() {
+    return {renderingContext.GetFrameDuration(), renderingContext.GetCurrentFrameCount()};
+}
+
 void PlayerSprite::PlayAnimation(const AnimationType newAnimation, const Direction direction, const bool ForceReset) {
     renderingContext.PlayAnimation(newAnimation, direction, ForceReset);
 }
 
-std::tuple<std::string, SDL_FRect*> PlayerSprite::getFrame() {
-    std::string texture = renderingContext.getTexture();
-    return  {texture, renderingContext.getFrameRect()};
+std::tuple<std::string, SDL_FRect*> PlayerSprite::GetFrame() {
+    std::string texture = renderingContext.GetTexture();
+    return  {texture, renderingContext.GetFrameRect()};
 }
 
-int PlayerSprite::getWidth() const {
-    return renderingContext.getWidth();
+int PlayerSprite::GetWidth() const {
+    return renderingContext.GetWidth();
 }
 
-int PlayerSprite::getHeight() const {
-    return renderingContext.getHeight();
+int PlayerSprite::GetHeight() const {
+    return renderingContext.GetHeight();
 }
 
-RenderingContext PlayerSprite::getRenderingContext() {
+RenderingContext PlayerSprite::GetRenderingContext() {
     RenderingContext context;
 
-    auto frame  = getFrame();
+    auto frame  = GetFrame();
     context.textureName = std::get<0>(frame);
     context.rect = std::get<1>(frame);
 

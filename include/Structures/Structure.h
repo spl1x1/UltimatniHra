@@ -21,6 +21,7 @@ enum class structureType{
     ORE_DEPOSIT
 };
 
+
 class IStructure {
 
 public:
@@ -42,6 +43,7 @@ class StructureRenderingComponent {
     void Tick(float deltaTime) const;
     void SetVariant(int variant) const;
     [[nodiscard]] ISprite* GetSprite() const;
+    static std::string TypeToString(structureType type);
 
     explicit StructureRenderingComponent(std::unique_ptr<ISprite> sprite);
 };

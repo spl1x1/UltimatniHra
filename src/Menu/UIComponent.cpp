@@ -329,7 +329,7 @@ void UIComponent::Render() {
         }
         ImGui::Checkbox("Player collision", &windowClass->data.collisionState);
         ImGui::Checkbox("Mouse preview", &windowClass->data.drawMousePreview);
-        ImGui::Text("Mouse Position: (%f, %f)", windowClass->data.mousePosition.x, windowClass->data.mousePosition.y);
+        ImGui::Text("Mouse Position: (%f, %f)", windowClass->data.mouseData.x, windowClass->data.mouseData.y);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
     }

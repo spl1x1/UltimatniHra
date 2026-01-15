@@ -4,29 +4,33 @@
 
 #include "../../include/Sprites/OreNodeSprite.h"
 
-void OreNodeSprite::setVariant(const int newVariant) {
-    renderingContext.setVariant(newVariant);
+std::tuple<float, int> OreNodeSprite::GetFrameTimeAndCount() {
+    return {0.0f,1};
 }
 
-void OreNodeSprite::setCurrentFrame(const int newCurrentFrame) {
-    renderingContext.setCurrentFrame(newCurrentFrame);
+void OreNodeSprite::SetVariant(const int newVariant) {
+    renderingContext.SetVariant(newVariant);
 }
 
-std::tuple<std::string, SDL_FRect*> OreNodeSprite::getFrame() {
-    return {renderingContext.getTexture(), renderingContext.getFrameRect()};
+void OreNodeSprite::SetCurrentFrame(const int newCurrentFrame) {
+    renderingContext.SetCurrentFrame(newCurrentFrame);
 }
 
-RenderingContext OreNodeSprite::getRenderingContext() {
+std::tuple<std::string, SDL_FRect*> OreNodeSprite::GetFrame() {
+    return {renderingContext.GetTexture(), renderingContext.GetFrameRect()};
+}
+
+RenderingContext OreNodeSprite::GetRenderingContext() {
     RenderingContext context;
-    context.textureName = renderingContext.getTexture();
-    context.rect = renderingContext.getFrameRect();
+    context.textureName = renderingContext.GetTexture();
+    context.rect = renderingContext.GetFrameRect();
     return context;
 }
 
-int OreNodeSprite::getWidth() const {
-    return renderingContext.getWidth();
+int OreNodeSprite::GetWidth() const {
+    return renderingContext.GetWidth();
 }
 
-int OreNodeSprite::getHeight() const {
-    return renderingContext.getHeight();
+int OreNodeSprite::GetHeight() const {
+    return renderingContext.GetHeight();
 }

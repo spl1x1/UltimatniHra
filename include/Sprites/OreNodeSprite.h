@@ -7,19 +7,20 @@
 #include "Sprite.hpp"
 
 class OreNodeSprite final : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("assets/jsons/structures/ore_nodes.json","ore_nodes",0.0,96, 96);
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("ore_nodes",0.0,96, 96);
 public:
     //Interface Methods Implementation
-    void Tick(float deltaTime) override {};
+    void Tick(float deltaTime) override {}
+    std::tuple<float,int> GetFrameTimeAndCount() override;
 
     void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) override {};
-    void setVariant(int newVariant) override; //Sets ore type (iron, copper, gold)
-    void setCurrentFrame(int newCurrentFrame) override;
+    void SetVariant(int newVariant) override; //Sets ore type (iron, copper, gold)
+    void SetCurrentFrame(int newCurrentFrame) override;
 
-    std::tuple<std::string,SDL_FRect*> getFrame() override;
-    RenderingContext getRenderingContext() override;
-    [[nodiscard]] int getWidth() const override;
-    [[nodiscard]] int getHeight() const override;
+    std::tuple<std::string,SDL_FRect*> GetFrame() override;
+    RenderingContext GetRenderingContext() override;
+    [[nodiscard]] int GetWidth() const override;
+    [[nodiscard]] int GetHeight() const override;
 };
 
 #endif //ORENODESPRITE_H
