@@ -18,6 +18,19 @@ add_library(Freetype::Freetype ALIAS freetype)
 add_library(SDL::SDL ALIAS SDL3-static )
 add_library(SDL_image::SDL_image ALIAS SDL3_image-static)
 
+set(FREETYPE_FOUND TRUE)
+set(FREETYPE_LIBRARY freetype)
+set(FREETYPE_LIBRARIES freetype)
+set(FREETYPE_INCLUDE_DIRS ${freetype_SOURCE_DIR}/include)
+
+CPMAddPackage(
+        NAME SDL3_ttf
+        GITHUB_REPOSITORY libsdl-org/SDL_ttf
+        GIT_TAG 5e1293a
+        OPTIONS
+        "SDL3TTF_VENDORED=OFF"
+)
+
 #other libs
 CPMAddPackage("gh:simdjson/simdjson#8b69401")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
@@ -35,6 +48,7 @@ endif()
 target_link_libraries(LibsBundle INTERFACE
         SDL3::SDL3
         SDL3_image::SDL3_image
+        SDL3_ttf::SDL3_ttf
         RmlUi::RmlUi
         simdjson::simdjson
 )

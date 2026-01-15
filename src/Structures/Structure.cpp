@@ -19,17 +19,30 @@ void StructureRenderingComponent::Tick(float deltaTime) const {
 
 void StructureRenderingComponent::SetVariant(int variant) const {
     if (!sprite) return;
-    sprite->setVariant(variant);
+    sprite->SetVariant(variant);
 }
 
 ISprite* StructureRenderingComponent::GetSprite() const {
     return sprite.get();
 }
 
+std::string StructureRenderingComponent::TypeToString(const structureType type) {
+    switch (type) {
+        case structureType::TREE:
+            return "Tree";
+        case structureType::ORE_NODE:
+            return "Ore Node";
+        case structureType::ORE_DEPOSIT:
+            return "Ore Deposit";
+        default:
+            return "Unknown";
+    }
+}
+
 RenderingContext StructureRenderingComponent::getRenderingContext() const {
     if (!sprite) return RenderingContext{};
 
-    auto renderingContext = sprite->getRenderingContext();
+    auto renderingContext = sprite->GetRenderingContext();
     return renderingContext;
 }
 

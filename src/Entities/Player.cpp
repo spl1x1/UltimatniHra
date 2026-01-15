@@ -20,10 +20,10 @@ void Player::Tick() {
 
     if (oldCoordinates.x != newCoordinates.x || oldCoordinates.y != newCoordinates.y) {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
-        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, direction, false);
+        _entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, direction, 1);
     } else {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(_entityLogicComponent.GetAngle());
-        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, direction, false);
+        _entityRenderingComponent.PlayAnimation(AnimationType::IDLE, direction, 1);
     }
 
 }
@@ -84,6 +84,14 @@ void Player::AddEvent(std::unique_ptr<EntityEvent> eventData) {
 
 Coordinates Player::GetCoordinates() const {
     return _entityLogicComponent.GetCoordinates();
+}
+
+Coordinates Player::GetEntityCenter() {
+    const auto adjustment{_entityRenderingComponent.CalculateCenterOffset(*this)};
+    auto coordinates {_entityLogicComponent.GetCoordinates()};
+    coordinates.x += adjustment.x;
+    coordinates.y += adjustment.y;
+    return coordinates;
 }
 
 CollisionStatus Player::GetCollisionStatus() const {

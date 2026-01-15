@@ -29,7 +29,7 @@ HitboxContext OreDeposit::GetHitboxContext() {
 OreDeposit::OreDeposit(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, OreType type, const int variant)
 : id(id),hitboxComponent(server), type(type) {
     renderingComponent.SetVariant(static_cast<int>(type));
-    renderingComponent.GetSprite()->setCurrentFrame(variant);
+    renderingComponent.GetSprite()->SetCurrentFrame(variant);
     topLeftCorner.x -= 32.0f; // Hitbox alignment
     topLeftCorner.y -= 32.0f;
     hitboxComponent.SetTopLeftCorner(topLeftCorner);

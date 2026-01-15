@@ -5,6 +5,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <string>
 #include <iostream>
 #include <unordered_map>
@@ -34,9 +35,10 @@ struct WindowData {
     SDL_Window* Window;
     SDL_Renderer* Renderer;
     SDL_Event event;
+    TTF_Font* font;
 
     std::unique_ptr<UIComponent> uiComponent = nullptr;
-    MousePosition mousePosition;
+    MouseData mouseData;
     int lastHealth{100};
     float healthFrameTime{0.0f};
     bool healthHurtState{false};
@@ -61,10 +63,12 @@ class Window {
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
-    void handleMouseInputs() const;
+    void handleMouseInputs();
     void handlePlayerInput() const;
     void renderAt(const RenderingContext& context) const;
     void drawHitbox(const HitboxContext& context) const;
+    void drawPointsAt(const std::vector<PointData>& points ) const;
+    void drawTextAt(const std::string& text, Coordinates coordinates, SDL_Color color) const;
     void renderHud();
 
     void advanceFrame();

@@ -11,15 +11,16 @@ class TreeSprite final : public ISprite {
 public:
     //Interface Methods Implementation
     void Tick(float deltaTime) override;
+    std::tuple<float,int> GetFrameTimeAndCount() override;
 
     void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) override {};
-    void setVariant(int newVariant) override;
-    void setCurrentFrame(int newCurrentFrame) override{};
+    void SetVariant(int newVariant) override;
+    void SetCurrentFrame(int newCurrentFrame) override{};
 
-    std::tuple<std::string,SDL_FRect*> getFrame() override;
-    RenderingContext getRenderingContext() override;
-    [[nodiscard]] int getWidth() const override;
-    [[nodiscard]] int getHeight() const override;
+    std::tuple<std::string,SDL_FRect*> GetFrame() override;
+    RenderingContext GetRenderingContext() override;
+    [[nodiscard]] int GetWidth() const override;
+    [[nodiscard]] int GetHeight() const override;
 };
 
 #endif //TREESPRITE_HPP

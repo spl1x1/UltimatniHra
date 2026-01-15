@@ -5,14 +5,14 @@
 #include "../../include/Sprites/TreeSprite.hpp"
 
 
-std::tuple<std::string, SDL_FRect*> TreeSprite::getFrame() {
-    return {renderingContext.getTexture(), renderingContext.getFrameRect()};
+std::tuple<std::string, SDL_FRect*> TreeSprite::GetFrame() {
+    return {renderingContext.GetTexture(), renderingContext.GetFrameRect()};
 }
 
-RenderingContext TreeSprite::getRenderingContext() {
+RenderingContext TreeSprite::GetRenderingContext() {
     RenderingContext context;
-    context.textureName = renderingContext.getTexture();
-    context.rect = renderingContext.getFrameRect();
+    context.textureName = renderingContext.GetTexture();
+    context.rect = renderingContext.GetFrameRect();
     return context;
 }
 
@@ -20,14 +20,18 @@ void TreeSprite::Tick(const float deltaTime) {
     renderingContext.Tick(deltaTime);
 }
 
-void TreeSprite::setVariant(const int newVariant) {
-    renderingContext.setVariant(newVariant);
+std::tuple<float, int> TreeSprite::GetFrameTimeAndCount() {
+    return {0.2f, renderingContext.GetCurrentFrameCount()};
 }
 
-int TreeSprite::getWidth() const {
-    return renderingContext.getWidth();
+void TreeSprite::SetVariant(const int newVariant) {
+    renderingContext.SetVariant(newVariant);
 }
 
-int TreeSprite::getHeight() const {
-    return renderingContext.getHeight();
+int TreeSprite::GetWidth() const {
+    return renderingContext.GetWidth();
+}
+
+int TreeSprite::GetHeight() const {
+    return renderingContext.GetHeight();
 }

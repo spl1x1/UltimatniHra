@@ -12,18 +12,19 @@ class PlayerSprite final : public ISprite {
 public:
     //Interface Methods
     void Tick(float deltaTime) override;
+    std::tuple<float,int> GetFrameTimeAndCount() override;
 
 
     //Setters
     void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) override;
-    void setVariant(int newVariant) override {}
-    void setCurrentFrame(int newCurrentFrame) override{};
+    void SetVariant(int newVariant) override {}
+    void SetCurrentFrame(int newCurrentFrame) override{};
 
     //Getters
-    std::tuple<std::string,SDL_FRect*> getFrame() override;
-    [[nodiscard]] int getWidth() const override;
-    [[nodiscard]] int getHeight() const override;
-    RenderingContext getRenderingContext() override;
+    std::tuple<std::string,SDL_FRect*> GetFrame() override;
+    [[nodiscard]] int GetWidth() const override;
+    [[nodiscard]] int GetHeight() const override;
+    RenderingContext GetRenderingContext() override;
 };
 
 
