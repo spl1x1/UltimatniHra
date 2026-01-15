@@ -17,4 +17,6 @@ add_library(ImguiDependency STATIC
         ${SOURCES}
         ../src/Application/SaveGame.cpp
         ../include/Application/SaveGame.h
+        ../src/Items/crafting.cpp
+        ../include/Items/crafting.h
 )

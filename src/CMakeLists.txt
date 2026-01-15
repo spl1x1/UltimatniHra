@@ -16,6 +16,8 @@ add_executable(UltimatniHra
         Items/inventory.cpp
         ../include/Items/inventory.h
         ../include/Items/inventory.h
+        Items/crafting.cpp
+        ../include/Items/crafting.h
 )
 
 target_link_libraries(ImguiDependency

@@ -374,6 +374,19 @@ int InventoryController::countItems(ItemType type) const {
     return count;
 }
 
+int InventoryController::countMaterials(MaterialType materialType) const {
+    int count = 0;
+    for (const auto& [slotIndex, item] : items) {
+        if (item->getType() == ItemType::MATERIAL) {
+            auto* material = dynamic_cast<Material*>(item.get());
+            if (material && material->getMaterialType() == materialType) {
+                count += item->getStackSize();
+            }
+        }
+    }
+    return count;
+}
+
 void InventoryController::setupEquipmentSlots() {
     // Define equipment slot types
     equipmentSlotTypes["slot_helmet"] = EquipmentSlotType::HELMET;

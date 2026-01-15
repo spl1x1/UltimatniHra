@@ -69,6 +69,12 @@ public:
     // Get total item count of a specific type
     int countItems(ItemType type) const;
 
+    // Count materials of a specific material type
+    int countMaterials(MaterialType materialType) const;
+
+    // Get all items (for crafting system)
+    const std::unordered_map<int, std::unique_ptr<Item>>& getItems() const { return items; }
+
 private:
     Window* window;
     UIComponent* uiComponent;

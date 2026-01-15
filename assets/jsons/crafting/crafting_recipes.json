@@ -1,0 +1,276 @@
+﻿{
+  "materials": [
+    "wood",
+    "stone",
+    "leather",
+    "iron",
+    "steel",
+    "dragonscale"
+  ],
+
+  "recipes": [
+
+    {
+      "id": "steel",
+      "category": "material",
+      "station": "smelter",
+      "ingredients": [
+        { "item": "iron", "amount": 2 },
+        { "item": "wood", "amount": 1 }
+      ],
+      "output": { "item": "steel", "amount": 1 }
+    },
+
+    {
+      "id": "wood_sword",
+      "category": "weapon",
+      "ingredients": [
+        { "item": "wood", "amount": 3 }
+      ],
+      "output": { "item": "wood_sword", "amount": 1 }
+    },
+    {
+      "id": "wood_axe",
+      "category": "tool",
+      "ingredients": [
+        { "item": "wood", "amount": 3 }
+      ],
+      "output": { "item": "wood_axe", "amount": 1 }
+    },
+    {
+      "id": "wood_pickaxe",
+      "category": "tool",
+      "ingredients": [
+        { "item": "wood", "amount": 3 }
+      ],
+      "output": { "item": "wood_pickaxe", "amount": 1 }
+    },
+
+    {
+      "id": "stone_sword",
+      "category": "weapon",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "stone", "amount": 3 }
+      ],
+      "output": { "item": "stone_sword", "amount": 1 }
+    },
+    {
+      "id": "stone_axe",
+      "category": "tool",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "stone", "amount": 3 }
+      ],
+      "output": { "item": "stone_axe", "amount": 1 }
+    },
+    {
+      "id": "stone_pickaxe",
+      "category": "tool",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "stone", "amount": 3 }
+      ],
+      "output": { "item": "stone_pickaxe", "amount": 1 }
+    },
+
+    {
+      "id": "iron_sword",
+      "category": "weapon",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "iron", "amount": 3 }
+      ],
+      "output": { "item": "iron_sword", "amount": 1 }
+    },
+    {
+      "id": "iron_axe",
+      "category": "tool",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "iron", "amount": 3 }
+      ],
+      "output": { "item": "iron_axe", "amount": 1 }
+    },
+    {
+      "id": "iron_pickaxe",
+      "category": "tool",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "iron", "amount": 3 }
+      ],
+      "output": { "item": "iron_pickaxe", "amount": 1 }
+    },
+
+    {
+      "id": "steel_sword",
+      "category": "weapon",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "steel", "amount": 3 }
+      ],
+      "output": { "item": "steel_sword", "amount": 1 }
+    },
+    {
+      "id": "steel_axe",
+      "category": "tool",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "steel", "amount": 3 }
+      ],
+      "output": { "item": "steel_axe", "amount": 1 }
+    },
+    {
+      "id": "steel_pickaxe",
+      "category": "tool",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "steel", "amount": 3 }
+      ],
+      "output": { "item": "steel_pickaxe", "amount": 1 }
+    },
+
+    {
+      "id": "dragonscale_sword",
+      "category": "weapon",
+      "ingredients": [
+        { "item": "wood", "amount": 1 },
+        { "item": "dragonscale", "amount": 3 }
+      ],
+      "output": { "item": "dragonscale_sword", "amount": 1 }
+    },
+
+    {
+      "id": "leather_helmet",
+      "category": "armor",
+      "ingredients": [
+        { "item": "leather", "amount": 3 }
+      ],
+      "output": { "item": "leather_helmet", "amount": 1 }
+    },
+    {
+      "id": "leather_chestplate",
+      "category": "armor",
+      "ingredients": [
+        { "item": "leather", "amount": 6 }
+      ],
+      "output": { "item": "leather_chestplate", "amount": 1 }
+    },
+    {
+      "id": "leather_leggings",
+      "category": "armor",
+      "ingredients": [
+        { "item": "leather", "amount": 5 }
+      ],
+      "output": { "item": "leather_leggings", "amount": 1 }
+    },
+    {
+      "id": "leather_boots",
+      "category": "armor",
+      "ingredients": [
+        { "item": "leather", "amount": 4 }
+      ],
+      "output": { "item": "leather_boots", "amount": 1 }
+    },
+
+    {
+      "id": "iron_helmet",
+      "category": "armor",
+      "ingredients": [
+        { "item": "iron", "amount": 4 }
+      ],
+      "output": { "item": "iron_helmet", "amount": 1 }
+    },
+    {
+      "id": "iron_chestplate",
+      "category": "armor",
+      "ingredients": [
+        { "item": "iron", "amount": 8 }
+      ],
+      "output": { "item": "iron_chestplate", "amount": 1 }
+    },
+    {
+      "id": "iron_leggings",
+      "category": "armor",
+      "ingredients": [
+        { "item": "iron", "amount": 7 }
+      ],
+      "output": { "item": "iron_leggings", "amount": 1 }
+    },
+    {
+      "id": "iron_boots",
+      "category": "armor",
+      "ingredients": [
+        { "item": "iron", "amount": 5 }
+      ],
+      "output": { "item": "iron_boots", "amount": 1 }
+    },
+
+    {
+      "id": "steel_helmet",
+      "category": "armor",
+      "ingredients": [
+        { "item": "steel", "amount": 4 }
+      ],
+      "output": { "item": "steel_helmet", "amount": 1 }
+    },
+    {
+      "id": "steel_chestplate",
+      "category": "armor",
+      "ingredients": [
+        { "item": "steel", "amount": 8 }
+      ],
+      "output": { "item": "steel_chestplate", "amount": 1 }
+    },
+    {
+      "id": "steel_leggings",
+      "category": "armor",
+      "ingredients": [
+        { "item": "steel", "amount": 7 }
+      ],
+      "output": { "item": "steel_leggings", "amount": 1 }
+    },
+    {
+      "id": "steel_boots",
+      "category": "armor",
+      "ingredients": [
+        { "item": "steel", "amount": 5 }
+      ],
+      "output": { "item": "steel_boots", "amount": 1 }
+    },
+
+    {
+      "id": "dragonscale_helmet",
+      "category": "armor",
+      "ingredients": [
+        { "item": "dragonscale", "amount": 5 }
+      ],
+      "output": { "item": "dragonscale_helmet", "amount": 1 }
+    },
+    {
+      "id": "dragonscale_chestplate",
+      "category": "armor",
+      "ingredients": [
+        { "item": "dragonscale", "amount": 10 }
+      ],
+      "output": { "item": "dragonscale_chestplate", "amount": 1 }
+    },
+    {
+      "id": "dragonscale_leggings",
+      "category": "armor",
+      "ingredients": [
+        { "item": "dragonscale", "amount": 8 }
+      ],
+      "output": { "item": "dragonscale_leggings", "amount": 1 }
+    },
+    {
+      "id": "dragonscale_boots",
+      "category": "armor",
+      "ingredients": [
+        { "item": "dragonscale", "amount": 6 }
+      ],
+      "output": { "item": "dragonscale_boots", "amount": 1 }
+    }
+
+  ]
+}
