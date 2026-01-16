@@ -29,6 +29,9 @@
                     <div class="slot-icon amulet-icon"></div>
                 </div>
             </div>
+            <div class="crafting-button-container" id="crafting_button_container" style="display: none;">
+                <div class="crafting-button" id="crafting_button">Craft</div>
+            </div>
         </div>
         <div class="inventory-grid" id="inventory_grid">
             <div class="inventory-slot" id="slot_0"></div>

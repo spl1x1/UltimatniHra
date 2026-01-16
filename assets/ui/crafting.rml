@@ -1,0 +1,19 @@
+<rml>
+    <head>
+        <title>Crafting</title>
+        <link type="text/rcss" href="crafting.rcss"/>
+    </head>
+    <body>
+    <div id="crafting-container">
+        <div class="crafting-header">
+            <span class="crafting-title">Crafting</span>
+            <div class="close-button" id="crafting_close">x</div>
+        </div>
+        <div class="crafting-content">
+            <div class="recipe-list" id="recipe_list">
+                <!-- Recipes will be added dynamically -->
+            </div>
+        </div>
+    </div>
+    </body>
+</rml>

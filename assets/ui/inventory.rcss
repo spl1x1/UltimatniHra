@@ -201,3 +201,28 @@ body {
     font-size: 11dp;
     font-weight: bold;
 }
+
+/* Crafting button */
+.crafting-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 10dp;
+}
+
+.crafting-button {
+    width: 50dp;
+    height: 38dp;
+    background-color: #27ae60;
+    border: 2dp solid #2ecc71;
+    color: white;
+    font-size: 12dp;
+    text-align: center;
+    line-height: 34dp;
+    cursor: pointer;
+}
+
+.crafting-button:hover {
+    background-color: #2ecc71;
+    border-color: #58d68d;
+}

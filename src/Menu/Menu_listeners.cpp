@@ -1100,6 +1100,18 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
         window->server->playerUpdate(Event_Damage::Create(damageAmount));
 
     }
+    else if (commandName == "crafting") {
+        if (window) {
+            auto* inventory = window->data.uiComponent->getInventoryController();
+            if (inventory) {
+                // Toggle crafting table proximity for testing
+                bool currentState = inventory->isNearCraftingTable();
+                inventory->setNearCraftingTable(!currentState);
+                printf("NearCraftingTable set to: %s\n", !currentState ? "true" : "false");
+                printf("Open inventory (TAB) to see the Craft button\n");
+            }
+        }
+    }
 
     else if (commandName == "help") {
         printf("Available commands:\n");
@@ -1112,6 +1124,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
         printf("      Types: sword, axe, pickaxe, bow, helmet, chestplate, leggings, boots\n");
         printf("      Amulets: speed_amulet, damage_amulet, armour_amulet\n");
         printf("  /damageplayer <amount> - Sends damage event to player\n");
+        printf("  /crafting           - Toggle crafting table proximity (for testing)\n");
         printf("  /help               - Show this help message\n");
     }
     else {

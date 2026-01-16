@@ -11,7 +11,20 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <array>
 #include "Item.h"
+
+class CraftingSystem;
+
+// Quickbar slot info for displaying items in the HUD quickbar
+struct QuickbarSlotInfo {
+    bool hasItem = false;
+    std::string itemId;      // Unique identifier for the item (e.g., "iron_sword", "health_potion")
+    std::string itemName;    // Display name
+    std::string iconPath;    // Path to the item's icon texture
+    int stackSize = 0;       // Current stack size (1 for non-stackable items)
+    ItemType itemType = ItemType::MATERIAL;  // Type of item in slot
+};
 
 // Equipment slot types for validation
 enum class EquipmentSlotType {
@@ -75,6 +88,23 @@ public:
     // Get all items (for crafting system)
     const std::unordered_map<int, std::unique_ptr<Item>>& getItems() const { return items; }
 
+    // Quickbar functionality (slots 0-4)
+    static constexpr int QUICKBAR_SIZE = 5;
+    const std::array<QuickbarSlotInfo, QUICKBAR_SIZE>& getQuickbarSlots() const { return quickbarSlots; }
+    QuickbarSlotInfo getQuickbarSlot(int slot) const;
+    int getSelectedQuickbarSlot() const { return selectedQuickbarSlot; }
+    void setSelectedQuickbarSlot(int slot);  // Select quickbar slot (0-4)
+
+    // Crafting functionality
+    void setCraftingSystem(CraftingSystem* system) { craftingSystem = system; }
+    void setNearCraftingTable(bool near);
+    bool isNearCraftingTable() const { return nearCraftingTable; }
+    void showCraftingUI();
+    void hideCraftingUI();
+    void toggleCraftingUI();
+    bool isCraftingUIVisible() const { return craftingVisible; }
+    void craftRecipe(const std::string& recipeId);
+
 private:
     Window* window;
     UIComponent* uiComponent;
@@ -104,6 +134,21 @@ private:
     bool isEquipmentSlot(const std::string& slotId);
     void updateEquipmentDisplay(const std::string& slotId);
     void clearEquipmentSlot(const std::string& slotId);
+
+    // Quickbar management
+    std::array<QuickbarSlotInfo, 5> quickbarSlots;
+    int selectedQuickbarSlot = 0;  // Currently selected quickbar slot (0-4)
+    void updateQuickbarSlot(int slot);  // Update quickbar info when inventory slot changes
+    std::string generateItemId(Item* item) const;  // Generate unique item ID from item
+
+    // Crafting
+    CraftingSystem* craftingSystem = nullptr;
+    Rml::ElementDocument* craftingDocument = nullptr;
+    bool nearCraftingTable = false;
+    bool craftingVisible = false;
+    void setupCraftingUI();
+    void updateCraftingButton();
+    void updateCraftingRecipeList();
 };
 
 
