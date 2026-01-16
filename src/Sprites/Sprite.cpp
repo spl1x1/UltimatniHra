@@ -58,7 +58,7 @@ void SpriteAnimationBinding::Init() {
         return dirlist;
     };
 
-    const auto pathToJsons{"assets/jsons"};
+    const auto pathToJsons{"assets/jsons/animation_bindings"};
     auto iter = iterateOverDirectory(pathToJsons);
     for (const auto& entry : iter) {
         iterateOverDirectory(entry);
