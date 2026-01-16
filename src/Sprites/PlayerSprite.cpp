@@ -39,3 +39,7 @@ RenderingContext PlayerSprite::GetRenderingContext() {
     return context;
 }
 
+SpriteRenderingContext * PlayerSprite::GetSpriteRenderingContext() {
+    return &renderingContext;
+}
+

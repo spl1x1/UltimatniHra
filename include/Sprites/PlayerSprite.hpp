@@ -25,6 +25,7 @@ public:
     [[nodiscard]] int GetWidth() const override;
     [[nodiscard]] int GetHeight() const override;
     RenderingContext GetRenderingContext() override;
+    SpriteRenderingContext* GetSpriteRenderingContext() override;
 };
 
 

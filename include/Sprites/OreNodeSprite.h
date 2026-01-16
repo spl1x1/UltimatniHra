@@ -21,6 +21,7 @@ public:
     RenderingContext GetRenderingContext() override;
     [[nodiscard]] int GetWidth() const override;
     [[nodiscard]] int GetHeight() const override;
+    SpriteRenderingContext* GetSpriteRenderingContext() override;
 };
 
 #endif //ORENODESPRITE_H

@@ -39,3 +39,7 @@ RenderingContext SlimeSprite::GetRenderingContext() {
     return context;
 }
 
+SpriteRenderingContext * SlimeSprite::GetSpriteRenderingContext() {
+    return &renderingContext;
+}
+

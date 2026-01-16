@@ -35,3 +35,5 @@ int TreeSprite::GetWidth() const {
 int TreeSprite::GetHeight() const {
     return renderingContext.GetHeight();
 }
+
+SpriteRenderingContext * TreeSprite::GetSpriteRenderingContext() { return &renderingContext; }

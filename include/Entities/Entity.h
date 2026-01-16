@@ -48,6 +48,7 @@ public:
     static Direction GetDirectionBaseOnAngle(int angle) ;
     [[nodiscard]] RenderingContext GetRenderingContext() const;
     [[nodiscard]] std::tuple<float,int> GetFrameTimeAndCount() const;
+    ISprite* GetSprite() const;
 
     //Constructor
     explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite);
@@ -100,7 +101,7 @@ class EntityLogicComponent {
     int angle{0};
     float speed{0};
     bool interrupted{false};
-    float lockTime{0};
+    bool lock{false};
     float currentTime{0};
 
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
@@ -115,8 +116,7 @@ public:
     void SetSpeed(float newSpeed);
     [[nodiscard]] float GetSpeed() const;
 
-    void SetLockTime(float newLockTime);
-    [[nodiscard]] float GetLockTime() const;
+    void SetLock();
 
     void SetInterrupted(bool newInterrupted);
 

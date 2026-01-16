@@ -64,6 +64,10 @@ std::tuple<float, int> EntityRenderingComponent::GetFrameTimeAndCount() const {
      return sprite ? sprite->GetFrameTimeAndCount() : std::make_tuple(0.0f, 0);
 }
 
+ISprite * EntityRenderingComponent::GetSprite() const {
+    return sprite.get();
+}
+
 Direction EntityRenderingComponent::GetDirectionBaseOnAngle(const int angle) {
     if ((angle >= 0 && angle <= 44) || (angle >= 316 && angle <= 360)) {
         return Direction::DOWN;
@@ -198,13 +202,8 @@ float EntityLogicComponent::GetSpeed() const {
     return speed;
 }
 
-void EntityLogicComponent::SetLockTime(const float newLockTime) {
-    if (newLockTime < 0.0f) return;
-    lockTime = newLockTime;
-}
-
-float EntityLogicComponent::GetLockTime() const {
-    return lockTime;
+void EntityLogicComponent::SetLock() {
+    lock = true;
 }
 
 void EntityLogicComponent::SetInterrupted(const bool newInterrupted) {
@@ -212,7 +211,7 @@ void EntityLogicComponent::SetInterrupted(const bool newInterrupted) {
 }
 
 bool EntityLogicComponent::IsInterrupted() const {
-    return lockTime > 0.0f;
+    return lock || interrupted;
 }
 
 
@@ -245,12 +244,14 @@ void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
         if (event->validate()) EventBindings::Callback(&entity, event);
     }; //Process event at index
 
-    auto updateLockTime = [&](const float deltaTime) {
-        if (lockTime > 0.0f) {
-            lockTime -= deltaTime;
-            if (lockTime < 0.0f) lockTime = 0.0f;
-        }
+    auto updateLock = [&] {
+        const auto spriteRenderingContext{entity.GetRenderingComponent()->GetSprite()->GetSpriteRenderingContext()};
+        const auto frameInfo{spriteRenderingContext->GetCurrentFrame()};
+        if (frameInfo == spriteRenderingContext->GetCurrentFrameCount() -1)
+            lock = false;
     };
+
+    updateLock();
 
     for (auto &e : queueUpEvents) {
         events.emplace_back(std::move(e));
@@ -263,7 +264,6 @@ void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
     events.clear();
     interruptedEvents.clear();
     interrupted = false;
-    updateLockTime(dt);
 }
 
 void EntityLogicComponent::AddEvent(std::unique_ptr<EntityEvent> eventData, bool priority) {
@@ -290,7 +290,7 @@ bool EntityLogicComponent::isInInterrupts(int eventIndex) const {
 }
 
 bool EntityLogicComponent::Move(const float deltaTime, const float dX,const float dY, EntityCollisionComponent &collisionComponent, const Server* server) {
-    if (lockTime > 0.0f) return false;
+    if (lock) return false;
     const float newX{coordinates.x + dX * speed* deltaTime};
     const float newY{coordinates.y + dY * speed * deltaTime};
 
@@ -306,7 +306,7 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
 }
 
 void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, IEntity* entity) {
-    if (lockTime > 0.0f) return;
+    if (lock) return;
     const auto adjustment = entity->GetRenderingComponent()->CalculateCenterOffset(*entity);
     float diffX{targetX - coordinates.x - adjustment.x};
     float diffY{targetY - coordinates.y - adjustment.y};
@@ -323,12 +323,13 @@ void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, co
 }
 
 void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, const int damage) {
+    if (lock) return;
     if (attackType < 0) return;
     const auto renderingComponent = entity->GetRenderingComponent();
     const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(angle);
     renderingComponent->PlayAnimation(AnimationType::ATTACK, direction, attackType,true);
     const auto frameInfo{renderingComponent->GetFrameTimeAndCount()};
-    lockTime = std::get<0>(frameInfo)* static_cast<float>(std::get<1>(frameInfo)); //Example lock time for attack
+    lock = std::get<0>(frameInfo)* static_cast<float>(std::get<1>(frameInfo)); //Example lock time for attack
     const auto reach{entity->GetReach()};
     const auto entityCenter{entity->GetEntityCenter()};
 
@@ -380,8 +381,7 @@ void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
     const auto logicComponent{entity.GetLogicComponent()};
 
     renderingComponent->PlayAnimation(AnimationType::HURT, direction, 1, true);
-    const auto lockParams{renderingComponent->GetFrameTimeAndCount()};
-    logicComponent->SetLockTime(std::get<0>(lockParams) * static_cast<float>(std::get<1>(lockParams)));
+    logicComponent->SetLock(); //Lock entity during hurt animation
 
     if (health < 0) health = 0;
     if (isDead()) {
@@ -467,7 +467,7 @@ void EventBindings::InitializeBindings() {
         //TODO: Drop loot
         const auto logicComponent{entity->GetLogicComponent()};
         logicComponent->SetInterrupted(true);
-        if (logicComponent->GetLockTime() > 0.0f) {
+        if (logicComponent->lock) {
             logicComponent->QueueUpEvent(Event_Death::Create());
             return;
         };

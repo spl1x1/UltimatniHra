@@ -165,6 +165,10 @@ int SpriteRenderingContext::GetHeight() const {
     return spriteHeight;
 }
 
+int SpriteRenderingContext::GetCurrentFrame() const {
+    return currentFrame;
+}
+
 
 SDL_FRect* SpriteRenderingContext::GetFrameRect() {
     if (!currentAnimationNode) currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());

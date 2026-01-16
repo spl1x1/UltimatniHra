@@ -36,27 +36,6 @@ enum class Direction {
     RIGHT
 };
 
-class ISprite {
-public:
-    virtual ~ISprite() = default;
-
-    //Interface Methods
-    virtual void Tick(float deltaTime) = 0;
-    virtual void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) = 0;
-    virtual std::tuple<float,int> GetFrameTimeAndCount() = 0;
-
-    //Setters
-    virtual void SetVariant(int newVariant) = 0;
-    virtual void SetCurrentFrame(int newCurrentFrame) = 0; //For special cases
-
-    //Getters
-    virtual std::tuple<std::string,SDL_FRect*> GetFrame() = 0;
-    virtual RenderingContext GetRenderingContext() = 0;
-    [[nodiscard]] virtual int GetWidth() const = 0;
-    [[nodiscard]] virtual int GetHeight() const = 0;
-};
-
-
 class SpriteAnimationBinding {
 public:
     struct FrameNode {
@@ -124,6 +103,7 @@ public:
 
     [[nodiscard]] int GetWidth() const;
     [[nodiscard]] int GetHeight() const;
+    [[nodiscard]] int GetCurrentFrame() const;
 
     [[nodiscard]] std::string BuildKey();
     std::tuple<std::string,SDL_FRect*> GetFrame();
@@ -138,6 +118,27 @@ public:
     //Static Methods
     static std::string AnimationTypeToString(AnimationType type);
     static std::string DirectionTypeToString(Direction type);
+};
+
+class ISprite {
+public:
+    virtual ~ISprite() = default;
+
+    //Interface Methods
+    virtual void Tick(float deltaTime) = 0;
+    virtual void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) = 0;
+    virtual std::tuple<float,int> GetFrameTimeAndCount() = 0;
+
+    //Setters
+    virtual void SetVariant(int newVariant) = 0;
+    virtual void SetCurrentFrame(int newCurrentFrame) = 0; //For special cases
+
+    //Getters
+    virtual std::tuple<std::string,SDL_FRect*> GetFrame() = 0;
+    virtual RenderingContext GetRenderingContext() = 0;
+    [[nodiscard]] virtual int GetWidth() const = 0;
+    [[nodiscard]] virtual int GetHeight() const = 0;
+    virtual SpriteRenderingContext* GetSpriteRenderingContext() = 0;
 };
 
 #endif //SPRITE_H

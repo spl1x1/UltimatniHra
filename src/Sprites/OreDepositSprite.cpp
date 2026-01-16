@@ -34,3 +34,7 @@ int OreDepositSprite::GetWidth() const {
 int OreDepositSprite::GetHeight() const {
     return renderingContext.GetHeight();
 }
+
+SpriteRenderingContext * OreDepositSprite::GetSpriteRenderingContext() {
+    return &renderingContext;
+}
