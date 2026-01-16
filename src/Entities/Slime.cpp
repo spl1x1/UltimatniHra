@@ -1,15 +1,15 @@
 //
+// Created by Lukáš Kaplánek on 16.01.2026.
+//
+//
 // Created by Lukáš Kaplánek on 13.11.2025.
 //
 
-#include "../../include/Entities/Player.hpp"
-#include "../../include/Application/SaveGame.h"
+#include "../../include/Entities/Slime.h"
 #include <memory>
 
 
-//PlayerNew
-
-void Player::Tick() {
+void Slime::Tick() {
     const auto deltaTime = server->getDeltaTime_unprotected();
     const auto oldCoordinates = entityLogicComponent.GetCoordinates();
     entityRenderingComponent.Tick(deltaTime);
@@ -27,65 +27,45 @@ void Player::Tick() {
 
 }
 
-RenderingContext Player::GetRenderingContext() {
+RenderingContext Slime::GetRenderingContext() {
     auto context = entityRenderingComponent.GetRenderingContext();
     context.coordinates = entityLogicComponent.GetCoordinates();
     return context;
 }
 
-void Player::Create(Server* server, int slotId) {
-    auto player = std::make_shared<Player>(server, server->getSpawnPoint());
-    server->addLocalPlayer(player);
-    SaveManager::getInstance().setCurrentSlot(slotId);
-}
-
-void Player::Load(Server* server, int slotId) {
-    // TODO: Load player data from save
-    auto player = std::make_shared<Player>(server, server->getSpawnPoint());
-    server->addLocalPlayer(player);
-
-    // Load saved data into player
-    SaveManager::getInstance().loadGame(slotId, server);
-}
-void Player::Save(Server* server) {
-    int currentSlot = SaveManager::getInstance().getCurrentSlot();
-    if (currentSlot >= 0) {
-        SaveManager::getInstance().saveGame(currentSlot, server);
-    }
-}
-
-void Player::SetId(const int newId) {
+void Slime::SetId(const int newId) {
     id = newId;
 }
 
 
-void Player::SetCoordinates(const Coordinates &newCoordinates) {
+void Slime::SetCoordinates(const Coordinates &newCoordinates) {
     entityLogicComponent.SetCoordinates(newCoordinates);
 }
 
-void Player::SetAngle(const int newAngle) {
+
+void Slime::SetAngle(const int newAngle) {
     entityLogicComponent.SetAngle(newAngle);
 }
 
-void Player::SetSpeed(float newSpeed) {
+void Slime::SetSpeed(float newSpeed) {
     entityLogicComponent.SetSpeed(newSpeed);
 }
 
 
 
-void Player::SetEntityCollision(const bool disable) {
+void Slime::SetEntityCollision(const bool disable) {
     entityCollisionComponent.DisableCollision(disable);
 }
 
-void Player::AddEvent(std::unique_ptr<EntityEvent> eventData) {
+void Slime::AddEvent(std::unique_ptr<EntityEvent> eventData) {
     entityLogicComponent.AddEvent(std::move(eventData));
 }
 
-Coordinates Player::GetCoordinates() const {
+Coordinates Slime::GetCoordinates() const {
     return entityLogicComponent.GetCoordinates();
 }
 
-Coordinates Player::GetEntityCenter() {
+Coordinates Slime::GetEntityCenter() {
     const auto adjustment{entityRenderingComponent.CalculateCenterOffset(*this)};
     auto coordinates {entityLogicComponent.GetCoordinates()};
     coordinates.x += adjustment.x;
@@ -93,57 +73,57 @@ Coordinates Player::GetEntityCenter() {
     return coordinates;
 }
 
-CollisionStatus Player::GetCollisionStatus() const {
+CollisionStatus Slime::GetCollisionStatus() const {
     return entityCollisionComponent.GetCollisionStatus();
 }
 
-int Player::GetAngle() const {
+int Slime::GetAngle() const {
     return entityLogicComponent.GetAngle();
 }
 
-HitboxContext Player::GetHitboxRenderingContext() const {
+HitboxContext Slime::GetHitboxRenderingContext() const {
     auto context = entityCollisionComponent.GetHitboxContext();
     context.coordinates = entityLogicComponent.GetCoordinates();
     return context;
 }
 
-int Player::GetId() const {
+int Slime::GetId() const {
     return id;
 }
 
-int Player::GetReach() const {
+int Slime::GetReach() const {
     return reach;
 }
 
-EntityType Player::GetType() const {
-    return EntityType::PLAYER;
+EntityType Slime::GetType() const {
+    return EntityType::SLIME;
 }
 
-EntityCollisionComponent * Player::GetCollisionComponent() {
+EntityCollisionComponent * Slime::GetCollisionComponent() {
     return &entityCollisionComponent;
 }
 
-EntityLogicComponent * Player::GetLogicComponent() {
+EntityLogicComponent * Slime::GetLogicComponent() {
     return &entityLogicComponent;
 }
 
-EntityHealthComponent * Player::GetHealthComponent() {
+EntityHealthComponent * Slime::GetHealthComponent() {
     return &entityHealthComponent;
 }
 
-EntityRenderingComponent * Player::GetRenderingComponent() {
+EntityRenderingComponent * Slime::GetRenderingComponent() {
     return &entityRenderingComponent;
 }
 
-EntityInventoryComponent * Player::GetInventoryComponent() {
+EntityInventoryComponent * Slime::GetInventoryComponent() {
     return &entityInventoryComponent;
 }
 
-Server* Player::GetServer() const {
+Server* Slime::GetServer() const {
     return server;
 }
 
-Player::Player(Server* server, const Coordinates& coordinates){
+Slime::Slime(Server* server, const Coordinates& coordinates) {
     this->server = server;
     entityLogicComponent.SetCoordinates(coordinates);
     entityLogicComponent.SetSpeed(200.0f);

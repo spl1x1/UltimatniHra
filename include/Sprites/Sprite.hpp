@@ -116,6 +116,7 @@ public:
 
     //Getters and Setters
     void SetVariant(int newVariant);
+    void SetTexture(std::string texture);
     void SetCurrentFrame(int newCurrentFrame); //For special cases
     void PlayAnimation(AnimationType animationType, Direction direction, bool ForceReset); //Plays animation immediately
     [[nodiscard]] float GetFrameDuration() const;

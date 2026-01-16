@@ -32,7 +32,11 @@ class Server : public std::enable_shared_from_this<Server> {
 
     //mozna by vector byl lepsi, ale toto by melo setrit pamet
     std::map<int,std::shared_ptr<class IEntity>> entities{};
+    std::vector<int> entitiesToRemove{};
+
     std::map<int,std::shared_ptr<IStructure>> structures{};
+    std::vector<int> structuresToRemove{};
+
     std::shared_ptr<Player> localPlayer{nullptr}; //Pointer na lokalniho hrace pro rychle
 
     //ID counters, k limitu se nikdy nedostaneme reclaim neni nutny
@@ -93,8 +97,9 @@ public:
     static int calculateAngle(Coordinates center, Coordinates point); //Vypocita uhel mezi dvema objekty, nemusi byt thread safe
     std::vector<std::string> getTileInfo(float x, float y);
 
-    void addEntity(Coordinates coordinates, EntityType type); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
-    void addEntity(const std::shared_ptr<IEntity>& entity); //Prida na server entitu
+    void addEntity(Coordinates coordinates, EntityType type, int variant = 1); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
+    void addEntity_unprotected(const std::shared_ptr<IEntity>& entity); //Prida na server entitu
+    void addEntity(const std::shared_ptr<IEntity>& entity); //Prida na server entitu, thread safe verze
     void addLocalPlayer(const std::shared_ptr<Player>& player); //Prida na server lokalni instanci hrace
 
     void addStructure(Coordinates coordinates,  structureType type, int innerType, int variant = 0); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
@@ -103,6 +108,7 @@ public:
     void addStructure_unprotected(std::unique_ptr<IStructure>); //Prida na server strukturu TODO: implementovat, nezapomenout na thread safety
 
     void removeEntity(int entityId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety
+    void removeEntity_unprotected(int entityId);
     void removeStructure(int structureId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety
 };
 
