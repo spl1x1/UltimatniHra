@@ -244,6 +244,7 @@ void Window::advanceFrame() {
     auto AttackPoints = [this]()->std::vector<PointData> {
         const auto damageAreas = server->getDamagePoints();
         std::vector<PointData> points;
+        points.reserve(damageAreas.size());
         for (const auto& area : damageAreas) {
             points.push_back(PointData{
                 .position = area.coordinates,
@@ -283,7 +284,6 @@ void Window::advanceFrame() {
     const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
     SDL_RenderTexture(data.Renderer, textures.at(texture), data.cameraWaterRect.get(), nullptr);
     SDL_RenderTexture(data.Renderer, textures.at("WorldMap"), data.cameraRect.get(), nullptr);
-    renderAt(server->getPlayer()->GetRenderingContext());
 
 #ifdef DEBUG
     if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer()->GetHitboxRenderingContext());
@@ -298,8 +298,7 @@ void Window::advanceFrame() {
     dataModel.DirtyAllVariables();
 #endif
 
-    const auto structures = server->getStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH});
-    for (const auto& structure : structures) {
+    for (const auto structures{server->getStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH})}; const auto& structure : structures) {
         IStructure *struc = server->getStructure(structure);
         if (!struc) continue;
         renderAt(struc->GetRenderingContext());
@@ -307,6 +306,20 @@ void Window::advanceFrame() {
 #ifdef DEBUG
         if (data.uiComponent->getMenuData().debugOverlay) {
             drawHitbox(struc->GetHitboxContext());
+        };
+#endif
+    }
+
+#ifdef DEBUG
+    if (data.uiComponent->getMenuData().debugOverlay) drawPointsAt(AttackPoints());
+#endif
+
+    for (const auto entities {server->getEntities()}; const auto& [id, entity] : entities) {
+        if (!entity) continue;
+        renderAt(entity->GetRenderingContext());
+#ifdef DEBUG
+        if (data.uiComponent->getMenuData().debugOverlay) {
+            drawHitbox(entity->GetHitboxRenderingContext());
             drawPointsAt(AttackPoints());
         };
 #endif

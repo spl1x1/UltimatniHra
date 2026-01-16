@@ -24,7 +24,8 @@ class EventBindings;
 
 enum class EntityType {
     PLAYER,
-    SLIME
+    SLIME,
+    UNKNOWN
 };
 
 class EntityRenderingComponent {
@@ -38,6 +39,7 @@ public:
     void Tick(float deltaTime) const;
     [[nodiscard]] Coordinates CalculateCenterOffset(IEntity& entity); //Returns offset to center sprite based on its dimensions and hitbox
     static std::string TypeToString(EntityType type);
+    static EntityType StringToType(const std::string& type);
 
     //Setters
     void PlayAnimation(AnimationType animation, Direction direction, int variant, bool ForceReset = false) const;
@@ -113,14 +115,22 @@ public:
     void SetSpeed(float newSpeed);
     [[nodiscard]] float GetSpeed() const;
 
-    bool IsInterrupted() const;
+    void SetLockTime(float newLockTime);
+    [[nodiscard]] float GetLockTime() const;
+
+    void SetInterrupted(bool newInterrupted);
+
+    [[nodiscard]] bool IsInterrupted() const;
 
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
     void MoveTo(float deltaTime, float targetX, float targetY,IEntity* entity);
     void PerformAttack(IEntity* entity, int attackType, int damage);
     void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
-    void AddEvent(std::unique_ptr<EntityEvent> eventData);
+    void AddEvent(std::unique_ptr<EntityEvent> eventData, bool priority = false); //Add event to be processed
+    void QueueUpEvent(std::unique_ptr<EntityEvent> eventData, bool priority = false); //Queue up event for next tick
+
+    [[nodiscard]] bool isInInterrupts(int eventIndex) const;
 
     //Constructor
     explicit EntityLogicComponent() = default;
@@ -132,7 +142,7 @@ class EntityHealthComponent {
     int maxHealth{0};
 public:
     //Methods
-    void TakeDamage(int damage);
+    void TakeDamage(int damage, IEntity& entity);
     void Heal(int amount);
 
     //Setters

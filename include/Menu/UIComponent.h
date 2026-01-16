@@ -53,7 +53,7 @@ private:
 
     std::unique_ptr<InventoryController> inventoryController{};
 
-    void RegisterButtonBindings(Window *window);
+    void RegisterButtonBindings(Window *Window);
 
 public:
 
@@ -61,7 +61,7 @@ public:
     bool blockInput{false};
 
     //Methods
-    void LoadDocumentsFromDirectory(const std::string& docDirectory); // Loads all .rml files from the given directory with hot reload support
+    void LoadDocumentsFromDirectory(const std::string& DocDirectory); // Loads all .rml files from the given directory with hot reload support
     void LoadDocumentsFromDirectory(); // Loads all .rml files from the set document directory
     static void LoadFaceFromDirectory(const std::string& fontDirectory);
     void LoadFaceFromDirectory() const; // Loads all font faces from the set font directory
@@ -82,22 +82,22 @@ public:
     ~UIComponent();
 
     //Getters
-    Rml::Context* getRmlContext() const;
-    Rml::RenderInterface* getRmlRenderer() const;
-    Rml::SystemInterface* getRmlSystem() const;
+    [[nodiscard]] Rml::Context* getRmlContext() const;
+    [[nodiscard]] Rml::RenderInterface* getRmlRenderer() const;
+    [[nodiscard]] Rml::SystemInterface* getRmlSystem() const;
     std::unordered_map<std::string, std::unique_ptr<Rml::ElementDocument>>* getDocuments(); //Returns pointer to allow modification
 
-    MenuData getMenuData() const;
-    std::string getDocumentDirectory() const;
-    std::string getFontDirectory() const;
+    [[nodiscard]] MenuData getMenuData() const;
+    [[nodiscard]] std::string getDocumentDirectory() const;
+    [[nodiscard]] std::string getFontDirectory() const;
 
     //Setters
     void setDocDirectory(const std::string& directory);
-    void setMenuData(const MenuData& menuData);
-    void setFontDirectory(const std::string& fontDirectory);
+    void setMenuData(const MenuData& MenuData);
+    void setFontDirectory(const std::string& FontDirectory);
 
     //Inventory
-    InventoryController* getInventoryController() const;
+    [[nodiscard]] InventoryController* getInventoryController() const;
 };
 
 #endif //UICOMPONENT_H

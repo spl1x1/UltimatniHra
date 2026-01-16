@@ -146,6 +146,11 @@ void SpriteRenderingContext::SetVariant(const int newVariant) {
     ResetAnimation(SpriteAnimationBinding::GetAnimationNode(BuildKey()));
 }
 
+void SpriteRenderingContext::SetTexture(std::string texture) {
+    textureName = std::move(texture);
+    ResetAnimation(SpriteAnimationBinding::GetAnimationNode(BuildKey()));
+}
+
 void SpriteRenderingContext::SetCurrentFrame(int newCurrentFrame) {
     currentFrame = newCurrentFrame;
     ResetAnimation(SpriteAnimationBinding::GetAnimationNode(BuildKey()));

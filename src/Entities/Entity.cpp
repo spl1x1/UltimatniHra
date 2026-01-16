@@ -36,9 +36,21 @@ std::string EntityRenderingComponent::TypeToString(EntityType type) {
     switch (type) {
         case EntityType::PLAYER:
             return "PLAYER";
+        case EntityType::SLIME:
+            return "SLIME";
         default:
             return "UNKNOWN";
     }
+}
+
+EntityType EntityRenderingComponent::StringToType(const std::string &type) {
+    if (type == "PLAYER") {
+        return EntityType::PLAYER;
+    }
+    if (type == "SLIME") {
+        return EntityType::SLIME;
+    }
+    return EntityType::UNKNOWN;
 }
 
 RenderingContext EntityRenderingComponent::GetRenderingContext() const {
@@ -74,6 +86,7 @@ void EntityRenderingComponent::PlayAnimation(const AnimationType animation, cons
     sprite->SetVariant(variant);
     sprite->PlayAnimation(animation, direction, ForceReset);
 }
+
 
 EntityRenderingComponent::EntityRenderingComponent(std::unique_ptr<ISprite> sprite) :sprite(std::move(sprite)) {
     rect = std::make_unique<SDL_FRect>();
@@ -156,13 +169,14 @@ bool EntityCollisionComponent::CheckPoint(const Coordinates coordinates, IEntity
     const auto entityPosition = entity.GetLogicComponent()->GetCoordinates();
     const Coordinates Points[2] ={
         {_hitbox.corners[0].x + entityPosition.x, _hitbox.corners[0].y + entityPosition.y}, // TOP_LEFT
-        {_hitbox.corners[3].x + entityPosition.x, _hitbox.corners[3].y + entityPosition.y}  // BOTTOM_LEFT
+        {_hitbox.corners[2].x + entityPosition.x, _hitbox.corners[2].y + entityPosition.y}  // BOTTOM_LEFT
     };
     if ((coordinates.x >= Points[0].x && coordinates.x <= Points[1].x)
-        && (coordinates.y >= Points[0].y && coordinates.x <= Points[1].y))
+        && (coordinates.y >= Points[0].y && coordinates.y <= Points[1].y))
         return true; //Point is inside hitbox
     return false;
 }
+
 
 //EntityMovementComponent methods
 
@@ -182,6 +196,19 @@ void EntityLogicComponent::SetSpeed(float newSpeed) {
 
 float EntityLogicComponent::GetSpeed() const {
     return speed;
+}
+
+void EntityLogicComponent::SetLockTime(const float newLockTime) {
+    if (newLockTime < 0.0f) return;
+    lockTime = newLockTime;
+}
+
+float EntityLogicComponent::GetLockTime() const {
+    return lockTime;
+}
+
+void EntityLogicComponent::SetInterrupted(const bool newInterrupted) {
+    interrupted = newInterrupted;
 }
 
 bool EntityLogicComponent::IsInterrupted() const {
@@ -239,8 +266,27 @@ void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
     updateLockTime(dt);
 }
 
-void EntityLogicComponent::AddEvent(std::unique_ptr<EntityEvent> eventData) {
+void EntityLogicComponent::AddEvent(std::unique_ptr<EntityEvent> eventData, bool priority) {
+    if (priority) {
+        events.insert(events.begin(), std::move(eventData));
+        return;
+    }
     events.push_back(std::move(eventData));
+}
+
+void EntityLogicComponent::QueueUpEvent(std::unique_ptr<EntityEvent> eventData, bool priority) {
+    if (priority) {
+        queueUpEvents.insert(queueUpEvents.begin(), std::move(eventData));;
+        return;
+    }
+    queueUpEvents.push_back(std::move(eventData));
+}
+
+bool EntityLogicComponent::isInInterrupts(int eventIndex) const {
+    return std::ranges::any_of(interruptedEvents,
+                               [&] (const EntityEvent::Type interruptedEvent) {
+                                   return interruptedEvent== events.at(eventIndex)->GetType();
+                               });
 }
 
 bool EntityLogicComponent::Move(const float deltaTime, const float dX,const float dY, EntityCollisionComponent &collisionComponent, const Server* server) {
@@ -326,9 +372,23 @@ void EntityHealthComponent::Heal(const int amount) {
     if (health > maxHealth) health = maxHealth;
 }
 
-void EntityHealthComponent::TakeDamage(const int damage) {
+void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
     health -= damage;
+
+    const auto renderingComponent{entity.GetRenderingComponent()};
+    const auto direction{EntityRenderingComponent::GetDirectionBaseOnAngle(entity.GetLogicComponent()->GetAngle())};
+    const auto logicComponent{entity.GetLogicComponent()};
+
+    renderingComponent->PlayAnimation(AnimationType::HURT, direction, 1, true);
+    const auto lockParams{renderingComponent->GetFrameTimeAndCount()};
+    logicComponent->SetLockTime(std::get<0>(lockParams) * static_cast<float>(std::get<1>(lockParams)));
+
     if (health < 0) health = 0;
+    if (isDead()) {
+        entity.GetLogicComponent()->SetInterrupted(true);
+        entity.GetRenderingComponent()->PlayAnimation(AnimationType::DEATH,direction, 1, true);
+        logicComponent->QueueUpEvent(Event_Death::Create());
+    }
 }
 void EntityHealthComponent::SetHealth(const int newHealth) {
     health = newHealth;
@@ -389,7 +449,7 @@ void EventBindings::InitializeBindings() {
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::DAMAGE, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_Damage*>(e);
-        entity->GetHealthComponent()->TakeDamage(data->amount);
+        entity->GetHealthComponent()->TakeDamage(data->amount, *entity);
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::ATTACK, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_Attack*>(e);
@@ -402,6 +462,16 @@ void EventBindings::InitializeBindings() {
     instance->bindings.insert_or_assign(EntityEvent::Type::SET_ANGLE, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_SetAngle*>(e);
         entity->GetLogicComponent()->SetAngle(data->angle);
+    });
+    instance->bindings.insert_or_assign(EntityEvent::Type::DEATH, [](IEntity* entity, const EntityEvent *e) {
+        //TODO: Drop loot
+        const auto logicComponent{entity->GetLogicComponent()};
+        logicComponent->SetInterrupted(true);
+        if (logicComponent->GetLockTime() > 0.0f) {
+            logicComponent->QueueUpEvent(Event_Death::Create());
+            return;
+        };
+        entity->GetServer()->removeEntity_unprotected(entity->GetId());
     });
 
 }

@@ -170,3 +170,11 @@ std::unique_ptr<EntityEvent> Event_SetAngle::Create(int angle) {
     return std::make_unique<Event_SetAngle>(angle);
 }
 
+Event_Death::Event_Death() {
+    this->type = Type::DEATH;
+}
+
+std::unique_ptr<EntityEvent> Event_Death::Create() {
+    return std::make_unique<Event_Death>();
+}
+

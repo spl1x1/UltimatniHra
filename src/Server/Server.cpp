@@ -11,6 +11,7 @@
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
+#include "../../include/Entities/Slime.h"
 #include "../../include/Structures/OreNode.h"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Structures/Tree.h"
@@ -44,7 +45,7 @@ int Server::getNextEntityId() {return nextEntityId++;}
 
 int Server::getNextStructureId() {
     if (!reclaimedStructureIds.empty()) {
-        int id = reclaimedStructureIds.back();
+        const int id = reclaimedStructureIds.back();
         reclaimedStructureIds.pop_back();
         return id;
     }
@@ -86,10 +87,17 @@ void Server::addLocalPlayer(const std::shared_ptr<Player>& player) {
     player->SetId(0); //Local player always has ID 0
 }
 
+void Server::addEntity_unprotected(const std::shared_ptr<IEntity>& entity) {
+    const int newId = getNextEntityId();
+    entities.insert_or_assign(newId, entity);
+    entity->SetId(newId);
+}
+
 void Server::addEntity(const std::shared_ptr<IEntity>& entity) {
     std::lock_guard lock(serverMutex);
     const int newId = getNextEntityId();
-    entities[newId] = entity;
+    entities.insert_or_assign(newId, entity);
+    entity->SetId(newId);
 }
 
 
@@ -151,6 +159,17 @@ bool Server::addStructure_unprotected(Coordinates coordinates, structureType typ
     return true;
 }
 
+
+void Server::removeEntity(int entityId) {
+    std::lock_guard lock(serverMutex);
+    if (!entities.contains(entityId)) return;
+    entitiesToRemove.emplace_back(entityId);
+}
+
+void Server::removeEntity_unprotected(int entityId) {
+    if (!entities.contains(entityId)) return;
+    entitiesToRemove.emplace_back(entityId);
+}
 
 void Server::removeStructure(int structureId) {
     std::lock_guard lock(serverMutex);
@@ -221,7 +240,7 @@ std::vector<std::string> Server::getTileInfo(const float x, const float y) {
 
      std::vector<std::string> text;
 
-    for (const auto& [id, entity] : entities) {
+    for (const auto &entity: entities | std::views::values) {
         const auto entityPos{entity->GetEntityCenter()};
         const int entityTileX{static_cast<int>(std::floor(entityPos.x / 32.0f))};
         const int entityTileY{static_cast<int>(std::floor(entityPos.y / 32.0f))};
@@ -235,8 +254,26 @@ std::vector<std::string> Server::getTileInfo(const float x, const float y) {
     return text;
 }
 
-void Server::Tick() {
+void Server::addEntity(Coordinates coordinates, const EntityType type, const int variant)
+{
+    std::unique_lock lock(serverMutex);
+    switch (type) {
+        case EntityType::SLIME: {
+            const auto slime{std::make_shared<Slime>(getSharedPtr().get(), coordinates)};
+            addEntity_unprotected(slime);
+            break;
+        }
+        case EntityType::PLAYER: {
+            const auto player{std::make_shared<Player>(getSharedPtr().get(), coordinates)};
+            addEntity_unprotected(player);
+            break;
+        }
+        default:
+            break;
+    }
+}
 
+void Server::Tick() {
     auto checkDamage = [this](const std::shared_ptr<IEntity>& entity) ->int {
         std::set<int> appliedDamageIds{};
         int totalDamage{0};
@@ -250,6 +287,18 @@ void Server::Tick() {
     };
 
     std::lock_guard lock(serverMutex);
+    for (const auto& entityId : entitiesToRemove) {
+        entities.erase(entityId);
+        reclaimedEntityIds.emplace_back(entityId);
+    }
+    entitiesToRemove.clear();
+
+    for (const auto& structureId : structuresToRemove) {
+        structures.erase(structureId);
+        reclaimedStructureIds.emplace_back(structureId);
+    }
+    structuresToRemove.clear();
+
     for (const auto &entity: entities | std::views::values) {
         if (!entity) continue;
         const auto damage =checkDamage(entity);

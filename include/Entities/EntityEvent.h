@@ -37,7 +37,8 @@ public:
         CLICK_ATTACK,
         //interupts type of event sent right after
         INTERRUPT_SPECIFIC,
-        SET_ANGLE
+        SET_ANGLE,
+        DEATH
     };
 protected:
     Type type{Type::NONE};
@@ -147,6 +148,12 @@ public:
     explicit Event_SetAngle(int angle);
     [[nodiscard]] bool validate() const override;
     [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(int angle);
+};
+
+class Event_Death final : public EntityEvent {
+public:
+    explicit Event_Death();
+    [[nodiscard]]  static std::unique_ptr<EntityEvent> Create();
 };
 
 

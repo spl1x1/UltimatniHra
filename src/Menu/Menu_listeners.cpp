@@ -1100,6 +1100,57 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
         window->server->playerUpdate(Event_Damage::Create(damageAmount));
 
     }
+    else if (commandName == "spawn") {
+        auto splitArgs = [](const std::string& str) -> std::vector<std::string> {
+            std::vector<std::string> tokens;
+            std::istringstream iss(str);
+            std::string token;
+            while (iss >> token) {
+                tokens.push_back(token);
+            }
+            return tokens;
+        };
+
+        if (!window) {
+            printf("Error: No server instance available to spawn entity\n");
+            return;
+        }
+        auto tokens = splitArgs(args);
+        const auto entityType{EntityRenderingComponent::StringToType(tokens[0])};
+        if (tokens.size() != 3) {
+            printf("Usage: /spawn <entityType> <x> <y>\n");
+            return;
+        }
+
+        Coordinates position{};
+        try {
+            position.x = stof(tokens[1]);
+            position.y = stof(tokens[2]);
+        }
+        catch (const std::exception& e) {
+            printf("Error parsing coordinates: %s\n", e.what());
+            return;
+        }
+        if (position.x < 0 || position.y < 0 || position.x >= MAPSIZE*32 || position.y >= MAPSIZE*32) {
+            printf("Error: Invalid coordinates (%f, %f)\n", position.x, position.y);
+            return;
+        }
+        int variant = 1;
+        if (tokens.size() == 4) {
+            try {
+                variant = std::stoi(tokens[3]);
+            }
+            catch (const std::exception& e) {
+                printf("Error parsing variant: %s\n", e.what());
+                return;
+            }
+        }
+
+        window->server->addEntity_unprotected(position, entityType, variant);
+        printf("Spawned entity of type '%s'\n", args.c_str());
+
+
+    }
 
     else if (commandName == "help") {
         printf("Available commands:\n");
