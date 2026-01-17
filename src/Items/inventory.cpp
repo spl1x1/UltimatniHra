@@ -869,6 +869,10 @@ void InventoryController::setSelectedQuickbarSlot(int slot) {
     }
 }
 
+Item* InventoryController::getActiveQuickbarItem() {
+    return getItem(selectedQuickbarSlot);
+}
+
 // Crafting functionality implementation
 void InventoryController::setupCraftingUI() {
     if (!document) return;

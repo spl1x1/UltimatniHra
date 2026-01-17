@@ -94,6 +94,7 @@ public:
     QuickbarSlotInfo getQuickbarSlot(int slot) const;
     int getSelectedQuickbarSlot() const { return selectedQuickbarSlot; }
     void setSelectedQuickbarSlot(int slot);  // Select quickbar slot (0-4)
+    Item* getActiveQuickbarItem();  // Get item at currently selected quickbar slot
 
     // Crafting functionality
     void setCraftingSystem(CraftingSystem* system) { craftingSystem = system; }
