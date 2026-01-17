@@ -20,10 +20,6 @@ void WorldRender::GenerateTextures() const {
     ReleaseResources();
 }
 
-void WorldRender::GenerateStructureTextures() const {
-
-
-}
 
 void WorldRender::ReleaseResources() const {
     for (auto it = window.surfaces.begin(); it != window.surfaces.end(); ) {

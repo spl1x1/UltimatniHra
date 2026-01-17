@@ -150,7 +150,7 @@ bool EntityCollisionComponent::CheckCollision(const float newX, const float newY
     return _hitbox.colliding;
 }
 
-bool EntityCollisionComponent::CheckCollisionAt(const float newX, const float newY, const Server* server) const{
+bool EntityCollisionComponent::CheckCollisionAt(const float newX, const float newY,IEntity& entity){
     bool result{false};
 
     auto evaluatePoint = [&, newX, newY](const Coordinates corner){;
@@ -160,13 +160,29 @@ bool EntityCollisionComponent::CheckCollisionAt(const float newX, const float ne
         if (tileX < 0 || tileY < 0
             || tileX >= MAPSIZE
             || tileY >= MAPSIZE
-            || server->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
+            || entity.GetServer()->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
             result = true;
             }
     };
-
-    std::ranges::for_each(_hitbox.corners, evaluatePoint);
+    const auto hitbox{entity.GetCollisionComponent()->GetHitbox()};
+    std::ranges::for_each(hitbox->corners, evaluatePoint);
     return result;
+}
+
+bool EntityCollisionComponent::CheckCollisionAtTile(int tileX, int tileY, IEntity &entity) {
+    const auto hitbox{entity.GetCollisionComponent()->GetHitbox()};
+
+    auto evaluatePoint = [&, tileX, tileY](const Coordinates corner){;
+        const int cornerTileX{static_cast<int>(std::floor((corner.x + entity.GetLogicComponent()->GetCoordinates().x) / 32.0f))};
+        const int cornerTileY{static_cast<int>(std::floor((corner.y + entity.GetLogicComponent()->GetCoordinates().y) / 32.0f))};
+
+        if (cornerTileX == tileX && cornerTileY == tileY) {
+            return true;
+        }
+        return false;
+    };
+
+    return std::ranges::any_of(hitbox->corners, evaluatePoint);
 }
 
 bool EntityCollisionComponent::CheckPoint(const Coordinates coordinates, IEntity& entity ) const {
@@ -305,31 +321,74 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
     return true;
 }
 
-void EntityLogicComponent::MoveTo(const float deltaTime, const float targetX, const float targetY, IEntity* entity) {
+void EntityLogicComponent::MoveTo(const float deltaTime,Coordinates targetCoordinates, IEntity* entity) {
     if (lock) return;
-    const auto adjustment = entity->GetRenderingComponent()->CalculateCenterOffset(*entity);
-    float diffX{targetX - coordinates.x - adjustment.x};
-    float diffY{targetY - coordinates.y - adjustment.y};
-    const float distance{std::sqrt(diffX * diffX + diffY * diffY)};
 
-    if (distance <= threshold)
-        return; //Already at target
+    const auto adjustment{entity->GetRenderingComponent()->CalculateCenterOffset(*entity)};
+    auto CalculateDiff = [&](const Coordinates target) {
+        return target - coordinates - adjustment;
+    };
 
-    diffX /= distance;
-    diffY /= distance;
+    Coordinates diffs = CalculateDiff(targetCoordinates);
 
-    if (!Move(deltaTime, diffX, diffY, *entity->GetCollisionComponent(), entity->GetServer())) return;
-    queueUpEvents.emplace_back(Event_MoveTo::Create(targetX,targetY));
+    const float distance{std::sqrt(diffs.x * diffs.x + diffs.y * diffs.y)};
+    const auto target {toTileCoordinates(targetCoordinates)};
+    if (entity->GetServer()->getMapValue_unprotected(
+        static_cast<int>(target.x),
+        static_cast<int>(target.y),
+        WorldData::COLLISION_MAP) != 0) {
+
+        // Adjust coordinates
+        targetCoordinates.x = diffs.x >= 0 ? (target.x + 0.5f) * 32.0f : (target.x - 0.5f) * 32.0f;
+        targetCoordinates.y = diffs.y >= 0 ? (target.y + 0.5f) * 32.0f : (target.y - 0.5f) * 32.0f;
+        diffs = CalculateDiff(targetCoordinates);
+    }
+
+    if (distance <= threshold) {
+        lastMoveDirection = {0.0f, 0.0f};
+        return;
+    }
+
+    diffs /= distance;
+
+    auto CheckAt = [&](Coordinates diffsValue) -> bool {
+        return EntityCollisionComponent::CheckCollisionAt(coordinates.x + diffsValue.x * speed * deltaTime, coordinates.y + diffsValue.y * speed * deltaTime, *entity);
+    };
+
+    if (CheckAt(diffs)) {
+        if (lastMoveDirection != Coordinates{0.0f, 0.0f}
+            && !CheckAt(lastMoveDirection)) {
+            diffs = lastMoveDirection;
+            }
+        else if (!CheckAt({diffs.x, 0.0f})) {
+            diffs.y = 0.0f;
+            diffs.x = (diffs.x  > 0.0f) ? 1.0f : -1.0f;
+        }
+        else if (!CheckAt({0.0f, diffs.y})) {
+            diffs.x = 0.0f;
+            diffs.y = (diffs.y > 0.0f) ? 1.0f : -1.0f;
+        }
+        else {
+            lastMoveDirection = {0.0f, 0.0f};
+            return;
+        }
+    }
+
+    if (Move(deltaTime, diffs.x, diffs.y, *entity->GetCollisionComponent(), entity->GetServer())) {
+        lastMoveDirection = diffs;
+    }
+    queueUpEvents.emplace_back(Event_MoveTo::Create(targetCoordinates.x, targetCoordinates.y));
 }
 
-void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, const int damage) {
+
+
+void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, const int damage) const {
     if (lock) return;
     if (attackType < 0) return;
     const auto renderingComponent = entity->GetRenderingComponent();
     const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(angle);
     renderingComponent->PlayAnimation(AnimationType::ATTACK, direction, attackType,true);
-    const auto frameInfo{renderingComponent->GetFrameTimeAndCount()};
-    lock = std::get<0>(frameInfo)* static_cast<float>(std::get<1>(frameInfo)); //Example lock time for attack
+    entity->GetLogicComponent()->SetLock();
     const auto reach{entity->GetReach()};
     const auto entityCenter{entity->GetEntityCenter()};
 
@@ -354,13 +413,14 @@ void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, 
         circleEnd = 450;
     }
 
-    attackPoints.reserve(circleEnd - circleStart);
+    attackPoints.reserve((circleEnd - circleStart) * reach);
     for (int i{circleStart}; i < circleEnd; ++i) {
         const auto rad = static_cast<float>(i * M_PI / 180.0f);
-        attackPoints.push_back({
-            entityCenter.x + std::cos(rad) * static_cast<float>(reach),
-            entityCenter.y + std::sin(rad) * static_cast<float>(reach)
-        });
+        for (int j{1}; j < reach; ++j)
+            attackPoints.push_back({
+                entityCenter.x + std::cos(rad) * static_cast<float>(j),
+                entityCenter.y + std::sin(rad) * static_cast<float>(j)
+            });
     }
 
     entity->GetServer()->applyDamageAt_unprotected(damage, attackPoints);
@@ -435,13 +495,13 @@ void EventBindings::InitializeBindings() {
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::MOVE_TO, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_MoveTo*>(e);
-        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, entity);
+        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), {data->targetX, data->targetY}, entity);
 
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::CLICK_MOVE, [](IEntity* entity, const EntityEvent *e) {
        const auto data = dynamic_cast<const Event_ClickMove*>(e);
         entity->GetLogicComponent()->interrupted = true;
-        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), data->targetX, data->targetY, entity);
+        entity->GetLogicComponent()->MoveTo(data->GetDeltaTime(), {data->targetX, data->targetY}, entity);
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::HEAL, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_Heal*>(e);

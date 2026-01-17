@@ -54,6 +54,10 @@ std::unique_ptr<EntityEvent> Event_MoveTo::Create(float targetX, float targetY) 
     return std::make_unique<Event_MoveTo>(targetX, targetY);
 }
 
+std::unique_ptr<EntityEvent> Event_MoveTo::Create(Coordinates targetCoordinates) {
+    return std::make_unique<Event_MoveTo>(targetCoordinates.x, targetCoordinates.y);
+}
+
 Event_ChangeCollision::Event_ChangeCollision() {
     this->type = Type::CHANGE_COLLISION;
 }

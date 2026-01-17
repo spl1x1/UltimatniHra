@@ -67,7 +67,7 @@ void Player::SetAngle(const int newAngle) {
     entityLogicComponent.SetAngle(newAngle);
 }
 
-void Player::SetSpeed(float newSpeed) {
+void Player::SetSpeed(const float newSpeed) {
     entityLogicComponent.SetSpeed(newSpeed);
 }
 

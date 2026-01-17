@@ -76,7 +76,8 @@ public:
     [[nodiscard]] Coordinates getSpawnPoint() const {return spawnPoint;} //Nemusi byt thread safe, spawn point se nemeni po spusteni serveru
     [[nodiscard]] int getSeed() const {return seed;} //Nemusi byt thread safe, seed se nemeni
     [[nodiscard]] int getMapValue(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP); //Musi byt thread safe, vraci hodnotu collision mapy na danych souradnicich
-    [[nodiscard]] int getMapValue_unprotected(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP) const {return worldData.getMapValue(x,y, mapType);}; //Verze bez locku, pro vnitrni pouziti
+    [[nodiscard]] int getMapValue_unprotected(int x, int y, WorldData::MapType mapType= WorldData::COLLISION_MAP) const;
+    ; //Verze bez locku, pro vnitrni pouziti
     [[nodiscard]] Coordinates getEntityPos(int entityId); //Musi byt thread safe, vraci pozici entity podle id
     [[nodiscard]] IEntity* getEntity(int entityId); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] IStructure* getStructure(int structureId); //Metoda je thread safe, ale operace s pointerem na entitu ne

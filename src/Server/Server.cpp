@@ -10,6 +10,7 @@
 #include "../../include/Application/MACROS.h"
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
+#include "../../include/Entities/PathManager.h"
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Entities/Slime.h"
 #include "../../include/Structures/OreNode.h"
@@ -67,9 +68,20 @@ float Server::getDeltaTime_unprotected() const{
 }
 
 int Server::getMapValue(int x, int y, WorldData::MapType mapType) {
+    if (x < 0 || y < 0 || x >= MAPSIZE || y >= MAPSIZE) {
+        return -1; // Out of bounds
+    }
     std::shared_lock lock(serverMutex);
     return worldData.getMapValue(x,y, mapType);
 }
+
+int Server::getMapValue_unprotected(int x, int y, WorldData::MapType mapType) const {
+    if (x < 0 || y < 0 || x >= MAPSIZE || y >= MAPSIZE) {
+        return -1; // Out of bounds
+    }
+    return worldData.getMapValue(x,y, mapType);
+}
+
 
 void Server::setMapValue(int x, int y, WorldData::MapType mapType, int value) {
     std::lock_guard lock(serverMutex);
@@ -287,6 +299,7 @@ void Server::Tick() {
     };
 
     std::lock_guard lock(serverMutex);
+    PathManager::Tick();
     for (const auto& entityId : entitiesToRemove) {
         entities.erase(entityId);
         reclaimedEntityIds.emplace_back(entityId);
@@ -399,17 +412,39 @@ void Server::generateStructures() {
         return addStructure_unprotected(pos, structureType::ORE_NODE, oreTypeDist(mt), oreDist(mt));
     };
 
-    auto process = [&](const int x, const int y){
+    auto checkForDiagonalNeighbors = [&](const int x, const int y) -> int {
+        return
+      getMapValue_unprotected(x-1, y-1, WorldData::COLLISION_MAP) +
+      getMapValue_unprotected(x+1, y-1, WorldData::COLLISION_MAP);
+    };
+
+    auto checkForNeighbors = [&](const int x, const int y) -> int {
+        return
+      getMapValue_unprotected(x-1, y-1, WorldData::COLLISION_MAP) +
+      getMapValue_unprotected(x,   y-1, WorldData::COLLISION_MAP) +
+      getMapValue_unprotected(x+1, y-1, WorldData::COLLISION_MAP) +
+      getMapValue_unprotected(x-1, y,   WorldData::COLLISION_MAP) +
+      getMapValue_unprotected(x+1, y,   WorldData::COLLISION_MAP) +
+      getMapValue_unprotected(x-1, y+1, WorldData::COLLISION_MAP) +
+      getMapValue_unprotected(x,   y+1, WorldData::COLLISION_MAP) +
+      getMapValue_unprotected(x+1, y+1, WorldData::COLLISION_MAP);
+    };
+
+    auto process = [&](const int x, const int y) {
+        if (checkForDiagonalNeighbors(x,y) > 0) return;
+        if (checkForNeighbors(x,y) > 2) return;
+
+        if (getMapValue_unprotected(x-1, y-1, WorldData::COLLISION_MAP)
+            + getMapValue_unprotected(x+1, y-1, WorldData::COLLISION_MAP) > 0) return;
         auto Biome = biomeModifierValues.at(0);
         const int biomeValue = getMapValue_unprotected(x, y, WorldData::BIOME_MAP);
-        const Coordinates coordinates {static_cast<float>(x)*32.0f ,static_cast<float>(y)*32.0f};
         for (const auto& biomeInfo : biomeModifierValues) {
             if (biomeInfo.biomeId != biomeValue) continue;
             Biome = biomeInfo;
             break;
         }
-        if (TryToSpawnTree(Biome,coordinates)){}
-        else TryToSpawnOre(Biome,coordinates);
+        if (TryToSpawnTree(Biome,toWorldCoordinates(x,y))){}
+        else TryToSpawnOre(Biome,toWorldCoordinates(x,y));
     };
 
 

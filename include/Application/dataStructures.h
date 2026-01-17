@@ -8,15 +8,35 @@
 #include <SDL3/SDL_rect.h>
 
 //Defines a 2D coordinate
+
 struct Coordinates {
     float x = 0;
     float y = 0;
-};
 
-struct TileCoordinates {
-    int x = 0;
-    int y = 0;
+    Coordinates operator-(const Coordinates& other) const;
+    Coordinates operator+(const Coordinates& other) const;
+    Coordinates operator*(const Coordinates& other) const;
+    Coordinates operator/(const Coordinates& other) const;
+
+    Coordinates& operator+=(const Coordinates& other);
+    Coordinates& operator-=(const Coordinates& other);
+    Coordinates& operator/=(const Coordinates& other);
+    Coordinates& operator*=(const Coordinates& other);
+    Coordinates& operator+=(float value);
+    Coordinates& operator-=(float value);
+    Coordinates& operator/=(float value);
+    Coordinates& operator*=(float value);
+
+    bool operator==(const Coordinates& other) const;
+    bool operator!=(const Coordinates& other) const;
+    bool operator<(float value) const;
+    bool operator>(float value) const;
 };
+Coordinates toTileCoordinates(const Coordinates& worldCoordinates);
+Coordinates toTileCoordinates(int worldX, int worldY);
+Coordinates toWorldCoordinates(const Coordinates& tileCoordinates);
+Coordinates toWorldCoordinates(int tileX, int tileY);
+float CoordinatesDistance(const Coordinates& a, const Coordinates& b);
 
 struct CollisionStatus{
     bool colliding;

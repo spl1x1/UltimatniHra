@@ -10,6 +10,8 @@
 #include <SDL3_image/SDL_image.h>
 #include <utility>
 #include <cmath>
+
+#include "../../include/Entities/PathManager.h"
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Entities/Player.hpp"
@@ -69,6 +71,9 @@ void Window::handleMouseInputs() {
     auto sendRightClickInput = [&]() {
         if (data.mouseData.currentRightHoldTime > 0.5f) {
             SDL_Log("Right Click Hold Input");
+            const Coordinates point{data.mouseData.x +16, data.mouseData.y +16};
+            PathManager::StopPathfinding(*server->getPlayer());
+            PathManager::StartPathfinding(point,*server->getPlayer());
             return;
         }
         server->playerUpdate(Event_ClickMove::Create(data.mouseData.x +16, data.mouseData.y +16));
@@ -298,6 +303,21 @@ void Window::advanceFrame() {
     dataModel.DirtyAllVariables();
 #endif
 
+#ifdef DEBUG
+    if (data.uiComponent->getMenuData().debugOverlay) drawPointsAt(AttackPoints());
+#endif
+
+    for (const auto entities{server->getEntities()}; const auto &entity: entities | std::views::values) {
+        if (!entity) continue;
+        renderAt(entity->GetRenderingContext());
+#ifdef DEBUG
+        if (data.uiComponent->getMenuData().debugOverlay) {
+            drawHitbox(entity->GetHitboxRenderingContext());
+            drawPointsAt(AttackPoints());
+        };
+#endif
+
+    }
     for (const auto structures{server->getStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH})}; const auto& structure : structures) {
         IStructure *struc = server->getStructure(structure);
         if (!struc) continue;
@@ -306,21 +326,6 @@ void Window::advanceFrame() {
 #ifdef DEBUG
         if (data.uiComponent->getMenuData().debugOverlay) {
             drawHitbox(struc->GetHitboxContext());
-        };
-#endif
-    }
-
-#ifdef DEBUG
-    if (data.uiComponent->getMenuData().debugOverlay) drawPointsAt(AttackPoints());
-#endif
-
-    for (const auto entities {server->getEntities()}; const auto& [id, entity] : entities) {
-        if (!entity) continue;
-        renderAt(entity->GetRenderingContext());
-#ifdef DEBUG
-        if (data.uiComponent->getMenuData().debugOverlay) {
-            drawHitbox(entity->GetHitboxRenderingContext());
-            drawPointsAt(AttackPoints());
         };
 #endif
     }
@@ -565,7 +570,7 @@ void Window::initGame() {
     data.cameraWaterRect->y = 64;
 
     server->generateWorld();
-    WorldRender wr(*this);
+    const WorldRender wr(*this);
     wr.GenerateTextures();
     server->generateStructures();
 

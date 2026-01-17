@@ -4,8 +4,8 @@
 
 #ifndef ENTITYEVENT_H
 #define ENTITYEVENT_H
-#include <memory>
 
+#include <memory>
 #include "../Application/dataStructures.h"
 
 //Abstract event class for entity events
@@ -72,6 +72,8 @@ public:
     explicit Event_MoveTo(float targetX, float targetY);
     [[nodiscard]] bool validate() const override;
     [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(float targetX, float targetY);
+    [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(Coordinates targetCoordinates);
+
 };
 
 class Event_ChangeCollision final : public EntityEvent {
@@ -155,10 +157,5 @@ public:
     explicit Event_Death();
     [[nodiscard]]  static std::unique_ptr<EntityEvent> Create();
 };
-
-
-
-
-
 
 #endif //ENTITYEVENT_H

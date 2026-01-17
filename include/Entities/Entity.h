@@ -73,7 +73,8 @@ public:
 
     //Check collision with structures, entities can collide with each other
     bool CheckCollision(float newX, float newY, const Server* server);
-    [[nodiscard]] bool CheckCollisionAt(float newX, float newY, const Server* server) const;
+    static bool CheckCollisionAt(float newX, float newY, IEntity& entity);
+    static bool CheckCollisionAtTile(int tileX, int tileY, IEntity& entity);
     [[nodiscard]] bool CheckPoint(Coordinates coordinates, IEntity& entity) const;
 
     //Setters
@@ -92,8 +93,8 @@ public:
 
 class EntityLogicComponent {
     friend class EventBindings;
-    static constexpr float threshold = 1.0f; //Threshold to consider reached target
     Coordinates coordinates{0.0f, 0.0f};
+    Coordinates lastMoveDirection{0.0f, 0.0f};
     std::vector<std::unique_ptr<EntityEvent>> events{};
     std::vector<std::unique_ptr<EntityEvent>> queueUpEvents{}; //Events to be processed in next tick, usually result of scripts or other events
     std::set<EntityEvent::Type> interruptedEvents{};
@@ -104,9 +105,13 @@ class EntityLogicComponent {
     bool lock{false};
     float currentTime{0};
 
+
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
 public:
+
+    static constexpr float threshold = 4.0f; //Threshold to consider reached target
+
     void SetCoordinates(const Coordinates &newCoordinates);
     [[nodiscard]] Coordinates GetCoordinates() const;
 
@@ -124,8 +129,8 @@ public:
 
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
-    void MoveTo(float deltaTime, float targetX, float targetY,IEntity* entity);
-    void PerformAttack(IEntity* entity, int attackType, int damage);
+    void MoveTo(float deltaTime, Coordinates targetCoordinates,IEntity* entity);
+    void PerformAttack(IEntity* entity, int attackType, int damage) const;
     void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
     void AddEvent(std::unique_ptr<EntityEvent> eventData, bool priority = false); //Add event to be processed
     void QueueUpEvent(std::unique_ptr<EntityEvent> eventData, bool priority = false); //Queue up event for next tick
