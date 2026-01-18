@@ -6,10 +6,12 @@
 #define PLAYER_HPP
 
 #include "../Entities/Entity.h"
+#include "../Sprites/GhostSprite.h"
 #include "../Sprites/PlayerSprite.hpp"
 
 class Player final : public IEntity {
     EntityRenderingComponent entityRenderingComponent = EntityRenderingComponent(std::make_unique<PlayerSprite>());
+    EntityRenderingComponent entityRenderingComponent2 = EntityRenderingComponent(std::make_unique<GhostSprite>());
 
     EntityCollisionComponent entityCollisionComponent =
         EntityCollisionComponent(EntityCollisionComponent::HitboxData
@@ -28,6 +30,8 @@ class Player final : public IEntity {
     int id{};
     int reach{32}; //Player reach in pixels
     bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes)
+    bool isGhostMode{false}; //If true, player is in ghost mode
+    bool beingRevived{false};
 
 public:
     //Interface methods implementation
@@ -37,6 +41,11 @@ public:
     static void Create(Server* server, int slotId) ;
     static void Load(Server* server, int slotId);
     static void Save(Server* server);
+    void SetGhostMode(bool enable);
+    void ReviveFromGhostMode();
+    [[nodiscard]] bool IsBeingRevived() const;
+
+    [[nodiscard]] bool IsGhostMode() const;
 
     //Setters
     void SetId(int newId) override;

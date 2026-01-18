@@ -11,6 +11,8 @@
 #include <queue>
 #include <algorithm>
 
+#include "../../include/Entities/Player.hpp"
+
 std::unique_ptr<EventBindings> EventBindings::instance = nullptr;
 
 //EntityRenderingComponent methods
@@ -222,6 +224,8 @@ void EntityLogicComponent::SetLock() {
     lock = true;
 }
 
+bool EntityLogicComponent::IsLocked() const { return lock; }
+
 void EntityLogicComponent::SetInterrupted(const bool newInterrupted) {
     interrupted = newInterrupted;
 }
@@ -266,8 +270,7 @@ void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
 
     auto updateLock = [&] {
         const auto spriteRenderingContext{entity.GetRenderingComponent()->GetSprite()->GetSpriteRenderingContext()};
-        const auto frameInfo{spriteRenderingContext->GetCurrentFrame()};
-        if (frameInfo == spriteRenderingContext->GetCurrentFrameCount() -1)
+        if (const auto frameInfo{spriteRenderingContext->GetCurrentFrame()}; frameInfo == spriteRenderingContext->GetCurrentFrameCount() -1)
             lock = false;
     };
 
@@ -277,7 +280,24 @@ void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
         events.emplace_back(std::move(e));
     }
     queueUpEvents.clear();
-
+    if (entity.GetType() == EntityType::PLAYER) {
+        const auto &player = dynamic_cast<Player&>(entity);
+        if (player.IsGhostMode()) {
+            interruptedEvents.clear();
+            interruptedEvents.insert(EntityEvent::Type::ATTACK);
+            interruptedEvents.insert(EntityEvent::Type::CLICK_ATTACK);
+            interruptedEvents.insert(EntityEvent::Type::DAMAGE);
+            interruptedEvents.insert(EntityEvent::Type::HEAL);
+            interruptedEvents.insert(EntityEvent::Type::PLACE);
+            interruptedEvents.insert(EntityEvent::Type::INVENTORY);
+        }
+        if (player.IsBeingRevived()) {
+            interruptedEvents.clear();
+            interruptedEvents.insert(EntityEvent::Type::MOVE);
+            interruptedEvents.insert(EntityEvent::Type::MOVE_TO);
+            interruptedEvents.insert(EntityEvent::Type::CLICK_MOVE);
+        }
+    }
     for (auto eventIndex{0}; eventIndex < events.size(); ++eventIndex) {
         if (!interrupted && !isInInterrupts(eventIndex)) process(eventIndex);
     }
@@ -577,6 +597,10 @@ void EventBindings::InitializeBindings() {
             logicComponent->QueueUpEvent(Event_Death::Create());
             return;
         };
+        if (entity->GetType() == EntityType::PLAYER) {
+            dynamic_cast<Player*>(entity)->SetGhostMode(true);
+            return;
+        }
         entity->GetServer()->RemoveEntity_unprotected(entity->GetId());
     });
 
