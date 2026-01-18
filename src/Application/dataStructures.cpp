@@ -4,6 +4,8 @@
 
 #include "../../include/Application/dataStructures.h"
 
+#include <cmath>
+
 Coordinates Coordinates::operator-(const Coordinates &other) const {
     return {x-other.x, y - other.y};
 }

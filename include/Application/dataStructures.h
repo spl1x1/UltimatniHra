@@ -4,10 +4,12 @@
 
 #ifndef ULTIMATNIHRA_DATASTRUCTURES_H
 #define ULTIMATNIHRA_DATASTRUCTURES_H
-#include <vector>
-#include <SDL3/SDL_rect.h>
 
 //Defines a 2D coordinate
+
+#include <vector>
+#include <SDL3/SDL_rect.h>
+#include <string>
 
 struct Coordinates {
     float x = 0;
