@@ -124,6 +124,7 @@ public:
     [[nodiscard]] float GetSpeed() const;
 
     void SetLock();
+    [[nodiscard]] bool IsLocked() const;
 
     void SetInterrupted(bool newInterrupted);
 

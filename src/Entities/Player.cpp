@@ -10,9 +10,16 @@
 //PlayerNew
 
 void Player::Tick() {
+
+    if (entityHealthComponent.IsDead() && !IsGhostMode() )  {
+        SetGhostMode(true);
+    }
+
     const auto deltaTime = server->GetDeltaTime_unprotected();
     const auto oldCoordinates = entityLogicComponent.GetCoordinates();
-    entityRenderingComponent.Tick(deltaTime);
+    if (beingRevived) ReviveFromGhostMode();
+    if (isGhostMode) entityRenderingComponent2.Tick(deltaTime);
+    else entityRenderingComponent.Tick(deltaTime);
     entityLogicComponent.Tick(server, *this);
     entityHealthComponent.Tick(deltaTime);
     const auto newCoordinates = entityLogicComponent.GetCoordinates();
@@ -20,14 +27,19 @@ void Player::Tick() {
 
     if (oldCoordinates != newCoordinates) {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(entityLogicComponent.GetAngle());
-        entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, direction, 1);
+        GetRenderingComponent()->PlayAnimation(AnimationType::RUNNING, direction, 1);
     } else {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(entityLogicComponent.GetAngle());
-        entityRenderingComponent.PlayAnimation(AnimationType::IDLE, direction, 1);
+        GetRenderingComponent()->PlayAnimation(AnimationType::IDLE, direction, 1);
     }
 }
 
 RenderingContext Player::GetRenderingContext() {
+    if (isGhostMode) {
+        auto context2 = entityRenderingComponent2.GetRenderingContext();
+        context2.coordinates = entityLogicComponent.GetCoordinates();
+        return context2;
+    }
     auto context = entityRenderingComponent.GetRenderingContext();
     context.coordinates = entityLogicComponent.GetCoordinates();
     return context;
@@ -53,6 +65,27 @@ void Player::Save(Server* server) {
         SaveManager::getInstance().saveGame(currentSlot, server);
     }
 }
+
+void Player::SetGhostMode(const bool enable) { isGhostMode = enable; }
+
+void Player::ReviveFromGhostMode() {
+    if (entityLogicComponent.IsLocked()) return;
+    if (!beingRevived) {
+        entityRenderingComponent2.PlayAnimation(AnimationType::DEATH, Direction::OMNI, 1, true);
+        entityLogicComponent.SetLock();
+        beingRevived = true;
+        return;
+    };
+    isGhostMode = false;
+    beingRevived = false;
+    entityHealthComponent.SetHealth(entityHealthComponent.GetMaxHealth() / 2);
+}
+
+bool Player::IsBeingRevived() const {
+    return beingRevived;
+}
+
+bool Player::IsGhostMode() const { return isGhostMode; }
 
 void Player::SetId(const int newId) {
     id = newId;
@@ -140,6 +173,9 @@ EntityHealthComponent * Player::GetHealthComponent() {
 }
 
 EntityRenderingComponent * Player::GetRenderingComponent() {
+    if (isGhostMode) {
+        return &entityRenderingComponent2;
+    }
     return &entityRenderingComponent;
 }
 

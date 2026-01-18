@@ -1163,6 +1163,13 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
             }
         }
     }
+    else if (commandName == "revive") {
+        if (window) {
+            const auto player{window->server->GetPlayer()};
+            dynamic_cast<Player*>(player)->ReviveFromGhostMode();
+            printf("Player revived\n");
+        }
+    }
 
     else if (commandName == "help") {
         printf("Available commands:\n");
