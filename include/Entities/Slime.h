@@ -26,7 +26,9 @@ class Slime final: public IEntity {
 
     Server* server;
     int id{};
-    int reach{32}; //Entity reach in pixels
+    int reach{40}; //Entity reach in pixels
+    float detectionRange{500.0f}; //Detection range in pixels
+    float attackRange{40.0f}; //Attack range in pixels
     bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes)
 
 public:
@@ -57,6 +59,9 @@ public:
     [[nodiscard]] HitboxContext GetHitboxRenderingContext() const override;
     [[nodiscard]] int GetId() const override;
     [[nodiscard]] int GetReach() const override;
+    [[nodiscard]] float GetSpeed() const override;
+    [[nodiscard]] float GetDetectionRange() const override;
+    [[nodiscard]] float GetAttackRange() const override;
     [[nodiscard]] EntityType GetType() const override;
 
     EntityCollisionComponent* GetCollisionComponent() override;

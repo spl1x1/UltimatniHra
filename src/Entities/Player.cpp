@@ -10,7 +10,7 @@
 //PlayerNew
 
 void Player::Tick() {
-    const auto deltaTime = server->getDeltaTime_unprotected();
+    const auto deltaTime = server->GetDeltaTime_unprotected();
     const auto oldCoordinates = entityLogicComponent.GetCoordinates();
     entityRenderingComponent.Tick(deltaTime);
     entityLogicComponent.Tick(server, *this);
@@ -34,15 +34,15 @@ RenderingContext Player::GetRenderingContext() {
 }
 
 void Player::Create(Server* server, int slotId) {
-    auto player = std::make_shared<Player>(server, server->getSpawnPoint());
-    server->addLocalPlayer(player);
+    auto player = std::make_shared<Player>(server, server->GetSpawnPoint());
+    server->AddLocalPlayer(player);
     SaveManager::getInstance().setCurrentSlot(slotId);
 }
 
 void Player::Load(Server* server, int slotId) {
     // TODO: Load player data from save
-    auto player = std::make_shared<Player>(server, server->getSpawnPoint());
-    server->addLocalPlayer(player);
+    auto player = std::make_shared<Player>(server, server->GetSpawnPoint());
+    server->AddLocalPlayer(player);
 
     // Load saved data into player
     SaveManager::getInstance().loadGame(slotId, server);
@@ -114,6 +114,14 @@ int Player::GetId() const {
 int Player::GetReach() const {
     return reach;
 }
+
+float Player::GetSpeed() const {
+    return entityLogicComponent.GetSpeed();
+}
+
+float Player::GetDetectionRange() const { return 0; }
+
+float Player::GetAttackRange() const { return 0; }
 
 EntityType Player::GetType() const {
     return EntityType::PLAYER;

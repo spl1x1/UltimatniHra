@@ -61,6 +61,9 @@ public:
     [[nodiscard]] HitboxContext GetHitboxRenderingContext() const override;
     [[nodiscard]] int GetId() const override;
     [[nodiscard]] int GetReach() const override;
+    [[nodiscard]] float GetSpeed() const override;
+    [[nodiscard]] float GetDetectionRange() const override;;
+    [[nodiscard]] float GetAttackRange() const override;;
     [[nodiscard]] EntityType GetType() const override;
 
     EntityCollisionComponent* GetCollisionComponent() override;

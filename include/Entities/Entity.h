@@ -99,21 +99,23 @@ class EntityLogicComponent {
     std::vector<std::unique_ptr<EntityEvent>> queueUpEvents{}; //Events to be processed in next tick, usually result of scripts or other events
     std::set<EntityEvent::Type> interruptedEvents{};
 
+    Coordinates lastCoordinates{0.0f, 0.0f};
+
     int angle{0};
     float speed{0};
+
     bool interrupted{false};
     bool lock{false};
-    float currentTime{0};
 
 
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
 public:
-
-    static constexpr float threshold = 4.0f; //Threshold to consider reached target
+    static constexpr float threshold = 5.0f; //Threshold to consider reached target
 
     void SetCoordinates(const Coordinates &newCoordinates);
     [[nodiscard]] Coordinates GetCoordinates() const;
+    [[nodiscard]] Coordinates GetLastMoveDirection() const;
 
     void SetAngle(int newAngle);
     [[nodiscard]] int GetAngle() const;
@@ -206,6 +208,9 @@ public:
     [[nodiscard]] virtual HitboxContext GetHitboxRenderingContext() const = 0;
     [[nodiscard]] virtual int GetId() const = 0;
     [[nodiscard]] virtual int GetReach() const = 0;
+    [[nodiscard]] virtual float GetSpeed() const = 0;
+    [[nodiscard]] virtual float GetDetectionRange() const = 0;
+    [[nodiscard]] virtual float GetAttackRange() const = 0;
     [[nodiscard]] virtual EntityType GetType() const = 0;
 
 

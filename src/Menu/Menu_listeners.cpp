@@ -690,7 +690,7 @@ void CreateWorldConfirmListener::ProcessEvent(Rml::Event& event) {
         documents->at("create_world")->Hide();
     }
 
-    window->server->setSeed(seed);
+    window->server->SetSeed(seed);
     window->initGame();
 
     Player::Create(window->server.get(), activeSlot);
@@ -741,7 +741,7 @@ void LoadGameListener::ProcessEvent(Rml::Event&) {
         documents->at("play_menu")->Hide();
     }
 
-    window->server->setSeed(save->worldData.seed);
+    window->server->SetSeed(save->worldData.seed);
     window->initGame();
 
     Player::Load(window->server.get(), slotId);
@@ -1097,7 +1097,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
             printf("Error: No server instance available to damage player\n");
             return;
         }
-        window->server->playerUpdate(Event_Damage::Create(damageAmount));
+        window->server->PlayerUpdate(Event_Damage::Create(damageAmount));
 
     }
     else if (commandName == "spawn") {
@@ -1146,7 +1146,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
             }
         }
 
-        window->server->addEntity(position, entityType, variant);
+        window->server->AddEntity(position, entityType, variant);
         printf("Spawned entity of type '%s'\n", args.c_str());
 
 

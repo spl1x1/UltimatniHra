@@ -14,6 +14,7 @@ enum class AiState {
     Idle,
     Patrol,
     Chase,
+    GetUnstuck, // Obecny stav pro reseni zaseknuti
     Attack,
     Flee,
     Dead
@@ -26,7 +27,8 @@ enum class AiEvent {
     LowHealth,
     TargetInRange,
     TargetOutOfRange,
-    ReachedDestination
+    ReachedDestination,
+    MovementStuck
 };
 
 class AiStateMachine {
@@ -36,17 +38,22 @@ public:
     void setState(AiState state);
     AiState getState() const;
 
-    void registerState(AiState state, const StateHandler &onUpdate);
+    void registerState(AiState state, const StateHandler& onEnter, const StateHandler& onUpdate);
+
     void registerTransition(AiState from, AiEvent event, AiState to);
 
     void handleEvent(AiEvent event);
-    void update(IEntity* entity, float deltaTime) const;
+    void update(IEntity *entity, float deltaTime);
 
 private:
+    bool stateChanged = false;
     AiState currentState = AiState::Idle;
-    std::unordered_map<AiState, StateHandler> stateHandlers;
+    AiState previousState = AiState::Idle; // Pro detekci změny stavu
+    std::unordered_map<AiState, StateHandler> stateEnterHandlers; // onEnter
+    std::unordered_map<AiState, StateHandler> stateHandlers;      // onUpdate
     std::unordered_map<AiState, std::unordered_map<AiEvent, AiState>> transitions;
 };
+
 
 class AiManager {
 public:

@@ -96,8 +96,7 @@ Coordinates toWorldCoordinates(int tileX, int tileY) {
     };}
 
 float CoordinatesDistance(const Coordinates &a, const Coordinates &b) {
-    const float dx{a.x - b.x};
-    const float dy{a.y - b.y};
-    return std::sqrt(dx * dx + dy * dy);
+    const auto [x, y]{a - b};
+    return std::sqrt(x * x + y * y);
 }
 

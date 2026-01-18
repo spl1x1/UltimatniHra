@@ -10,7 +10,7 @@
 
 
 void Slime::Tick() {
-    const auto deltaTime = server->getDeltaTime_unprotected();
+    const auto deltaTime = server->GetDeltaTime_unprotected();
     const auto oldCoordinates = entityLogicComponent.GetCoordinates();
     entityRenderingComponent.Tick(deltaTime);
     entityLogicComponent.Tick(server, *this);
@@ -95,6 +95,18 @@ int Slime::GetReach() const {
     return reach;
 }
 
+float Slime::GetSpeed() const {
+    return entityLogicComponent.GetSpeed();
+}
+
+float Slime::GetDetectionRange() const {
+    return detectionRange;
+}
+
+float Slime::GetAttackRange() const {
+    return attackRange;
+}
+
 EntityType Slime::GetType() const {
     return EntityType::SLIME;
 }
@@ -126,5 +138,5 @@ Server* Slime::GetServer() const {
 Slime::Slime(Server* server, const Coordinates& coordinates) {
     this->server = server;
     entityLogicComponent.SetCoordinates(coordinates);
-    entityLogicComponent.SetSpeed(200.0f);
+    entityLogicComponent.SetSpeed(100.0f);
 }

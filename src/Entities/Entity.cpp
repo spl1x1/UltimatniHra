@@ -142,7 +142,7 @@ bool EntityCollisionComponent::CheckCollision(const float newX, const float newY
         if (tileX < 0 || tileY < 0
             || tileX >= MAPSIZE
             || tileY >= MAPSIZE
-            || server->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
+            || server->GetMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
             _hitbox.colliding = true;
             }
     };
@@ -160,7 +160,7 @@ bool EntityCollisionComponent::CheckCollisionAt(const float newX, const float ne
         if (tileX < 0 || tileY < 0
             || tileX >= MAPSIZE
             || tileY >= MAPSIZE
-            || entity.GetServer()->getMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
+            || entity.GetServer()->GetMapValue_unprotected(tileX, tileY, WorldData::COLLISION_MAP) != 0) {
             result = true;
             }
     };
@@ -244,9 +244,13 @@ Coordinates EntityLogicComponent::GetCoordinates() const {
     return coordinates;
 }
 
+Coordinates EntityLogicComponent::GetLastMoveDirection() const {
+    return lastMoveDirection;
+}
+
 
 void EntityLogicComponent::Tick(const Server* server, IEntity& entity) {
-    const auto dt = server->getDeltaTime_unprotected();
+    const auto dt = server->GetDeltaTime_unprotected();
     auto isInInterrupts= [&](const int index)->bool {
         return std::ranges::any_of(interruptedEvents,
                                    [&] (const EntityEvent::Type interruptedEvent) {
@@ -307,6 +311,7 @@ bool EntityLogicComponent::isInInterrupts(int eventIndex) const {
 
 bool EntityLogicComponent::Move(const float deltaTime, const float dX,const float dY, EntityCollisionComponent &collisionComponent, const Server* server) {
     if (lock) return false;
+    lastCoordinates = coordinates;
     const float newX{coordinates.x + dX * speed* deltaTime};
     const float newY{coordinates.y + dY * speed * deltaTime};
 
@@ -322,7 +327,14 @@ bool EntityLogicComponent::Move(const float deltaTime, const float dX,const floa
 }
 
 void EntityLogicComponent::MoveTo(const float deltaTime,Coordinates targetCoordinates, IEntity* entity) {
-    if (lock) return;
+    auto DestinationReached = [&] {
+        entity->GetServer()->GetAiManager_unprotected().sendEvent(entity, AiEvent::ReachedDestination);
+    };
+
+    if (lock) {
+        queueUpEvents.emplace_back(Event_MoveTo::Create(targetCoordinates.x, targetCoordinates.y));
+        return;
+    };
 
     const auto adjustment{entity->GetRenderingComponent()->CalculateCenterOffset(*entity)};
     auto CalculateDiff = [&](const Coordinates target) {
@@ -333,7 +345,7 @@ void EntityLogicComponent::MoveTo(const float deltaTime,Coordinates targetCoordi
 
     const float distance{std::sqrt(diffs.x * diffs.x + diffs.y * diffs.y)};
     const auto target {toTileCoordinates(targetCoordinates)};
-    if (entity->GetServer()->getMapValue_unprotected(
+    if (entity->GetServer()->GetMapValue_unprotected(
         static_cast<int>(target.x),
         static_cast<int>(target.y),
         WorldData::COLLISION_MAP) != 0) {
@@ -346,6 +358,7 @@ void EntityLogicComponent::MoveTo(const float deltaTime,Coordinates targetCoordi
 
     if (distance <= threshold) {
         lastMoveDirection = {0.0f, 0.0f};
+        DestinationReached();
         return;
     }
 
@@ -370,6 +383,7 @@ void EntityLogicComponent::MoveTo(const float deltaTime,Coordinates targetCoordi
         }
         else {
             lastMoveDirection = {0.0f, 0.0f};
+            DestinationReached();
             return;
         }
     }
@@ -416,14 +430,14 @@ void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, 
     attackPoints.reserve((circleEnd - circleStart) * reach);
     for (int i{circleStart}; i < circleEnd; ++i) {
         const auto rad = static_cast<float>(i * M_PI / 180.0f);
-        for (int j{1}; j < reach; ++j)
+        for (int j{3}; j < reach; ++j)
             attackPoints.push_back({
                 entityCenter.x + std::cos(rad) * static_cast<float>(j),
                 entityCenter.y + std::sin(rad) * static_cast<float>(j)
             });
     }
 
-    entity->GetServer()->applyDamageAt_unprotected(damage, attackPoints);
+    entity->GetServer()->ApplyDamageAt_unprotected(damage, attackPoints, entity->GetId());
 }
 
 
@@ -448,6 +462,14 @@ void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
         entity.GetLogicComponent()->SetInterrupted(true);
         entity.GetRenderingComponent()->PlayAnimation(AnimationType::DEATH,direction, 1, true);
         logicComponent->QueueUpEvent(Event_Death::Create());
+    }
+
+    if (auto* server = entity.GetServer()) {
+        server->GetAiManager_unprotected().sendEvent(&entity, AiEvent::TookDamage);
+
+        if (health <= maxHealth / 5 && health > 0) {
+            server->GetAiManager_unprotected().sendEvent(&entity, AiEvent::LowHealth);
+        }
     }
 }
 void EntityHealthComponent::SetHealth(const int newHealth) {
@@ -490,7 +512,15 @@ void EventBindings::InitializeBindings() {
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::MOVE, [](IEntity* entity, const EntityEvent *e) {
         const auto data =  dynamic_cast<const Event_Move*>(e);
-        entity->GetLogicComponent()->Move(data->GetDeltaTime(), data->dX, data->dY, *entity->GetCollisionComponent(), entity->GetServer());
+        auto targetDX{data->dX};
+        auto targetDY{data->dY};
+        const auto distance = std::sqrt(data->dX * data->dX + data->dY * data->dY);
+        if (distance > 0.0f) {
+            targetDX /= distance;
+            targetDY /= distance;
+        } // Normalizace vektoru
+        if (!entity->GetLogicComponent()->Move(data->GetDeltaTime(), targetDX, targetDY, *entity->GetCollisionComponent(), entity->GetServer()))
+            entity->GetServer()->GetAiManager_unprotected().sendEvent(entity, AiEvent::MovementStuck);
 
     });
     instance->bindings.insert_or_assign(EntityEvent::Type::MOVE_TO, [](IEntity* entity, const EntityEvent *e) {
@@ -531,7 +561,7 @@ void EventBindings::InitializeBindings() {
             logicComponent->QueueUpEvent(Event_Death::Create());
             return;
         };
-        entity->GetServer()->removeEntity_unprotected(entity->GetId());
+        entity->GetServer()->RemoveEntity_unprotected(entity->GetId());
     });
 
 }

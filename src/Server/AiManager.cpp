@@ -12,29 +12,42 @@ void AiStateMachine::setState(const AiState state) {
 
 AiState AiStateMachine::getState() const { return currentState; }
 
-void AiStateMachine::registerState(const AiState state, const StateHandler &onUpdate) {
-    stateHandlers.at(state) = onUpdate;
-}
 
 void AiStateMachine::registerTransition(const AiState from, const AiEvent event, const AiState to) {
-    transitions.at(from).at(event) = to;
+    transitions[from][event] = to;
 }
 
 void AiStateMachine::handleEvent(const AiEvent event) {
     if (const auto& stateTransitions{transitions[currentState]}; stateTransitions.contains(event)) {
         currentState = stateTransitions.at(event);
+        stateChanged = true;
     }
 }
 
-void AiStateMachine::update(IEntity* entity, const float deltaTime) const {
+
+void AiStateMachine::registerState(const AiState state, const StateHandler& onEnter, const StateHandler& onUpdate) {
+    stateEnterHandlers[state] = onEnter;
+    stateHandlers[state] = onUpdate;
+}
+
+void AiStateMachine::update(IEntity* entity, const float deltaTime) {
+    if (stateChanged || currentState != previousState) {
+        if (stateEnterHandlers.contains(currentState)) {
+            stateEnterHandlers.at(currentState)(entity, deltaTime);
+        }
+        previousState = currentState;
+        stateChanged = false;
+    }
+
     if (stateHandlers.contains(currentState)) {
         stateHandlers.at(currentState)(entity, deltaTime);
     }
 }
 
+
 // AiManager
 void AiManager::registerEntity(IEntity* entity) {
-    entityStates.at(entity) = std::make_unique<AiStateMachine>();
+    entityStates.insert_or_assign(entity,std::make_unique<AiStateMachine>());
 }
 
 void AiManager::unregisterEntity(IEntity* entity) {

@@ -78,8 +78,8 @@ void WorldRender::GenerateWorldTexture() const {
 
     for (int x = 0; x < MAPSIZE; x++) {
         for (int y = 0; y < MAPSIZE; y++) {
-            int tileType = window.server->getMapValue(x,y, WorldData::BIOME_MAP);
-            int variation = window.server->getMapValue(x,y, WorldData::BLOCK_VARIATION_MAP);
+            int tileType = window.server->GetMapValue(x,y, WorldData::BIOME_MAP);
+            int variation = window.server->GetMapValue(x,y, WorldData::BLOCK_VARIATION_MAP);
 
             SDL_Rect destRect;
             destRect.x = x * TEXTURERES;

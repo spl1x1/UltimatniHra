@@ -57,17 +57,17 @@ StructureHitboxComponent::StructureHitboxComponent(const std::shared_ptr<Server>
 void StructureHitboxComponent::updateCollisionMap(int value, int checkValue) const {
     for (const TrueCoordinates& point : hitboxPoints) {
         if (checkValue != -2) {
-            if (server->getMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != checkValue) {
+            if (server->GetMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != checkValue) {
                 continue; // Skip updating this point if it's already occupied
             }
         }
-        server->setMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP, value);
+        server->SetMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP, value);
     }
 }
 
 bool StructureHitboxComponent::checkCollisionMap() const {
      return std::ranges::any_of(hitboxPoints, [this](const TrueCoordinates& point) {
-        return server->getMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != 0;
+        return server->GetMapValue_unprotected(point.x, point.y, WorldData::COLLISION_MAP) != 0;
     });
 }
 
