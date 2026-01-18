@@ -1,42 +1,40 @@
 //
-// Created by Lukáš Kaplánek on 13.11.2025.
+// Created by Lukáš Kaplánek on 16.01.2026.
 //
 
-#ifndef PLAYER_HPP
-#define PLAYER_HPP
+#ifndef ULTIMATNIHRA_SLIME_H
+#define ULTIMATNIHRA_SLIME_H
 
-#include "../Entities/Entity.h"
-#include "../Sprites/PlayerSprite.hpp"
+#include "Entity.h"
+#include "../Sprites/SlimeSprite.h"
 
-class Player final : public IEntity {
-    EntityRenderingComponent entityRenderingComponent = EntityRenderingComponent(std::make_unique<PlayerSprite>());
+class Slime final: public IEntity {
+    EntityRenderingComponent entityRenderingComponent = EntityRenderingComponent(std::make_unique<SlimeSprite>());
 
     EntityCollisionComponent entityCollisionComponent =
         EntityCollisionComponent(EntityCollisionComponent::HitboxData
         {
-            Coordinates{41, 34}, // TOP_LEFT
-            Coordinates{55, 34}, // TOP_RIGHT
-            Coordinates{55, 60}, // BOTTOM_RIGHT
-            Coordinates{41, 60} // BOTTOM_LEFT
+            Coordinates{22, 24}, // TOP_LEFT
+            Coordinates{41, 24}, // TOP_RIGHT
+            Coordinates{41, 41}, // BOTTOM_RIGHT
+            Coordinates{22, 41} // BOTTOM_LEFT
         });
-    EntityHealthComponent entityHealthComponent = EntityHealthComponent(100, 100);
+    EntityHealthComponent entityHealthComponent = EntityHealthComponent(20, 20);
 
     EntityLogicComponent entityLogicComponent = EntityLogicComponent();
     EntityInventoryComponent entityInventoryComponent = EntityInventoryComponent();
 
     Server* server;
     int id{};
-    int reach{32}; //Player reach in pixels
+    int reach{40}; //Entity reach in pixels
+    float detectionRange{500.0f}; //Detection range in pixels
+    float attackRange{40.0f}; //Attack range in pixels
     bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes)
 
 public:
     //Interface methods implementation
     void Tick() override;
     RenderingContext GetRenderingContext() override;
-
-    static void Create(Server* server, int slotId) ;
-    static void Load(Server* server, int slotId);
-    static void Save(Server* server);
 
     //Setters
     void SetId(int newId) override;
@@ -62,8 +60,8 @@ public:
     [[nodiscard]] int GetId() const override;
     [[nodiscard]] int GetReach() const override;
     [[nodiscard]] float GetSpeed() const override;
-    [[nodiscard]] float GetDetectionRange() const override;;
-    [[nodiscard]] float GetAttackRange() const override;;
+    [[nodiscard]] float GetDetectionRange() const override;
+    [[nodiscard]] float GetAttackRange() const override;
     [[nodiscard]] EntityType GetType() const override;
 
     EntityCollisionComponent* GetCollisionComponent() override;
@@ -79,7 +77,7 @@ public:
     //Get server pointer
     [[nodiscard]] Server* GetServer() const override;
 
-    Player(Server* server, const Coordinates& coordinates);
+    Slime(Server* server, const Coordinates& coordinates);
 };
 
-#endif //PLAYER_HPP
+#endif //ULTIMATNIHRA_SLIME_H

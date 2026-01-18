@@ -4,8 +4,8 @@
 
 #ifndef ENTITYEVENT_H
 #define ENTITYEVENT_H
-#include <memory>
 
+#include <memory>
 #include "../Application/dataStructures.h"
 
 //Abstract event class for entity events
@@ -37,7 +37,8 @@ public:
         CLICK_ATTACK,
         //interupts type of event sent right after
         INTERRUPT_SPECIFIC,
-        SET_ANGLE
+        SET_ANGLE,
+        DEATH
     };
 protected:
     Type type{Type::NONE};
@@ -71,6 +72,8 @@ public:
     explicit Event_MoveTo(float targetX, float targetY);
     [[nodiscard]] bool validate() const override;
     [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(float targetX, float targetY);
+    [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(Coordinates targetCoordinates);
+
 };
 
 class Event_ChangeCollision final : public EntityEvent {
@@ -149,9 +152,10 @@ public:
     [[nodiscard]]  static std::unique_ptr<EntityEvent> Create(int angle);
 };
 
-
-
-
-
+class Event_Death final : public EntityEvent {
+public:
+    explicit Event_Death();
+    [[nodiscard]]  static std::unique_ptr<EntityEvent> Create();
+};
 
 #endif //ENTITYEVENT_H

@@ -94,24 +94,24 @@ void UIComponent::setDocDirectory(const std::string& directory) {
     docDirectory = directory;
 }
 
-void UIComponent::setMenuData(const MenuData& menuData) {
-    this->menuData = menuData;
+void UIComponent::setMenuData(const MenuData& MenuData) {
+    this->menuData = MenuData;
 }
 
-void UIComponent::setFontDirectory(const std::string& fontDirectory) {
-    this->fontDirectory = fontDirectory;
+void UIComponent::setFontDirectory(const std::string& FontDirectory) {
+    this->fontDirectory = FontDirectory;
 }
 
 InventoryController* UIComponent::getInventoryController() const {
     return inventoryController.get();
 }
 
-void UIComponent::LoadDocumentsFromDirectory(const std::string& docDirectory) {
-        if (docDirectory.empty()) {
+void UIComponent::LoadDocumentsFromDirectory(const std::string& DocDirectory) {
+        if (DocDirectory.empty()) {
             SDL_Log("Document directory is empty.");
             return;
         }
-    for (const auto& entry : std::filesystem::directory_iterator(docDirectory)) {
+    for (const auto& entry : std::filesystem::directory_iterator(DocDirectory)) {
         if (entry.is_directory()) continue;
         if (entry.path().extension() != ".rml") continue;
         LoadDocument(entry.path().string());
@@ -352,18 +352,18 @@ void UIComponent::applyUiScaling(const int scale) {
     windowClass->data.scale = static_cast<float>(scale);
 }
 
-void UIComponent::RegisterButtonBindings(Window* window) {
+void UIComponent::RegisterButtonBindings(Window* Window) {
     if (!documents.contains("main_menu")) {
         SDL_Log("No documents loaded to register button bindings.");
         return;
     }
 
     if (Rml::Element* playButton = documents.at("main_menu")->GetElementById("play_button"))
-        playButton->AddEventListener("click", new PlayButtonListener(window, this));
+        playButton->AddEventListener("click", new PlayButtonListener(Window, this));
     if (Rml::Element* optionsButton = documents.at("main_menu")->GetElementById("options_button"))
-        optionsButton->AddEventListener("click", new OptionsButtonListener(window, this));
+        optionsButton->AddEventListener("click", new OptionsButtonListener(Window, this));
     if (Rml::Element* quitButton = documents.at("main_menu")->GetElementById("quit_button"))
-        quitButton->AddEventListener("click", new QuitButtonListener(window, this));
+        quitButton->AddEventListener("click", new QuitButtonListener(Window, this));
 
     if (!documents.contains("pause_menu")) {
         SDL_Log("No documents loaded to register button bindings.");
@@ -371,12 +371,12 @@ void UIComponent::RegisterButtonBindings(Window* window) {
     }
 
     if (Rml::Element* resumeButton = documents.at("pause_menu")->GetElementById("resume_button"))
-        resumeButton->AddEventListener(Rml::EventId::Click, new ResumeButtonListener(window,this));
+        resumeButton->AddEventListener(Rml::EventId::Click, new ResumeButtonListener(Window,this));
     if (Rml::Element* settingsButton = documents.at("pause_menu")->GetElementById("settings_button"))
-        settingsButton->AddEventListener(Rml::EventId::Click, new PauseSettingsButtonListener(window,this));
+        settingsButton->AddEventListener(Rml::EventId::Click, new PauseSettingsButtonListener(Window,this));
     if (Rml::Element* mainMenuButton = documents.at("pause_menu")->GetElementById("main_menu_button"))
-        mainMenuButton->AddEventListener(Rml::EventId::Click, new MainMenuButtonListener(window,this));
+        mainMenuButton->AddEventListener(Rml::EventId::Click, new MainMenuButtonListener(Window,this));
     if (Rml::Element* quitGameButton = documents.at("pause_menu")->GetElementById("quit_game_button"))
-        quitGameButton->AddEventListener(Rml::EventId::Click, new QuitGameButtonListener(window,this));
+        quitGameButton->AddEventListener(Rml::EventId::Click, new QuitGameButtonListener(Window,this));
 
 }

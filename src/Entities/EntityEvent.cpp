@@ -54,6 +54,10 @@ std::unique_ptr<EntityEvent> Event_MoveTo::Create(float targetX, float targetY) 
     return std::make_unique<Event_MoveTo>(targetX, targetY);
 }
 
+std::unique_ptr<EntityEvent> Event_MoveTo::Create(Coordinates targetCoordinates) {
+    return std::make_unique<Event_MoveTo>(targetCoordinates.x, targetCoordinates.y);
+}
+
 Event_ChangeCollision::Event_ChangeCollision() {
     this->type = Type::CHANGE_COLLISION;
 }
@@ -168,5 +172,13 @@ bool Event_SetAngle::validate() const {
 }
 std::unique_ptr<EntityEvent> Event_SetAngle::Create(int angle) {
     return std::make_unique<Event_SetAngle>(angle);
+}
+
+Event_Death::Event_Death() {
+    this->type = Type::DEATH;
+}
+
+std::unique_ptr<EntityEvent> Event_Death::Create() {
+    return std::make_unique<Event_Death>();
 }
 

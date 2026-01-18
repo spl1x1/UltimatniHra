@@ -78,7 +78,7 @@ bool SaveManager::saveGame(int slotId, Server* server) {
     save.lastModified = std::time(nullptr);
 
     // Get player
-    IEntity* playerEntity = server->getPlayer();
+    IEntity* playerEntity = server->GetPlayer();
     if (!playerEntity) {
         return false;
     }
@@ -99,8 +99,8 @@ bool SaveManager::saveGame(int slotId, Server* server) {
     save.playerData.maxHealth = player->GetHealthComponent()->GetMaxHealth();
 
     // Save world data
-    save.worldData.seed = server->getSeed();
-    Coordinates spawnPoint = server->getSpawnPoint();
+    save.worldData.seed = server->GetSeed();
+    Coordinates spawnPoint = server->GetSpawnPoint();
     save.worldData.spawnX = spawnPoint.x;
     save.worldData.spawnY = spawnPoint.y;
 
@@ -124,7 +124,7 @@ bool SaveManager::loadGame(int slotId, Server* server) {
     SaveGame& save = saveSlots[slotId];
 
     // Get player
-    IEntity* playerEntity = server->getPlayer();
+    IEntity* playerEntity = server->GetPlayer();
     if (!playerEntity) {
         return false;
     }

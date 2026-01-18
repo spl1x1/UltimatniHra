@@ -1,14 +1,13 @@
 //
-// Created by Lukáš Kaplánek on 03.11.2025.
+// Created by Lukáš Kaplánek on 16.01.2026.
 //
 
-#ifndef PLAYERSPRITE_H
-#define PLAYERSPRITE_H
-
+#ifndef ULTIMATNIHRA_SLIMESPRITE_H
+#define ULTIMATNIHRA_SLIMESPRITE_H
 #include "Sprite.hpp"
 
-class PlayerSprite final : public ISprite {
-    SpriteRenderingContext renderingContext = SpriteRenderingContext("player",0.1f, 96, 96, Direction::DOWN, AnimationType::IDLE);
+class SlimeSprite final : public ISprite{
+    SpriteRenderingContext renderingContext = SpriteRenderingContext("Slime1",0.2f, 64, 64, Direction::DOWN, AnimationType::IDLE);
 public:
     //Interface Methods
     void Tick(float deltaTime) override;
@@ -17,7 +16,7 @@ public:
 
     //Setters
     void PlayAnimation(AnimationType newAnimation, Direction direction, bool ForceReset) override;
-    void SetVariant(int newVariant) override {}
+    void SetVariant(int newVariant) override {};
     void SetCurrentFrame(int newCurrentFrame) override{};
 
     //Getters
@@ -28,6 +27,4 @@ public:
     SpriteRenderingContext* GetSpriteRenderingContext() override;
 };
 
-
-
-#endif //PLAYERSPRITE_H
+#endif //ULTIMATNIHRA_SLIME_H

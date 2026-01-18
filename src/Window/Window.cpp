@@ -10,6 +10,7 @@
 #include <SDL3_image/SDL_image.h>
 #include <utility>
 #include <cmath>
+
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Entities/Player.hpp"
@@ -57,13 +58,13 @@ void Window::loadConfig() {
 void Window::handleMouseInputs() {
     auto sendLeftClickInput = [&]() {
         const Coordinates point{data.mouseData.x+16,data.mouseData.y+16}; //Center of the tile
-        server->playerUpdate(Event_SetAngle::Create(Server::calculateAngle(server->getPlayer()->GetEntityCenter(), point)));
+        server->PlayerUpdate(Event_SetAngle::Create(Server::CalculateAngle(server->GetPlayer()->GetEntityCenter(), point)));
 
         if (data.mouseData.currentLeftHoldTime > 0.5f) {
-            server->playerUpdate(Event_ClickAttack::Create(2,10,point));
+            server->PlayerUpdate(Event_ClickAttack::Create(2,10,point));
             return;
         }
-        server->playerUpdate(Event_ClickAttack::Create(1,10,point));
+        server->PlayerUpdate(Event_ClickAttack::Create(1,10,point));
     };
 
     auto sendRightClickInput = [&]() {
@@ -71,11 +72,11 @@ void Window::handleMouseInputs() {
             SDL_Log("Right Click Hold Input");
             return;
         }
-        server->playerUpdate(Event_ClickMove::Create(data.mouseData.x +16, data.mouseData.y +16));
+        server->PlayerUpdate(Event_ClickMove::Create(data.mouseData.x +16, data.mouseData.y +16));
     };
 
 
-    const auto deltaTime{server->getDeltaTime()};
+    const auto deltaTime{server->GetDeltaTime()};
     if (!data.drawMousePreview) return;
     const SDL_MouseButtonFlags mouseStates = SDL_GetMouseState(nullptr, nullptr);
 
@@ -126,8 +127,8 @@ void Window::handlePlayerInput() const {
     }
     if (dx == 0.0f && dy == 0.0f) return;
 
-    server->playerUpdate(Event_Move::Create(dx, dy));
-    server->playerUpdate(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO));
+    server->PlayerUpdate(Event_Move::Create(dx, dy));
+    server->PlayerUpdate(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO));
 }
 
 void Window::renderAt(const RenderingContext& context) const {
@@ -197,13 +198,13 @@ void Window::renderHud() {
         cursor.textureName = "cursor";
         renderAt(cursor);
 
-        const auto tileInfo{server->getTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
+        const auto tileInfo{server->GetTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
         for (int i{0}; i < static_cast<int>(tileInfo.size()); ++i) {
             drawTextAt(tileInfo.at(i), {data.mouseData.x, data.mouseData.y + 32.0f + static_cast<float>(i)*16.0f}, SDL_Color{255,255,255,255});
         }
     }
 
-    const auto playerHealth = server->getPlayer()->GetHealthComponent()->GetHealth();
+    const auto playerHealth = server->GetPlayer()->GetHealthComponent()->GetHealth();
 
     SDL_FRect rect;
     rect.x = 10.0f;
@@ -215,7 +216,7 @@ void Window::renderHud() {
     rect.w = 16.0f;
     rect.h = 16.0f;
 
-    data.healthFrameTime += server->getDeltaTime();
+    data.healthFrameTime += server->GetDeltaTime();
     if (playerHealth != data.lastHealth) {
         data.healthHurtState = true;
         data.healthFrameTime = 0.0f;
@@ -242,8 +243,9 @@ void Window::renderHud() {
 void Window::advanceFrame() {
 #ifdef DEBUG
     auto AttackPoints = [this]()->std::vector<PointData> {
-        const auto damageAreas = server->getDamagePoints();
+        const auto damageAreas = server->GetDamagePoints();
         std::vector<PointData> points;
+        points.reserve(damageAreas.size());
         for (const auto& area : damageAreas) {
             points.push_back(PointData{
                 .position = area.coordinates,
@@ -259,14 +261,14 @@ void Window::advanceFrame() {
 
     const Uint64 current = SDL_GetPerformanceCounter();
     const float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
-    server->setDeltaTime(deltaTime);
+    server->SetDeltaTime(deltaTime);
     server->Tick();
     WaterSprite::Tick(deltaTime);
     data.last = current;
 
     textures.at("FinalTexture");
     SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
-    Coordinates coords = server->getPlayer()->GetCoordinates();
+    Coordinates coords = server->GetPlayer()->GetCoordinates();
 
     data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
     data.cameraWaterRect->y += static_cast<float>(std::lround(coords.y - (data.cameraRect->y + cameraOffsetY)));
@@ -283,31 +285,43 @@ void Window::advanceFrame() {
     const auto texture = std::get<0>(WaterSprite::getInstance(0)->getFrame());
     SDL_RenderTexture(data.Renderer, textures.at(texture), data.cameraWaterRect.get(), nullptr);
     SDL_RenderTexture(data.Renderer, textures.at("WorldMap"), data.cameraRect.get(), nullptr);
-    renderAt(server->getPlayer()->GetRenderingContext());
 
 #ifdef DEBUG
-    if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->getPlayer()->GetHitboxRenderingContext());
+    if (data.uiComponent->getMenuData().debugOverlay) drawHitbox(server->GetPlayer()->GetHitboxRenderingContext());
     if (data.lastCollisionState != data.collisionState) {
-        server->playerUpdate(Event_ChangeCollision::Create());
+        server->PlayerUpdate(Event_ChangeCollision::Create());
         data.lastCollisionState = data.collisionState;
         SDL_Log("Collision state changed: %s", data.collisionState ? "ON" : "OFF");
     }
     data.playerX = static_cast<int>(std::floor(coords.x));
     data.playerY = static_cast<int>(std::floor(coords.y));
-    data.playerAngle = server->getPlayer()->GetLogicComponent()->GetAngle();
+    data.playerAngle = server->GetPlayer()->GetLogicComponent()->GetAngle();
     dataModel.DirtyAllVariables();
 #endif
 
-    const auto structures = server->getStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH});
-    for (const auto& structure : structures) {
-        IStructure *struc = server->getStructure(structure);
+#ifdef DEBUG
+    if (data.uiComponent->getMenuData().debugOverlay) drawPointsAt(AttackPoints());
+#endif
+
+    for (const auto entities{server->GetEntities()}; const auto &entity: entities | std::views::values) {
+        if (!entity) continue;
+        renderAt(entity->GetRenderingContext());
+#ifdef DEBUG
+        if (data.uiComponent->getMenuData().debugOverlay) {
+            drawHitbox(entity->GetHitboxRenderingContext());
+            drawPointsAt(AttackPoints());
+        };
+#endif
+
+    }
+    for (const auto structures{server->GetStructuresInArea({data.cameraRect->x, data.cameraRect->y},{ data.cameraRect->x + GAMERESW, data.cameraRect->y + GAMERESH})}; const auto& structure : structures) {
+        IStructure *struc = server->GetStructure(structure);
         if (!struc) continue;
         renderAt(struc->GetRenderingContext());
-        struc->Tick(server->getDeltaTime());
+        struc->Tick(server->GetDeltaTime());
 #ifdef DEBUG
         if (data.uiComponent->getMenuData().debugOverlay) {
             drawHitbox(struc->GetHitboxContext());
-            drawPointsAt(AttackPoints());
         };
 #endif
     }
@@ -543,7 +557,7 @@ void Window::initGame() {
     WaterSprite::Init();
     EventBindings::InitializeBindings();
     SpriteAnimationBinding::Init();
-    Coordinates coordinates = server->getEntityPos(0);
+    Coordinates coordinates = server->GetEntityPos(0);
 
     data.cameraRect->x = coordinates.x - cameraOffsetX;
     data.cameraRect->y = coordinates.y * cameraOffsetY;
@@ -551,10 +565,10 @@ void Window::initGame() {
     data.cameraWaterRect->x = 64;
     data.cameraWaterRect->y = 64;
 
-    server->generateWorld();
-    WorldRender wr(*this);
+    server->GenerateWorld();
+    const WorldRender wr(*this);
     wr.GenerateTextures();
-    server->generateStructures();
+    server->GenerateStructures();
 
     textures.insert_or_assign("FinalTexture", SDL_CreateTexture(data.Renderer,
                                                     SDL_PIXELFORMAT_RGBA8888,

@@ -24,7 +24,8 @@ class EventBindings;
 
 enum class EntityType {
     PLAYER,
-    SLIME
+    SLIME,
+    UNKNOWN
 };
 
 class EntityRenderingComponent {
@@ -38,6 +39,7 @@ public:
     void Tick(float deltaTime) const;
     [[nodiscard]] Coordinates CalculateCenterOffset(IEntity& entity); //Returns offset to center sprite based on its dimensions and hitbox
     static std::string TypeToString(EntityType type);
+    static EntityType StringToType(const std::string& type);
 
     //Setters
     void PlayAnimation(AnimationType animation, Direction direction, int variant, bool ForceReset = false) const;
@@ -46,6 +48,7 @@ public:
     static Direction GetDirectionBaseOnAngle(int angle) ;
     [[nodiscard]] RenderingContext GetRenderingContext() const;
     [[nodiscard]] std::tuple<float,int> GetFrameTimeAndCount() const;
+    ISprite* GetSprite() const;
 
     //Constructor
     explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite);
@@ -70,7 +73,8 @@ public:
 
     //Check collision with structures, entities can collide with each other
     bool CheckCollision(float newX, float newY, const Server* server);
-    [[nodiscard]] bool CheckCollisionAt(float newX, float newY, const Server* server) const;
+    static bool CheckCollisionAt(float newX, float newY, IEntity& entity);
+    static bool CheckCollisionAtTile(int tileX, int tileY, IEntity& entity);
     [[nodiscard]] bool CheckPoint(Coordinates coordinates, IEntity& entity) const;
 
     //Setters
@@ -89,23 +93,29 @@ public:
 
 class EntityLogicComponent {
     friend class EventBindings;
-    static constexpr float threshold = 1.0f; //Threshold to consider reached target
     Coordinates coordinates{0.0f, 0.0f};
+    Coordinates lastMoveDirection{0.0f, 0.0f};
     std::vector<std::unique_ptr<EntityEvent>> events{};
     std::vector<std::unique_ptr<EntityEvent>> queueUpEvents{}; //Events to be processed in next tick, usually result of scripts or other events
     std::set<EntityEvent::Type> interruptedEvents{};
 
+    Coordinates lastCoordinates{0.0f, 0.0f};
+
     int angle{0};
     float speed{0};
+
     bool interrupted{false};
-    float lockTime{0};
-    float currentTime{0};
+    bool lock{false};
+
 
     void SetAngleBasedOnMovement(float dX, float dY); //Sets angle based on movement direction
 
 public:
+    static constexpr float threshold = 5.0f; //Threshold to consider reached target
+
     void SetCoordinates(const Coordinates &newCoordinates);
     [[nodiscard]] Coordinates GetCoordinates() const;
+    [[nodiscard]] Coordinates GetLastMoveDirection() const;
 
     void SetAngle(int newAngle);
     [[nodiscard]] int GetAngle() const;
@@ -113,14 +123,21 @@ public:
     void SetSpeed(float newSpeed);
     [[nodiscard]] float GetSpeed() const;
 
-    bool IsInterrupted() const;
+    void SetLock();
+
+    void SetInterrupted(bool newInterrupted);
+
+    [[nodiscard]] bool IsInterrupted() const;
 
     //Methods
     bool Move(float deltaTime, float dX, float dY, EntityCollisionComponent &collisionComponent, const Server* server);
-    void MoveTo(float deltaTime, float targetX, float targetY,IEntity* entity);
-    void PerformAttack(IEntity* entity, int attackType, int damage);
+    void MoveTo(float deltaTime, Coordinates targetCoordinates,IEntity* entity);
+    void PerformAttack(IEntity* entity, int attackType, int damage) const;
     void Tick(const Server* server, IEntity &entity); //Process tasks when not already in progress else continue
-    void AddEvent(std::unique_ptr<EntityEvent> eventData);
+    void AddEvent(std::unique_ptr<EntityEvent> eventData, bool priority = false); //Add event to be processed
+    void QueueUpEvent(std::unique_ptr<EntityEvent> eventData, bool priority = false); //Queue up event for next tick
+
+    [[nodiscard]] bool isInInterrupts(int eventIndex) const;
 
     //Constructor
     explicit EntityLogicComponent() = default;
@@ -132,7 +149,7 @@ class EntityHealthComponent {
     int maxHealth{0};
 public:
     //Methods
-    void TakeDamage(int damage);
+    void TakeDamage(int damage, IEntity& entity);
     void Heal(int amount);
 
     //Setters
@@ -191,6 +208,9 @@ public:
     [[nodiscard]] virtual HitboxContext GetHitboxRenderingContext() const = 0;
     [[nodiscard]] virtual int GetId() const = 0;
     [[nodiscard]] virtual int GetReach() const = 0;
+    [[nodiscard]] virtual float GetSpeed() const = 0;
+    [[nodiscard]] virtual float GetDetectionRange() const = 0;
+    [[nodiscard]] virtual float GetAttackRange() const = 0;
     [[nodiscard]] virtual EntityType GetType() const = 0;
 
 

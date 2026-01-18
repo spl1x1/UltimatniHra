@@ -11,20 +11,21 @@
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
+#include "../../include/Entities/Slime.h"
 #include "../../include/Structures/OreNode.h"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Structures/Tree.h"
 #include "../../include/Window/WorldStructs.h"
 #include "../../include/Structures/OreDeposit.h"
 
-void Server::setEntityPos(int entityId, Coordinates newCoordinates) {
+void Server::SetEntityPos(int entityId, Coordinates newCoordinates) {
     std::lock_guard lock(serverMutex);
     if (entities.contains(entityId)) {
         entities[entityId]->GetCoordinates() = newCoordinates;
     }
 }
 
-void Server::setEntityCollision(int entityId, bool disable) {
+void Server::SetEntityCollision(int entityId, bool disable) {
     std::lock_guard lock(serverMutex);
     if (entities.contains(entityId)) {
         entities[entityId]->SetEntityCollision(disable);
@@ -32,7 +33,7 @@ void Server::setEntityCollision(int entityId, bool disable) {
 }
 
 
-bool Server::isEntityColliding(int entityId) {
+bool Server::IsEntityColliding(int entityId) {
     std::shared_lock lock(serverMutex);
     if (entities.contains(entityId)) {
         return entities[entityId]->GetCollisionStatus().colliding;
@@ -44,71 +45,173 @@ int Server::getNextEntityId() {return nextEntityId++;}
 
 int Server::getNextStructureId() {
     if (!reclaimedStructureIds.empty()) {
-        int id = reclaimedStructureIds.back();
+        const int id = reclaimedStructureIds.back();
         reclaimedStructureIds.pop_back();
         return id;
     }
     return ++nextStructureId;
 }
 
+void Server::setupSlimeAi(IEntity* entity) {
+    aiManager.registerEntity(entity);
+    auto* sm = aiManager.getStateMachine(entity);
 
-void Server::setDeltaTime(float dt) {
+    // Registrace handlerů pro stavy
+    sm->registerState(AiState::Idle,
+        [](IEntity* entity, float dt) {
+            SDL_Log("Slime %d: Idling", entity->GetId());
+        },
+        [](IEntity* entity, float dt) {}
+    );
+
+    sm->registerState(AiState::Patrol,
+        [](IEntity* entity, float dt) {
+            SDL_Log("Slime %d: Patrolling", entity->GetId());
+            std::mt19937 mt(static_cast<unsigned int>(SDL_GetTicks()));
+            std::uniform_int_distribution dist(1,entity->GetReach());
+            entity->GetLogicComponent()->AddEvent(Event_MoveTo::Create(
+            entity->GetCoordinates().x + dist(mt),
+            entity->GetCoordinates().y + dist(mt)
+        ));
+    },
+    [](IEntity* entity, float dt) {});
+
+    sm->registerState(AiState::Chase,
+        // onEnter - zavolá se jednou při vstupu do stavu
+        [](IEntity* entity, float dt) {
+            SDL_Log("Slime %d: Entering Chase state", entity->GetId());
+        },
+        // onUpdate - zavolá se každý frame (prázdný pro Chase)
+        [](IEntity* entity, float dt) {
+            if (const auto localPlayer{entity->GetServer()->localPlayer}) {
+            const auto dx{localPlayer->GetEntityCenter().x - entity->GetEntityCenter().x};
+            const auto dy {localPlayer->GetEntityCenter().y - entity->GetEntityCenter().y};
+            entity->GetLogicComponent()->AddEvent(Event_Move::Create(dx,dy));
+}
+        }
+    );
+
+
+    sm->registerState(AiState::Attack,
+        [](IEntity* entity, float dt) {
+            SDL_Log("Slime %d: Attacking player", entity->GetId());
+        },
+        [](IEntity* entity, float dt) {
+            entity->GetLogicComponent()->SetAngle(
+            CalculateAngle(entity->GetEntityCenter(), entity->GetServer()->GetPlayer_unprotected()->GetEntityCenter()));
+            entity->GetLogicComponent()->PerformAttack(entity, 0, 10);
+        }
+    );
+
+    sm->registerState(AiState::GetUnstuck,
+        [](IEntity* entity, float dt) {
+            SDL_Log("Slime %d: Attempting to get unstuck", entity->GetId());
+            const auto [x, y]{entity->GetServer()->GetPlayer_unprotected()->GetEntityCenter()};
+            entity->GetLogicComponent()->AddEvent(Event_MoveTo::Create(x,y));
+        },
+        [](IEntity* entity, float dt) {
+            // Po pokusu o odblokování se vrať zpět do Chase stavu
+            const auto logicComp{entity->GetLogicComponent()};
+            const auto distance = CoordinatesDistance(logicComp->GetCoordinates(),logicComp->GetLastMoveDirection());
+            if (std::abs(distance) <  EntityLogicComponent::threshold) {
+                entity->GetServer()->aiManager.sendEvent(entity, AiEvent::ReachedDestination);
+                entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO),true);
+            }
+        }
+    );
+
+    // Registrace přechodů
+    sm->registerTransition(AiState::Idle, AiEvent::PlayerSpotted, AiState::Chase);
+    sm->registerTransition(AiState::Chase, AiEvent::TargetInRange, AiState::Attack);
+    sm->registerTransition(AiState::Chase, AiEvent::PlayerLost, AiState::Idle);
+    sm->registerTransition(AiState::Attack, AiEvent::TargetOutOfRange, AiState::Chase);
+
+    sm->registerTransition(AiState::Idle, AiEvent::TookDamage, AiState::Chase);
+    sm->registerTransition(AiState::Patrol, AiEvent::TookDamage, AiState::Chase);
+
+    sm->registerTransition(AiState::Chase, AiEvent::MovementStuck, AiState::GetUnstuck);
+    sm->registerTransition(AiState::GetUnstuck, AiEvent::ReachedDestination, AiState::Chase);
+    sm->registerTransition(AiState::GetUnstuck, AiEvent::TargetInRange, AiState::Attack);
+
+    sm->registerTransition(AiState::Patrol, AiEvent::ReachedDestination, AiState::Patrol);
+}
+
+
+void Server::SetDeltaTime(float dt) {
     std::lock_guard lock(serverMutex);
     deltaTime = dt;
 }
 
-float Server::getDeltaTime(){
+float Server::GetDeltaTime(){
     std::shared_lock lock(serverMutex);
     return deltaTime;
 }
-float Server::getDeltaTime_unprotected() const{
+float Server::GetDeltaTime_unprotected() const{
     return deltaTime;
 }
 
-int Server::getMapValue(int x, int y, WorldData::MapType mapType) {
+int Server::GetMapValue(int x, int y, WorldData::MapType mapType) {
+    if (x < 0 || y < 0 || x >= MAPSIZE || y >= MAPSIZE) {
+        return -1; // Out of bounds
+    }
     std::shared_lock lock(serverMutex);
     return worldData.getMapValue(x,y, mapType);
 }
 
-void Server::setMapValue(int x, int y, WorldData::MapType mapType, int value) {
+int Server::GetMapValue_unprotected(int x, int y, WorldData::MapType mapType) const {
+    if (x < 0 || y < 0 || x >= MAPSIZE || y >= MAPSIZE) {
+        return -1; // Out of bounds
+    }
+    return worldData.getMapValue(x,y, mapType);
+}
+
+
+void Server::SetMapValue(int x, int y, WorldData::MapType mapType, int value) {
     std::lock_guard lock(serverMutex);
     worldData.updateMapValue(x,y, mapType, value);
 }
 
-void Server::setMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) const {
+void Server::SetMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) const {
     worldData.updateMapValue(x,y, mapType, value);
 }
 
-void Server::addLocalPlayer(const std::shared_ptr<Player>& player) {
+void Server::AddLocalPlayer(const std::shared_ptr<Player>& player) {
     std::lock_guard lock(serverMutex);
     localPlayer = player;
     entities[0] = player;
     player->SetId(0); //Local player always has ID 0
 }
 
-void Server::addEntity(const std::shared_ptr<IEntity>& entity) {
+void Server::AddEntity_unprotected(const std::shared_ptr<IEntity>& entity) {
+    const int newId = getNextEntityId();
+    entities.insert_or_assign(newId, entity);
+    entity->SetId(newId);
+}
+
+void Server::AddEntity(const std::shared_ptr<IEntity>& entity) {
     std::lock_guard lock(serverMutex);
     const int newId = getNextEntityId();
-    entities[newId] = entity;
+    entities.insert_or_assign(newId, entity);
+    entity->SetId(newId);
 }
 
 
-void Server::addStructure(Coordinates coordinates, structureType type, int innerType, int variant) {
+void Server::AddStructure(Coordinates coordinates, structureType type, int innerType, int variant) {
     std::lock_guard lock(serverMutex);
     int newId = getNextStructureId();
 
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
         case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr(), static_cast<Tree::TreeVariant>(innerType));
+            newStructure = std::make_shared<Tree>(newId, coordinates, GetSharedPtr(), static_cast<Tree::TreeVariant>(innerType));
             break;
         }
         case structureType::ORE_NODE: {
-            newStructure = std::make_shared<OreNode>(newId, coordinates, getSharedPtr(), static_cast<OreType>(innerType), variant);
+            newStructure = std::make_shared<OreNode>(newId, coordinates, GetSharedPtr(), static_cast<OreType>(innerType), variant);
             break;
         }
             case structureType::ORE_DEPOSIT: {
-            newStructure = std::make_shared<OreDeposit>(newId, coordinates, getSharedPtr(), static_cast<OreType>(innerType), variant);
+            newStructure = std::make_shared<OreDeposit>(newId, coordinates, GetSharedPtr(), static_cast<OreType>(innerType), variant);
         }
         default:
             break;
@@ -122,21 +225,21 @@ void Server::addStructure(Coordinates coordinates, structureType type, int inner
     structures[newId] =newStructure;
 }
 
-bool Server::addStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant) {
+bool Server::AddStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant) {
     int newId = getNextStructureId();
 
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
         case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, getSharedPtr(), static_cast<Tree::TreeVariant>(innerType));
+            newStructure = std::make_shared<Tree>(newId, coordinates, GetSharedPtr(), static_cast<Tree::TreeVariant>(innerType));
             break;
         }
         case structureType::ORE_NODE: {
-            newStructure = std::make_shared<OreNode>(newId, coordinates, getSharedPtr(), static_cast<OreType>(innerType), variant);
+            newStructure = std::make_shared<OreNode>(newId, coordinates, GetSharedPtr(), static_cast<OreType>(innerType), variant);
             break;
         }
         case structureType::ORE_DEPOSIT: {
-            newStructure = std::make_shared<OreDeposit>(newId, coordinates, getSharedPtr(), static_cast<OreType>(innerType), variant);
+            newStructure = std::make_shared<OreDeposit>(newId, coordinates, GetSharedPtr(), static_cast<OreType>(innerType), variant);
         }
         default:
             break;
@@ -152,7 +255,18 @@ bool Server::addStructure_unprotected(Coordinates coordinates, structureType typ
 }
 
 
-void Server::removeStructure(int structureId) {
+void Server::RemoveEntity(int entityId) {
+    std::lock_guard lock(serverMutex);
+    if (!entities.contains(entityId)) return;
+    entitiesToRemove.emplace_back(entityId);
+}
+
+void Server::RemoveEntity_unprotected(int entityId) {
+    if (!entities.contains(entityId)) return;
+    entitiesToRemove.emplace_back(entityId);
+}
+
+void Server::RemoveStructure(int structureId) {
     std::lock_guard lock(serverMutex);
     if (!structures.contains(structureId)) return;
     structures.erase(structureId);
@@ -160,13 +274,12 @@ void Server::removeStructure(int structureId) {
     cacheValidityData.isCacheValid = false; //Invalidae cache
 }
 
-
-void Server::playerUpdate(std::unique_ptr<EntityEvent> e, int playerId) {
+void Server::PlayerUpdate(std::unique_ptr<EntityEvent> e, int playerId) {
     std::lock_guard lock(serverMutex);
     if (localPlayer) localPlayer->AddEvent(std::move(e));
 }
 
-std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates bottomRight) {
+std::set<int> Server::GetStructuresInArea(Coordinates topLeft, Coordinates bottomRight) {
     std::lock_guard lock(serverMutex);
     if (std::abs(topLeft.x - cacheValidityData.lastPlayerPos.x) >= static_cast<float>(cacheValidityData.rangeForCacheUpdate)
         ||std::abs(topLeft.y - cacheValidityData.lastPlayerPos.y) >= static_cast<float>(cacheValidityData.rangeForCacheUpdate))
@@ -189,14 +302,14 @@ std::set<int> Server::getStructuresInArea(Coordinates topLeft, Coordinates botto
         if (x < 0 || x >= MAPSIZE) continue;
         for (int y = rangeYMin; y <= rangeYMax; y++) {
             if (y < 0 || y >= MAPSIZE) continue;
-            if (int id = getMapValue_unprotected(x, y, WorldData::COLLISION_MAP); id > 0)  StructureIdCache.emplace(id);
+            if (int id = GetMapValue_unprotected(x, y, WorldData::COLLISION_MAP); id > 0)  StructureIdCache.emplace(id);
         }
     }
     cacheValidityData.isCacheValid = true;
     return StructureIdCache;
 }
 
-void Server::applyDamageAt_unprotected(const int damage, const std::vector<Coordinates>& positions, const int entityId) {
+void Server::ApplyDamageAt_unprotected(const int damage, const std::vector<Coordinates>& positions, const int entityId) {
     for (const auto& position : positions) {
         damagePoints.emplace_back(DamageArea{
             .coordinates = position,
@@ -206,14 +319,14 @@ void Server::applyDamageAt_unprotected(const int damage, const std::vector<Coord
     }
 }
 
-int Server::calculateAngle(Coordinates center, Coordinates point) {
+int Server::CalculateAngle(Coordinates center, Coordinates point) {
         auto angle = static_cast<int>(std::atan2(point.x - center.x,
                                                  point.y - center.y) * 180.0f / M_PI);
         if (angle < 0) angle += 360;
         return angle;
 }
 
-std::vector<std::string> Server::getTileInfo(const float x, const float y) {
+std::vector<std::string> Server::GetTileInfo(const float x, const float y) {
     std::shared_lock lock(serverMutex);
     const int tileX{static_cast<int>(std::floor(x / 32.0f))};
     const int tileY{static_cast<int>(std::floor(y / 32.0f))};
@@ -221,7 +334,7 @@ std::vector<std::string> Server::getTileInfo(const float x, const float y) {
 
      std::vector<std::string> text;
 
-    for (const auto& [id, entity] : entities) {
+    for (const auto &entity: entities | std::views::values) {
         const auto entityPos{entity->GetEntityCenter()};
         const int entityTileX{static_cast<int>(std::floor(entityPos.x / 32.0f))};
         const int entityTileY{static_cast<int>(std::floor(entityPos.y / 32.0f))};
@@ -230,17 +343,52 @@ std::vector<std::string> Server::getTileInfo(const float x, const float y) {
         }
     }
 
-    if ( mapValue> 0) text.emplace_back(StructureRenderingComponent::TypeToString(getStructure(mapValue)->getType()));
+    if ( mapValue> 0) text.emplace_back(StructureRenderingComponent::TypeToString(GetStructure(mapValue)->getType()));
 
     return text;
 }
 
-void Server::Tick() {
+void Server::AddEntity(Coordinates coordinates, const EntityType type, const int variant)
+{
+    std::unique_lock lock(serverMutex);
+    switch (type) {
+        case EntityType::SLIME: {
+            const auto slime{std::make_shared<Slime>(GetSharedPtr().get(), coordinates)};
+            AddEntity_unprotected(slime);
+            if (slime) setupSlimeAi(slime.get());
+            break;
+        }
+        case EntityType::PLAYER: {
+            const auto player{std::make_shared<Player>(GetSharedPtr().get(), coordinates)};
+            AddEntity_unprotected(player);
+            break;
+        }
+        default:
+            break;
+    }
+}
 
+void Server::Tick() {
+    auto playerDetection = [this](IEntity* player) {
+        for (auto &entity: entities | std::views::values) {
+            if (entity->GetType() == EntityType::SLIME) {
+                if (const auto distanceToPlayer {CoordinatesDistance(entity->GetEntityCenter(), player->GetEntityCenter())}; distanceToPlayer < entity->GetDetectionRange()) {
+                    aiManager.sendEvent(entity.get(), AiEvent::PlayerSpotted);
+                    if (distanceToPlayer < entity->GetAttackRange()) aiManager.sendEvent(entity.get(), AiEvent::TargetInRange);
+                    else aiManager.sendEvent(entity.get(), AiEvent::TargetOutOfRange);
+                } else {
+                    aiManager.sendEvent(entity.get(), AiEvent::PlayerLost);
+                }
+            }
+        }
+    };
     auto checkDamage = [this](const std::shared_ptr<IEntity>& entity) ->int {
         std::set<int> appliedDamageIds{};
         int totalDamage{0};
         for (const auto& damageArea : damagePoints) {
+            const auto damageEntity{GetEntity_unprotected(damageArea.entityId)};
+            if (entity->GetId() == damageEntity->GetId()) continue; //Entity cannot damage itself
+            if (entity->GetType() != EntityType::PLAYER && damageEntity->GetType() != EntityType::PLAYER) continue; //Only player can damage other entities
             if (!entity->GetCollisionComponent()->CheckPoint(damageArea.coordinates, *entity)) continue;
             if (appliedDamageIds.contains(damageArea.entityId)) continue;
             totalDamage += damageArea.damage;
@@ -250,6 +398,23 @@ void Server::Tick() {
     };
 
     std::lock_guard lock(serverMutex);
+
+
+    for (const auto& entityId : entitiesToRemove) {
+        entities.erase(entityId);
+        reclaimedEntityIds.emplace_back(entityId);
+    }
+    entitiesToRemove.clear();
+
+    playerDetection(localPlayer.get()); //Detekce hrace pro AI, zatim pouze lokalni hrac
+    aiManager.update(deltaTime);
+
+    for (const auto& structureId : structuresToRemove) {
+        structures.erase(structureId);
+        reclaimedStructureIds.emplace_back(structureId);
+    }
+    structuresToRemove.clear();
+
     for (const auto &entity: entities | std::views::values) {
         if (!entity) continue;
         const auto damage =checkDamage(entity);
@@ -261,32 +426,46 @@ void Server::Tick() {
 }
 
 
-IEntity* Server::getPlayer() {
+IEntity* Server::GetPlayer() {
     std::shared_lock lock(serverMutex);
     if (localPlayer) return localPlayer.get();
     return nullptr; // Return nullptr if entity not found
 }
 
-std::shared_ptr<Server> Server::getSharedPtr() {
+IEntity * Server::GetPlayer_unprotected() const {
+    if (localPlayer) return localPlayer.get();
+    return nullptr; // Return nullptr if entity not found
+}
+
+std::shared_ptr<Server> Server::GetSharedPtr() {
     return shared_from_this();
 }
 
-std::vector<DamageArea> Server::getDamagePoints() {
+std::vector<DamageArea> Server::GetDamagePoints() {
     std::shared_lock lock(serverMutex);
     return lastDamagePoints;
 }
 
-std::map<int,std::shared_ptr<IEntity>> Server::getEntities() {
+AiManager & Server::GetAiManager() {
+    std::shared_lock lock(serverMutex);
+    return aiManager;
+}
+
+AiManager& Server::GetAiManager_unprotected() {
+    return aiManager;
+}
+
+std::map<int,std::shared_ptr<IEntity>> Server::GetEntities() {
     std::shared_lock lock(serverMutex);
     return entities;
 }
 
-std::map<int,std::shared_ptr<IStructure>> Server::getStructures() {
+std::map<int,std::shared_ptr<IStructure>> Server::GetStructures() {
     std::shared_lock lock(serverMutex);
     return structures;
 }
 
-Coordinates Server::getEntityPos(int entityId) {
+Coordinates Server::GetEntityPos(int entityId) {
    std::shared_lock lock(serverMutex);
     if (entities.contains(entityId)) {
         return entities[entityId]->GetCoordinates();
@@ -294,7 +473,7 @@ Coordinates Server::getEntityPos(int entityId) {
     return Coordinates{0.0f, 0.0f}; // Return a default value if entity not found
 }
 
-IEntity* Server::getEntity(int entityId) {
+IEntity* Server::GetEntity(const int entityId) {
     std::shared_lock lock(serverMutex);
     if (entities.contains(entityId)) {
         return entities[entityId].get();
@@ -302,7 +481,14 @@ IEntity* Server::getEntity(int entityId) {
     return nullptr; // Return nullptr if entity not found
 }
 
-IStructure* Server::getStructure(int structureId) {
+IEntity * Server::GetEntity_unprotected(const int entityId) const {
+    if (entities.contains(entityId)) {
+        return entities.at(entityId).get();
+    }
+    return nullptr;
+}
+
+IStructure* Server::GetStructure(int structureId) {
     std::shared_lock lock(serverMutex);
     if (structures.contains(structureId)) {
         return structures[structureId].get();
@@ -310,7 +496,7 @@ IStructure* Server::getStructure(int structureId) {
     return nullptr; // Return nullptr if entity not found
 }
 
-void Server::generateStructures() {
+void Server::GenerateStructures() {
     struct biomeModifierInfo {
         int biomeId;
         double treeDensityModifier;
@@ -337,7 +523,7 @@ void Server::generateStructures() {
 
     auto TryToSpawnTree = [&](const biomeModifierInfo &biome, const Coordinates pos)-> bool {
         if (dist(mt) > TREEDENSITY* biome.treeDensityModifier) return false;
-        return addStructure_unprotected(pos, structureType::TREE, static_cast<int>(biome.treeVariant));
+        return AddStructure_unprotected(pos, structureType::TREE, static_cast<int>(biome.treeVariant));
     };
 
     auto TryToSpawnOre = [&](const biomeModifierInfo &biome, const Coordinates pos)-> bool {
@@ -346,21 +532,43 @@ void Server::generateStructures() {
         const int oreAmount = (dist(mt) < biome.oreRarityModifier * 100) ? rareOreVariants : commonOreVariants;
         std::uniform_int_distribution<> oreTypeDist(1,oreAmount);
 
-        if (dist(mt) < OREDEPOSIT*10) return addStructure_unprotected(pos, structureType::ORE_DEPOSIT, oreTypeDist(mt), oreDist(mt));
-        return addStructure_unprotected(pos, structureType::ORE_NODE, oreTypeDist(mt), oreDist(mt));
+        if (dist(mt) < OREDEPOSIT*10) return AddStructure_unprotected(pos, structureType::ORE_DEPOSIT, oreTypeDist(mt), oreDist(mt));
+        return AddStructure_unprotected(pos, structureType::ORE_NODE, oreTypeDist(mt), oreDist(mt));
     };
 
-    auto process = [&](const int x, const int y){
+    auto checkForDiagonalNeighbors = [&](const int x, const int y) -> int {
+        return
+      GetMapValue_unprotected(x-1, y-1, WorldData::COLLISION_MAP) +
+      GetMapValue_unprotected(x+1, y-1, WorldData::COLLISION_MAP);
+    };
+
+    auto checkForNeighbors = [&](const int x, const int y) -> int {
+        return
+      GetMapValue_unprotected(x-1, y-1, WorldData::COLLISION_MAP) +
+      GetMapValue_unprotected(x,   y-1, WorldData::COLLISION_MAP) +
+      GetMapValue_unprotected(x+1, y-1, WorldData::COLLISION_MAP) +
+      GetMapValue_unprotected(x-1, y,   WorldData::COLLISION_MAP) +
+      GetMapValue_unprotected(x+1, y,   WorldData::COLLISION_MAP) +
+      GetMapValue_unprotected(x-1, y+1, WorldData::COLLISION_MAP) +
+      GetMapValue_unprotected(x,   y+1, WorldData::COLLISION_MAP) +
+      GetMapValue_unprotected(x+1, y+1, WorldData::COLLISION_MAP);
+    };
+
+    auto process = [&](const int x, const int y) {
+        if (checkForDiagonalNeighbors(x,y) > 0) return;
+        if (checkForNeighbors(x,y) > 2) return;
+
+        if (GetMapValue_unprotected(x-1, y-1, WorldData::COLLISION_MAP)
+            + GetMapValue_unprotected(x+1, y-1, WorldData::COLLISION_MAP) > 0) return;
         auto Biome = biomeModifierValues.at(0);
-        const int biomeValue = getMapValue_unprotected(x, y, WorldData::BIOME_MAP);
-        const Coordinates coordinates {static_cast<float>(x)*32.0f ,static_cast<float>(y)*32.0f};
+        const int biomeValue = GetMapValue_unprotected(x, y, WorldData::BIOME_MAP);
         for (const auto& biomeInfo : biomeModifierValues) {
             if (biomeInfo.biomeId != biomeValue) continue;
             Biome = biomeInfo;
             break;
         }
-        if (TryToSpawnTree(Biome,coordinates)){}
-        else TryToSpawnOre(Biome,coordinates);
+        if (TryToSpawnTree(Biome,toWorldCoordinates(x,y))){}
+        else TryToSpawnOre(Biome,toWorldCoordinates(x,y));
     };
 
 
@@ -370,7 +578,7 @@ void Server::generateStructures() {
     }
 }
 
-void Server::generateWorld(){
+void Server::GenerateWorld(){
     std::lock_guard lock(serverMutex);
     auto *generaceMapy = new GeneraceMapy(8);
 
@@ -388,7 +596,7 @@ void Server::generateWorld(){
             int variation = static_cast<int>(dist(mt));
             worldData.updateMapValue(x,y,WorldData::BLOCK_VARIATION_MAP,variation);
 
-            if (biomeValue == 0) worldData.updateMapValue(x,y,WorldData::COLLISION_MAP,1);
+            if (biomeValue == 0) worldData.updateMapValue(x,y,WorldData::COLLISION_MAP, -1); // Water
             else worldData.updateMapValue(x,y,WorldData::COLLISION_MAP,0);
         }
     }
