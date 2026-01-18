@@ -5,7 +5,10 @@
     "leather",
     "iron",
     "steel",
-    "dragonscale"
+    "dragonscale",
+    "gold",
+    "bronze",
+    "copper"
   ],
 
   "recipes": [
@@ -270,6 +273,15 @@
         { "item": "dragonscale", "amount": 6 }
       ],
       "output": { "item": "dragonscale_boots", "amount": 1 }
+    },
+    {
+      "id": "gold_ring",
+      "category": "accessory",
+      "ingredients": [
+        { "item": "gold", "amount": 2 },
+        { "item": "bronze", "amount": 1 }
+      ],
+      "output": { "item": "gold_ring", "amount": 1 }
     }
 
   ]
