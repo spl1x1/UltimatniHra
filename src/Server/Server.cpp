@@ -59,7 +59,6 @@ void Server::setupSlimeAi(IEntity* entity) {
     // Registrace handlerů pro stavy
     sm->registerState(AiState::Idle,
         [](IEntity* entity, float dt) {
-            SDL_Log("Slime %d: Idling", entity->GetId());
             entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
             entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
@@ -72,7 +71,6 @@ void Server::setupSlimeAi(IEntity* entity) {
 
     sm->registerState(AiState::Patrol,
     [](IEntity* entity, float dt) {
-        SDL_Log("Slime %d: Patrolling", entity->GetId());
         std::mt19937 rng(static_cast<unsigned int>(SDL_GetTicks()) + entity->GetId());
         std::uniform_int_distribution<int> dist(-100, 100);
 
@@ -90,7 +88,6 @@ void Server::setupSlimeAi(IEntity* entity) {
 
     sm->registerState(AiState::Chase,
         [](IEntity* entity, float dt) {
-            SDL_Log("Slime %d: Entering Chase state", entity->GetId());
             entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
             entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
@@ -99,14 +96,13 @@ void Server::setupSlimeAi(IEntity* entity) {
             const auto dx{localPlayer->GetEntityCenter().x - entity->GetEntityCenter().x};
             const auto dy {localPlayer->GetEntityCenter().y - entity->GetEntityCenter().y};
             entity->GetLogicComponent()->AddEvent(Event_Move::Create(dx,dy));
-}
+            }
         }
     );
 
 
     sm->registerState(AiState::Attack,
         [](IEntity* entity, float dt) {
-            SDL_Log("Slime %d: Attacking player", entity->GetId());
             entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
             entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
@@ -114,20 +110,18 @@ void Server::setupSlimeAi(IEntity* entity) {
             const auto logicComp{entity->GetLogicComponent()};
             logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(entity->GetEntityCenter(), entity->GetServer()->GetPlayer_unprotected()->GetEntityCenter())));
             logicComp->PerformAttack(entity,1,5);
-            //logicComp->AddEvent(Event_Attack::Create(1,10));
+            //logicComp->AddEvent(Event_Attack::Create(1,5));
         }
     );
 
     sm->registerState(AiState::GetUnstuck,
         [](IEntity* entity, float dt) {
-            SDL_Log("Slime %d: Attempting to get unstuck", entity->GetId());
             const auto [x, y]{entity->GetServer()->GetPlayer_unprotected()->GetEntityCenter()};
             entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE),true );
             entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO),true );
             entity->GetLogicComponent()->AddEvent(Event_MoveTo::Create(x,y),true);
         },
         [](IEntity* entity, float dt) {
-            // Po pokusu o odblokování se vrať zpět do Chase stavu
             const auto logicComp{entity->GetLogicComponent()};
             const auto distance = CoordinatesDistance(logicComp->GetCoordinates(),logicComp->GetLastMoveDirection());
             if (std::abs(distance) <  EntityLogicComponent::threshold) {
@@ -390,22 +384,15 @@ void Server::AddEntity(Coordinates coordinates, const EntityType type, const int
 }
 
 void Server::Tick() {
-    auto playerDetection = [this](IEntity* player) {
-        for (auto &entity: entities | std::views::values) {
-            if (entity->GetType() == EntityType::SLIME) {
-                if (player->GetHealthComponent()->IsDead()) {
-                    aiManager.sendEvent(entity.get(), AiEvent::PlayerLost);
-                    continue;
-                }
-                if (const auto distanceToPlayer {CoordinatesDistance(entity->GetEntityCenter(), player->GetEntityCenter())}; distanceToPlayer < entity->GetDetectionRange()) {
-                    aiManager.sendEvent(entity.get(), AiEvent::PlayerSpotted);
-                    if (distanceToPlayer < entity->GetAttackRange()) aiManager.sendEvent(entity.get(), AiEvent::TargetInRange);
-                    else aiManager.sendEvent(entity.get(), AiEvent::TargetOutOfRange);
-                } else {
-                    aiManager.sendEvent(entity.get(), AiEvent::PlayerLost);
-                }
-            }
+    auto playerDetection = [this](IEntity* player, IEntity* entity) {
+        if (entity->GetType() == EntityType::PLAYER)  return;
+        if (const auto distanceToPlayer {CoordinatesDistance(entity->GetEntityCenter(), player->GetEntityCenter())}; distanceToPlayer < entity->GetDetectionRange()
+        && !player->GetHealthComponent()->IsDead()) {
+            aiManager.sendEvent(entity, AiEvent::PlayerSpotted);
+            if (distanceToPlayer < entity->GetAttackRange()) aiManager.sendEvent(entity, AiEvent::TargetInRange);
+            else aiManager.sendEvent(entity, AiEvent::TargetOutOfRange);
         }
+        else aiManager.sendEvent(entity, AiEvent::PlayerLost);
     };
     auto checkDamage = [this](const std::shared_ptr<IEntity>& entity) ->int {
         std::set<int> appliedDamageIds{};
@@ -432,20 +419,19 @@ void Server::Tick() {
     }
     entitiesToRemove.clear();
 
-    playerDetection(localPlayer.get()); //Detekce hrace pro AI, zatim pouze lokalni hrac
-    aiManager.update(deltaTime);
-
     for (const auto& structureId : structuresToRemove) {
         structures.erase(structureId);
         reclaimedStructureIds.emplace_back(structureId);
     }
     structuresToRemove.clear();
 
+    aiManager.update(deltaTime);
     for (const auto &entity: entities | std::views::values) {
         if (!entity) continue;
-        const auto damage =checkDamage(entity);
-        entity->AddEvent(Event_Damage::Create(damage));
         entity->Tick();
+        playerDetection(localPlayer.get(), entity.get()); //Detekce hrace pro AI, zatim pouze lokalni hrac
+        if (const auto damage{checkDamage(entity)};checkDamage(entity) > 0)
+            entity->GetLogicComponent()->QueueUpEvent(Event_Damage::Create(damage), true);
     }
     lastDamagePoints = damagePoints;
     damagePoints.clear();

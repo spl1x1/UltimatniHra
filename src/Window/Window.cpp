@@ -227,15 +227,19 @@ void Window::renderHud() {
         data.healthHurtState = false;
     }
 
-    for (auto i{0}; i < playerHealth / 10; ++i) {
-        rect.x = 10 + static_cast<float>(i) * 17.0f;
-        SDL_RenderTexture(data.Renderer,data.healthHurtState ? textures.at("heart_full_hurt") :  textures.at("heart_full"), nullptr, &rect);
+    int fullHearts = static_cast<int>(playerHealth) / 10;
+    for (int i = 0; i < fullHearts; ++i) {
+        rect.x = 10.0f + static_cast<float>(i) * 17.0f;
+        SDL_RenderTexture(data.Renderer,
+                          data.healthHurtState ? textures.at("heart_full_hurt") : textures.at("heart_full"),
+                          nullptr, &rect);
     }
     if (static_cast<int>(playerHealth) % 10 >= 5) {
-        rect.x += 17.0f;
-        SDL_RenderTexture(data.Renderer,data.healthHurtState ? textures.at("heart_half_hurt") : textures.at("heart_half"), nullptr, &rect);
+        rect.x = 10.0f + static_cast<float>(fullHearts) * 17.0f;
+        SDL_RenderTexture(data.Renderer,
+                          data.healthHurtState ? textures.at("heart_half_hurt") : textures.at("heart_half"),
+                          nullptr, &rect);
     }
-
     data.lastHealth = playerHealth;
 }
 
