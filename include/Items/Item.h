@@ -35,7 +35,10 @@ enum class MaterialType {
     LEATHER,
     IRON,
     STEEL,
-    DRAGONSCALE
+    DRAGONSCALE,
+    GOLD,
+    BRONZE,
+    COPPER
 };
 enum class ConsumableType {
     HEALTH_POTION,
