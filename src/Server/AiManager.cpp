@@ -12,6 +12,10 @@ void AiStateMachine::setState(const AiState state) {
 
 AiState AiStateMachine::getState() const { return currentState; }
 
+float AiStateMachine::getTimeInCurrentState() const {
+    return timeInCurrentState;
+}
+
 
 void AiStateMachine::registerTransition(const AiState from, const AiEvent event, const AiState to) {
     transitions[from][event] = to;
@@ -31,12 +35,16 @@ void AiStateMachine::registerState(const AiState state, const StateHandler& onEn
 }
 
 void AiStateMachine::update(IEntity* entity, const float deltaTime) {
+    if (entity==nullptr) return;
+    timeInCurrentState += deltaTime;
+
     if (stateChanged || currentState != previousState) {
         if (stateEnterHandlers.contains(currentState)) {
             stateEnterHandlers.at(currentState)(entity, deltaTime);
         }
         previousState = currentState;
         stateChanged = false;
+        timeInCurrentState = 0.0f;
     }
 
     if (stateHandlers.contains(currentState)) {
@@ -79,4 +87,11 @@ void AiManager::update(const float deltaTime) {
     for (auto& [entity, stateMachine] : entityStates) {
         stateMachine->update(entity, deltaTime);
     }
+}
+
+float AiManager::getTimeInState(IEntity *entity) const {
+    if (entityStates.contains(entity)) {
+        return entityStates.at(entity)->getTimeInCurrentState();
+    }
+    return 0.0f;
 }

@@ -17,7 +17,7 @@ void Slime::Tick() {
     const auto newCoordinates = entityLogicComponent.GetCoordinates();
     if (entityLogicComponent.IsInterrupted()) return;
 
-    if (oldCoordinates.x != newCoordinates.x || oldCoordinates.y != newCoordinates.y) {
+    if (oldCoordinates != newCoordinates) {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(entityLogicComponent.GetAngle());
         entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, direction, 1);
     } else {
@@ -138,5 +138,5 @@ Server* Slime::GetServer() const {
 Slime::Slime(Server* server, const Coordinates& coordinates) {
     this->server = server;
     entityLogicComponent.SetCoordinates(coordinates);
-    entityLogicComponent.SetSpeed(100.0f);
+    entityLogicComponent.SetSpeed(70.0f);
 }

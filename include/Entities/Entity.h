@@ -159,7 +159,7 @@ public:
     //Getters
     [[nodiscard]] int GetHealth() const;
     [[nodiscard]] int GetMaxHealth() const;
-    [[nodiscard]] bool isDead() const;
+    [[nodiscard]] bool IsDead() const;
 
     //Constructor
     EntityHealthComponent(const int health, const int maxHealth): health(health), maxHealth(maxHealth){}

@@ -434,6 +434,7 @@ void EntityLogicComponent::PerformAttack(IEntity* entity, const int attackType, 
             attackPoints.push_back({
                 entityCenter.x + std::cos(rad) * static_cast<float>(j),
                 entityCenter.y + std::sin(rad) * static_cast<float>(j)
+
             });
     }
 
@@ -458,7 +459,7 @@ void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
     logicComponent->SetLock(); //Lock entity during hurt animation
 
     if (health < 0) health = 0;
-    if (isDead()) {
+    if (IsDead()) {
         entity.GetLogicComponent()->SetInterrupted(true);
         entity.GetRenderingComponent()->PlayAnimation(AnimationType::DEATH,direction, 1, true);
         logicComponent->QueueUpEvent(Event_Death::Create());
@@ -488,7 +489,7 @@ int EntityHealthComponent::GetHealth() const {
 int EntityHealthComponent::GetMaxHealth() const {
     return maxHealth;
 }
-bool EntityHealthComponent::isDead() const {
+bool EntityHealthComponent::IsDead() const {
     return health <= 0;
 }
 

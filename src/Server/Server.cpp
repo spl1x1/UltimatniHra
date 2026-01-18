@@ -60,28 +60,40 @@ void Server::setupSlimeAi(IEntity* entity) {
     sm->registerState(AiState::Idle,
         [](IEntity* entity, float dt) {
             SDL_Log("Slime %d: Idling", entity->GetId());
+            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
+            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
-        [](IEntity* entity, float dt) {}
+        [](IEntity* entity, float dt) {
+            if (entity->GetServer()->aiManager.getTimeInState(entity) >= 5.0f) { // Po 5 sekundách přepni do Patrol
+                entity->GetServer()->aiManager.sendEvent(entity, AiEvent::ReachedDestination);
+            }
+        }
     );
 
     sm->registerState(AiState::Patrol,
-        [](IEntity* entity, float dt) {
-            SDL_Log("Slime %d: Patrolling", entity->GetId());
-            std::mt19937 mt(static_cast<unsigned int>(SDL_GetTicks()));
-            std::uniform_int_distribution dist(1,entity->GetReach());
-            entity->GetLogicComponent()->AddEvent(Event_MoveTo::Create(
-            entity->GetCoordinates().x + dist(mt),
-            entity->GetCoordinates().y + dist(mt)
-        ));
+    [](IEntity* entity, float dt) {
+        SDL_Log("Slime %d: Patrolling", entity->GetId());
+        std::mt19937 rng(static_cast<unsigned int>(SDL_GetTicks()) + entity->GetId());
+        std::uniform_int_distribution<int> dist(-100, 100);
+
+        const auto coords {entity->GetCoordinates()};
+        entity->GetLogicComponent()->AddEvent(Event_MoveTo::Create(coords.x+static_cast<float>(dist(rng)),coords.y+static_cast<float>(dist(rng))));
+
+        entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
+        entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
     },
-    [](IEntity* entity, float dt) {});
+    [](IEntity* entity, float dt) {
+        if (entity->GetServer()->aiManager.getTimeInState(entity) >= 5.0f) {
+            entity->GetServer()->aiManager.sendEvent(entity, AiEvent::ReachedDestination);
+        }
+    });
 
     sm->registerState(AiState::Chase,
-        // onEnter - zavolá se jednou při vstupu do stavu
         [](IEntity* entity, float dt) {
             SDL_Log("Slime %d: Entering Chase state", entity->GetId());
+            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
+            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
-        // onUpdate - zavolá se každý frame (prázdný pro Chase)
         [](IEntity* entity, float dt) {
             if (const auto localPlayer{entity->GetServer()->localPlayer}) {
             const auto dx{localPlayer->GetEntityCenter().x - entity->GetEntityCenter().x};
@@ -95,11 +107,14 @@ void Server::setupSlimeAi(IEntity* entity) {
     sm->registerState(AiState::Attack,
         [](IEntity* entity, float dt) {
             SDL_Log("Slime %d: Attacking player", entity->GetId());
+            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
+            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
         [](IEntity* entity, float dt) {
-            entity->GetLogicComponent()->SetAngle(
-            CalculateAngle(entity->GetEntityCenter(), entity->GetServer()->GetPlayer_unprotected()->GetEntityCenter()));
-            entity->GetLogicComponent()->PerformAttack(entity, 0, 10);
+            const auto logicComp{entity->GetLogicComponent()};
+            logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(entity->GetEntityCenter(), entity->GetServer()->GetPlayer_unprotected()->GetEntityCenter())));
+            logicComp->PerformAttack(entity,1,5);
+            //logicComp->AddEvent(Event_Attack::Create(1,10));
         }
     );
 
@@ -107,33 +122,39 @@ void Server::setupSlimeAi(IEntity* entity) {
         [](IEntity* entity, float dt) {
             SDL_Log("Slime %d: Attempting to get unstuck", entity->GetId());
             const auto [x, y]{entity->GetServer()->GetPlayer_unprotected()->GetEntityCenter()};
-            entity->GetLogicComponent()->AddEvent(Event_MoveTo::Create(x,y));
+            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE),true );
+            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO),true );
+            entity->GetLogicComponent()->AddEvent(Event_MoveTo::Create(x,y),true);
         },
         [](IEntity* entity, float dt) {
             // Po pokusu o odblokování se vrať zpět do Chase stavu
             const auto logicComp{entity->GetLogicComponent()};
             const auto distance = CoordinatesDistance(logicComp->GetCoordinates(),logicComp->GetLastMoveDirection());
             if (std::abs(distance) <  EntityLogicComponent::threshold) {
-                entity->GetServer()->aiManager.sendEvent(entity, AiEvent::ReachedDestination);
-                entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO),true);
+                entity->GetServer()->aiManager.sendEvent(entity, AiEvent::MovementStuck);
             }
         }
     );
 
-    // Registrace přechodů
+    // Registrace prechodu
+    sm->registerTransition(AiState::Idle, AiEvent::ReachedDestination, AiState::Patrol);
     sm->registerTransition(AiState::Idle, AiEvent::PlayerSpotted, AiState::Chase);
+    sm->registerTransition(AiState::Idle, AiEvent::TookDamage, AiState::Chase);
+
     sm->registerTransition(AiState::Chase, AiEvent::TargetInRange, AiState::Attack);
     sm->registerTransition(AiState::Chase, AiEvent::PlayerLost, AiState::Idle);
-    sm->registerTransition(AiState::Attack, AiEvent::TargetOutOfRange, AiState::Chase);
-
-    sm->registerTransition(AiState::Idle, AiEvent::TookDamage, AiState::Chase);
-    sm->registerTransition(AiState::Patrol, AiEvent::TookDamage, AiState::Chase);
-
     sm->registerTransition(AiState::Chase, AiEvent::MovementStuck, AiState::GetUnstuck);
+
+    sm->registerTransition(AiState::Attack, AiEvent::TargetOutOfRange, AiState::Chase);
+    sm->registerTransition(AiState::Attack, AiEvent::PlayerLost, AiState::Idle);
+
     sm->registerTransition(AiState::GetUnstuck, AiEvent::ReachedDestination, AiState::Chase);
+    sm->registerTransition(AiState::GetUnstuck, AiEvent::MovementStuck, AiState::GetUnstuck);
     sm->registerTransition(AiState::GetUnstuck, AiEvent::TargetInRange, AiState::Attack);
 
     sm->registerTransition(AiState::Patrol, AiEvent::ReachedDestination, AiState::Patrol);
+    sm->registerTransition(AiState::Patrol, AiEvent::TookDamage, AiState::Chase);
+    sm->registerTransition(AiState::Patrol, AiEvent::PlayerSpotted, AiState::Chase);
 }
 
 
@@ -372,6 +393,10 @@ void Server::Tick() {
     auto playerDetection = [this](IEntity* player) {
         for (auto &entity: entities | std::views::values) {
             if (entity->GetType() == EntityType::SLIME) {
+                if (player->GetHealthComponent()->IsDead()) {
+                    aiManager.sendEvent(entity.get(), AiEvent::PlayerLost);
+                    continue;
+                }
                 if (const auto distanceToPlayer {CoordinatesDistance(entity->GetEntityCenter(), player->GetEntityCenter())}; distanceToPlayer < entity->GetDetectionRange()) {
                     aiManager.sendEvent(entity.get(), AiEvent::PlayerSpotted);
                     if (distanceToPlayer < entity->GetAttackRange()) aiManager.sendEvent(entity.get(), AiEvent::TargetInRange);
@@ -401,6 +426,7 @@ void Server::Tick() {
 
 
     for (const auto& entityId : entitiesToRemove) {
+        aiManager.unregisterEntity(GetEntity_unprotected(entityId));
         entities.erase(entityId);
         reclaimedEntityIds.emplace_back(entityId);
     }

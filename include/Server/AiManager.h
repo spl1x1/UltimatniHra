@@ -37,6 +37,7 @@ public:
 
     void setState(AiState state);
     AiState getState() const;
+    float getTimeInCurrentState() const;
 
     void registerState(AiState state, const StateHandler& onEnter, const StateHandler& onUpdate);
 
@@ -46,9 +47,10 @@ public:
     void update(IEntity *entity, float deltaTime);
 
 private:
-    bool stateChanged = false;
-    AiState currentState = AiState::Idle;
-    AiState previousState = AiState::Idle; // Pro detekci změny stavu
+    bool stateChanged{false};
+    float timeInCurrentState{0.0f};
+    AiState currentState{AiState::Idle};
+    AiState previousState{AiState::Idle}; // Pro detekci změny stavu
     std::unordered_map<AiState, StateHandler> stateEnterHandlers; // onEnter
     std::unordered_map<AiState, StateHandler> stateHandlers;      // onUpdate
     std::unordered_map<AiState, std::unordered_map<AiEvent, AiState>> transitions;
@@ -63,6 +65,7 @@ public:
     void sendEvent(IEntity* entity, AiEvent event);
     void update(float deltaTime);
 
+    float getTimeInState(IEntity* entity) const;
     AiStateMachine* getStateMachine(IEntity *entity) const;
 
 private:

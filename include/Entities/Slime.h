@@ -27,7 +27,7 @@ class Slime final: public IEntity {
     Server* server;
     int id{};
     int reach{40}; //Entity reach in pixels
-    float detectionRange{500.0f}; //Detection range in pixels
+    float detectionRange{300.0f}; //Detection range in pixels
     float attackRange{40.0f}; //Attack range in pixels
     bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes)
 

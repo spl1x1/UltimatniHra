@@ -17,7 +17,7 @@ void Player::Tick() {
     const auto newCoordinates = entityLogicComponent.GetCoordinates();
     if (entityLogicComponent.IsInterrupted()) return;
 
-    if (oldCoordinates.x != newCoordinates.x || oldCoordinates.y != newCoordinates.y) {
+    if (oldCoordinates != newCoordinates) {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(entityLogicComponent.GetAngle());
         entityRenderingComponent.PlayAnimation(AnimationType::RUNNING, direction, 1);
     } else {

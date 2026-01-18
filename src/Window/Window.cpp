@@ -251,7 +251,7 @@ void Window::advanceFrame() {
                 .position = area.coordinates,
                 .r = 255,
                 .g = 0,
-                .b = 0,
+                .b = area.entityId*37 % 255,
                 .a = 255
             });
         }
@@ -293,8 +293,9 @@ void Window::advanceFrame() {
         data.lastCollisionState = data.collisionState;
         SDL_Log("Collision state changed: %s", data.collisionState ? "ON" : "OFF");
     }
-    data.playerX = static_cast<int>(std::floor(coords.x));
-    data.playerY = static_cast<int>(std::floor(coords.y));
+    const auto playerCenter{server->GetPlayer()->GetEntityCenter()};
+    data.playerX = static_cast<int>(std::floor(playerCenter.x));
+    data.playerY = static_cast<int>(std::floor(playerCenter.y));
     data.playerAngle = server->GetPlayer()->GetLogicComponent()->GetAngle();
     dataModel.DirtyAllVariables();
 #endif
