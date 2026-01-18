@@ -14,6 +14,7 @@ void Player::Tick() {
     const auto oldCoordinates = entityLogicComponent.GetCoordinates();
     entityRenderingComponent.Tick(deltaTime);
     entityLogicComponent.Tick(server, *this);
+    entityHealthComponent.Tick(deltaTime);
     const auto newCoordinates = entityLogicComponent.GetCoordinates();
     if (entityLogicComponent.IsInterrupted()) return;
 
@@ -24,7 +25,6 @@ void Player::Tick() {
         const auto direction = EntityRenderingComponent::GetDirectionBaseOnAngle(entityLogicComponent.GetAngle());
         entityRenderingComponent.PlayAnimation(AnimationType::IDLE, direction, 1);
     }
-
 }
 
 RenderingContext Player::GetRenderingContext() {

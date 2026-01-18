@@ -448,6 +448,20 @@ void EntityHealthComponent::Heal(const int amount) {
     if (health > maxHealth) health = maxHealth;
 }
 
+void EntityHealthComponent::Tick(const float deltaTime) {
+    timeSinceLastDamage += deltaTime;
+    if (IsDead() || health >= maxHealth) return;
+    if (timeSinceLastDamage < 5*timeToRegenerate) {
+        return;
+    }
+    regenerationTime += deltaTime;
+    if (regenerationTime >= timeToRegenerate && health < maxHealth) {
+        regenerationTime = 0.0f;
+        health += 5;
+        if (health > maxHealth) health = maxHealth;
+    }
+}
+
 void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
     health -= damage;
 
@@ -463,15 +477,16 @@ void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
         entity.GetLogicComponent()->SetInterrupted(true);
         entity.GetRenderingComponent()->PlayAnimation(AnimationType::DEATH,direction, 1, true);
         logicComponent->QueueUpEvent(Event_Death::Create());
+        return;
     }
 
     if (auto* server = entity.GetServer()) {
         server->GetAiManager_unprotected().sendEvent(&entity, AiEvent::TookDamage);
-
         if (health <= maxHealth / 5 && health > 0) {
             server->GetAiManager_unprotected().sendEvent(&entity, AiEvent::LowHealth);
         }
     }
+    timeSinceLastDamage = 0.0f;
 }
 void EntityHealthComponent::SetHealth(const int newHealth) {
     health = newHealth;

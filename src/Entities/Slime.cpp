@@ -14,6 +14,7 @@ void Slime::Tick() {
     const auto oldCoordinates = entityLogicComponent.GetCoordinates();
     entityRenderingComponent.Tick(deltaTime);
     entityLogicComponent.Tick(server, *this);
+    entityHealthComponent.Tick(deltaTime);
     const auto newCoordinates = entityLogicComponent.GetCoordinates();
     if (entityLogicComponent.IsInterrupted()) return;
 

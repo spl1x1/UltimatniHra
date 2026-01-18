@@ -145,12 +145,18 @@ public:
 
 class EntityHealthComponent {
     friend class EventBindings;
+
     int health{0};
     int maxHealth{0};
+    float timeSinceLastDamage{0.0f};
+    float regenerationTime{0.0f};
+    float timeToRegenerate{5.0f}; //Time in seconds to start health regeneration after taking damage
+
 public:
     //Methods
     void TakeDamage(int damage, IEntity& entity);
     void Heal(int amount);
+    void Tick(float deltaTime);
 
     //Setters
     void SetHealth(int newHealth);
