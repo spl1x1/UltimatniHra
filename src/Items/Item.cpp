@@ -127,10 +127,14 @@ Material::Material(const std::string& name, MaterialType tier)
     : Item(name, "Crafting material", ItemType::MATERIAL, 0, true, 99), materialType(tier) {
 
     switch (tier) {
+        case MaterialType::WOOD: value = 1; break;
         case MaterialType::STONE: value = 1; break;
         case MaterialType::LEATHER: value = 5; break;
+        case MaterialType::COPPER: value = 8; break;
+        case MaterialType::BRONZE: value = 12; break;
         case MaterialType::IRON: value = 10; break;
         case MaterialType::STEEL: value = 25; break;
+        case MaterialType::GOLD: value = 50; break;
         case MaterialType::DRAGONSCALE: value = 100; break;
         default: value = 1; break;
     }
@@ -185,6 +189,9 @@ namespace ItemFactory {
             case MaterialType::IRON: return "Iron";
             case MaterialType::STEEL: return "Steel";
             case MaterialType::DRAGONSCALE: return "Dragon Scale";
+            case MaterialType::GOLD: return "Gold";
+            case MaterialType::BRONZE: return "Bronze";
+            case MaterialType::COPPER: return "Copper";
             default: return "Unknown";
         }
     }
@@ -197,6 +204,9 @@ namespace ItemFactory {
             case MaterialType::IRON: return "iron";
             case MaterialType::STEEL: return "steel";
             case MaterialType::DRAGONSCALE: return "dragonscale";
+            case MaterialType::GOLD: return "gold";
+            case MaterialType::BRONZE: return "bronze";
+            case MaterialType::COPPER: return "copper";
             default: return "unknown";
         }
     }
@@ -216,7 +226,19 @@ namespace ItemFactory {
     }
 
     std::string getMaterialIconPath(MaterialType material) {
-        return ITEMS_ICON_BASE + getMaterialPrefix(material) + ".png";
+        // Map materials to their specific SVG icon files
+        switch (material) {
+            case MaterialType::WOOD: return ITEMS_ICON_BASE + "wooden_planks.svg";
+            case MaterialType::STONE: return ITEMS_ICON_BASE + "stone_pile_granite.svg";
+            case MaterialType::LEATHER: return ITEMS_ICON_BASE + "leather_hide_brown.svg";
+            case MaterialType::IRON: return ITEMS_ICON_BASE + "metal_iron.svg";
+            case MaterialType::STEEL: return ITEMS_ICON_BASE + "metal_steel.svg";
+            case MaterialType::DRAGONSCALE: return ITEMS_ICON_BASE + "dorsal_scales_purple.svg";
+            case MaterialType::GOLD: return ITEMS_ICON_BASE + "metal_gold.svg";
+            case MaterialType::BRONZE: return ITEMS_ICON_BASE + "metal_bronze.svg";
+            case MaterialType::COPPER: return ITEMS_ICON_BASE + "metal_copper.svg";
+            default: return ITEMS_ICON_BASE + "wooden_planks.svg";
+        }
     }
 
     std::string getAmuletIconPath(const std::string& amuletType) {

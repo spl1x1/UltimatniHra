@@ -16,6 +16,7 @@
 
 class Window;
 class InventoryController;
+class CraftingSystem;
 
 enum class DisplayMode {
     WINDOWED,
@@ -52,6 +53,7 @@ private:
     ImVec4 clear_color;
 
     std::unique_ptr<InventoryController> inventoryController{};
+    std::unique_ptr<CraftingSystem> craftingSystem{};
 
     void RegisterButtonBindings(Window *Window);
 

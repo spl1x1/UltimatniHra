@@ -79,6 +79,13 @@ InventoryController::InventoryController(Window* window, UIComponent* uiComponen
         setupSlotListeners();
         setupEquipmentSlots();
         setupCraftingUI();
+
+        // Initialize first hotbar slot as active
+        auto firstSlot = document->GetElementById("slot_0");
+        if (firstSlot) {
+            firstSlot->SetClass("active-hotbar", true);
+        }
+
         document->Hide();
     } else {
         SDL_Log("InventoryController: inventory document NOT found!");
@@ -240,12 +247,52 @@ bool InventoryController::moveItem(int fromSlot, int toSlot) {
         SDL_Log("Moved item from slot %d to slot %d", fromSlot, toSlot);
 
     } else {
-        // Target slot has item - swap
-        std::swap(fromIt->second, toIt->second);
+        // Target slot has item - check if we can stack
+        Item* fromItem = fromIt->second.get();
+        Item* toItem = toIt->second.get();
 
-        updateItemDisplay(fromSlot);
-        updateItemDisplay(toSlot);
-        SDL_Log("Swapped items between slot %d and slot %d", fromSlot, toSlot);
+        // Check if both items are stackable and the same type
+        if (fromItem->isStackable() && toItem->isStackable() &&
+            fromItem->getName() == toItem->getName()) {
+
+            int fromAmount = fromItem->getStackSize();
+            int toAmount = toItem->getStackSize();
+            int maxStack = toItem->getMaxStackSize();
+            int spaceInTarget = maxStack - toAmount;
+
+            if (spaceInTarget > 0) {
+                // Can combine at least some
+                int transferAmount = std::min(fromAmount, spaceInTarget);
+
+                toItem->addToStack(transferAmount);
+                fromItem->removeFromStack(transferAmount);
+
+                // Check if source stack is now empty
+                if (fromItem->getStackSize() <= 0) {
+                    items.erase(fromIt);
+                    clearSlot(fromSlot);
+                    SDL_Log("Combined stacks: moved all %d from slot %d to slot %d", transferAmount, fromSlot, toSlot);
+                } else {
+                    updateItemDisplay(fromSlot);
+                    SDL_Log("Combined stacks: moved %d from slot %d to slot %d, %d remaining",
+                            transferAmount, fromSlot, toSlot, fromItem->getStackSize());
+                }
+                updateItemDisplay(toSlot);
+            } else {
+                // Target stack is full - swap instead
+                std::swap(fromIt->second, toIt->second);
+                updateItemDisplay(fromSlot);
+                updateItemDisplay(toSlot);
+                SDL_Log("Swapped full stacks between slot %d and slot %d", fromSlot, toSlot);
+            }
+        } else {
+            // Different items or not stackable - swap
+            std::swap(fromIt->second, toIt->second);
+
+            updateItemDisplay(fromSlot);
+            updateItemDisplay(toSlot);
+            SDL_Log("Swapped items between slot %d and slot %d", fromSlot, toSlot);
+        }
     }
 
     // Update quickbar if either slot is in quickbar range
@@ -865,7 +912,26 @@ QuickbarSlotInfo InventoryController::getQuickbarSlot(int slot) const {
 
 void InventoryController::setSelectedQuickbarSlot(int slot) {
     if (slot >= 0 && slot < QUICKBAR_SIZE) {
+        int oldSlot = selectedQuickbarSlot;
         selectedQuickbarSlot = slot;
+
+        // Update visual highlighting
+        if (document) {
+            // Remove highlight from old slot
+            if (oldSlot >= 0 && oldSlot < QUICKBAR_SIZE) {
+                auto oldElement = document->GetElementById(("slot_" + std::to_string(oldSlot)).c_str());
+                if (oldElement) {
+                    oldElement->SetClass("active-hotbar", false);
+                }
+            }
+            // Add highlight to new slot
+            auto newElement = document->GetElementById(("slot_" + std::to_string(slot)).c_str());
+            if (newElement) {
+                newElement->SetClass("active-hotbar", true);
+            }
+        }
+
+        SDL_Log("Selected hotbar slot %d", slot);
     }
 }
 
@@ -873,7 +939,134 @@ Item* InventoryController::getActiveQuickbarItem() {
     return getItem(selectedQuickbarSlot);
 }
 
+// Equipment access methods
+Item* InventoryController::getEquippedItem(const std::string& slotId) {
+    auto it = equipmentItems.find(slotId);
+    if (it != equipmentItems.end() && it->second) {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+Item* InventoryController::getEquippedHelmet() {
+    return getEquippedItem("helmet_slot");
+}
+
+Item* InventoryController::getEquippedChestplate() {
+    return getEquippedItem("chestplate_slot");
+}
+
+Item* InventoryController::getEquippedLeggings() {
+    return getEquippedItem("leggings_slot");
+}
+
+Item* InventoryController::getEquippedBoots() {
+    return getEquippedItem("boots_slot");
+}
+
+Item* InventoryController::getEquippedAmulet() {
+    return getEquippedItem("amulet_slot");
+}
+
+int InventoryController::getTotalArmorDefense() const {
+    int totalDefense = 0;
+
+    auto addDefense = [&](const std::string& slotId) {
+        auto it = equipmentItems.find(slotId);
+        if (it != equipmentItems.end() && it->second) {
+            if (it->second->getType() == ItemType::ARMOUR) {
+                Armour* armor = dynamic_cast<Armour*>(it->second.get());
+                if (armor) {
+                    totalDefense += armor->getDefense();
+                }
+            }
+        }
+    };
+
+    addDefense("helmet_slot");
+    addDefense("chestplate_slot");
+    addDefense("leggings_slot");
+    addDefense("boots_slot");
+
+    return totalDefense;
+}
+
 // Crafting functionality implementation
+
+// Event listeners for new crafting UI
+class CategoryTabListener : public Rml::EventListener {
+public:
+    CategoryTabListener(InventoryController* controller, const std::string& category)
+        : controller(controller), category(category) {}
+
+    void ProcessEvent(Rml::Event&) override {
+        controller->setCategory(category);
+    }
+
+private:
+    InventoryController* controller;
+    std::string category;
+};
+
+class RecipeSlotListener : public Rml::EventListener {
+public:
+    RecipeSlotListener(InventoryController* controller, const std::string& recipeId)
+        : controller(controller), recipeId(recipeId) {}
+
+    void ProcessEvent(Rml::Event&) override {
+        controller->selectRecipe(recipeId);
+    }
+
+private:
+    InventoryController* controller;
+    std::string recipeId;
+};
+
+std::string InventoryController::getMaterialIconPath(const std::string& materialId) {
+    if (materialId == "wood") return "../textures/items/wooden_planks.svg";
+    if (materialId == "stone") return "../textures/items/stone_pile_granite.svg";
+    if (materialId == "leather") return "../textures/items/leather_hide_brown.svg";
+    if (materialId == "iron") return "../textures/items/metal_iron.svg";
+    if (materialId == "steel") return "../textures/items/metal_steel.svg";
+    if (materialId == "dragonscale") return "../textures/items/dorsal_scales_purple.svg";
+    if (materialId == "gold") return "../textures/items/metal_gold.svg";
+    if (materialId == "bronze") return "../textures/items/metal_bronze.svg";
+    if (materialId == "copper") return "../textures/items/metal_copper.svg";
+    return "../textures/items/wooden_planks.svg";
+}
+
+std::string InventoryController::getRecipeOutputIconPath(const std::string& recipeId) {
+    // For materials, use the material icon
+    if (recipeId == "steel") return "../textures/items/metal_steel.svg";
+
+    // For crafted items, use the actual item icon (PNG format)
+    // Recipe IDs match file names: iron_sword -> iron_sword.png
+    size_t underscorePos = recipeId.find('_');
+    if (underscorePos == std::string::npos) {
+        return getMaterialIconPath(recipeId);
+    }
+
+    // Return the actual item icon path
+    return "../textures/items/" + recipeId + ".png";
+}
+
+std::string InventoryController::formatItemName(const std::string& itemId) {
+    std::string result = itemId;
+    // Replace underscores with spaces
+    for (char& c : result) {
+        if (c == '_') c = ' ';
+    }
+    // Capitalize first letter of each word
+    bool capitalizeNext = true;
+    for (char& c : result) {
+        if (capitalizeNext && c >= 'a' && c <= 'z') {
+            c = c - 'a' + 'A';
+        }
+        capitalizeNext = (c == ' ');
+    }
+    return result;
+}
+
 void InventoryController::setupCraftingUI() {
     if (!document) return;
 
@@ -912,7 +1105,24 @@ void InventoryController::updateCraftingButton() {
 
 void InventoryController::showCraftingUI() {
     if (craftingDocument && nearCraftingTable) {
-        updateCraftingRecipeList();
+        // Setup category tab listeners (only once)
+        static bool categoryListenersSetup = false;
+        if (!categoryListenersSetup && craftingDocument) {
+            const char* categories[] = {"all", "weapon", "tool", "armor", "material", "amulet"};
+            for (const char* cat : categories) {
+                std::string tabId = "tab_" + std::string(cat);
+                auto tab = craftingDocument->GetElementById(tabId.c_str());
+                if (tab) {
+                    tab->AddEventListener(Rml::EventId::Click, new CategoryTabListener(this, cat));
+                }
+            }
+            categoryListenersSetup = true;
+        }
+
+        selectedRecipeId.clear();
+        currentCategory = "all";
+        updateCraftingRecipeGrid();
+        updateSelectedRecipeDetails();
         craftingDocument->Show();
         craftingVisible = true;
     }
@@ -933,56 +1143,174 @@ void InventoryController::toggleCraftingUI() {
     }
 }
 
-void InventoryController::updateCraftingRecipeList() {
+void InventoryController::setCategory(const std::string& category) {
+    if (currentCategory == category) return;
+
+    currentCategory = category;
+    selectedRecipeId.clear();
+
+    // Update tab visual state
+    if (craftingDocument) {
+        const char* categories[] = {"all", "weapon", "tool", "armor", "material", "amulet"};
+        for (const char* cat : categories) {
+            std::string tabId = "tab_" + std::string(cat);
+            auto tab = craftingDocument->GetElementById(tabId.c_str());
+            if (tab) {
+                tab->SetClass("active", category == cat);
+            }
+        }
+    }
+
+    updateCraftingRecipeGrid();
+    updateSelectedRecipeDetails();
+}
+
+void InventoryController::selectRecipe(const std::string& recipeId) {
+    // Update selection visual
+    if (craftingDocument && !selectedRecipeId.empty()) {
+        auto oldSlot = craftingDocument->GetElementById(("slot_" + selectedRecipeId).c_str());
+        if (oldSlot) {
+            oldSlot->SetClass("selected", false);
+        }
+    }
+
+    selectedRecipeId = recipeId;
+
+    if (craftingDocument && !selectedRecipeId.empty()) {
+        auto newSlot = craftingDocument->GetElementById(("slot_" + selectedRecipeId).c_str());
+        if (newSlot) {
+            newSlot->SetClass("selected", true);
+        }
+    }
+
+    updateSelectedRecipeDetails();
+}
+
+void InventoryController::updateCraftingRecipeGrid() {
     if (!craftingDocument || !craftingSystem) return;
 
-    auto recipeList = craftingDocument->GetElementById("recipe_list");
-    if (!recipeList) return;
+    auto recipeGrid = craftingDocument->GetElementById("recipe_grid");
+    if (!recipeGrid) return;
 
     // Clear existing recipes
-    recipeList->SetInnerRML("");
+    recipeGrid->SetInnerRML("");
 
     const auto& recipes = craftingSystem->getAllRecipes();
 
+    std::string gridHTML;
     for (const auto& recipe : recipes) {
-        bool canCraft = craftingSystem->canCraft(recipe, this);
+        // Filter by category
+        if (currentCategory != "all") {
+            // Map category names (armor vs armour, amulet vs amulets)
+            std::string recipeCategory = recipe.category;
+            if (recipeCategory == "armour") recipeCategory = "armor";
+            if (recipeCategory == "amulets") recipeCategory = "amulet";
 
-        // Build ingredients string
-        std::string ingredientsStr;
-        for (size_t i = 0; i < recipe.ingredients.size(); i++) {
-            if (i > 0) ingredientsStr += ", ";
-            ingredientsStr += std::to_string(recipe.ingredients[i].amount) + "x " + recipe.ingredients[i].itemId;
+            if (recipeCategory != currentCategory) {
+                continue;
+            }
         }
 
-        // Build recipe HTML
-        std::string recipeHTML = "<div class='recipe-item";
-        recipeHTML += canCraft ? " craftable" : " not-craftable";
-        recipeHTML += "' id='recipe_" + recipe.id + "'>";
+        bool canCraft = craftingSystem->canCraft(recipe, this);
+        std::string iconPath = getRecipeOutputIconPath(recipe.id);
 
-        // Recipe info
-        recipeHTML += "<div class='recipe-info'>";
-        recipeHTML += "<span class='recipe-name'>" + recipe.output.itemId + "</span>";
-        recipeHTML += "<span class='recipe-ingredients'>" + ingredientsStr + "</span>";
-        recipeHTML += "</div>";
-
-        // Craft button
-        recipeHTML += "<div class='craft-button";
-        if (!canCraft) recipeHTML += " disabled";
-        recipeHTML += "' id='craft_" + recipe.id + "'>Craft</div>";
-
-        recipeHTML += "</div>";
-
-        // Add to list
-        recipeList->SetInnerRML((recipeList->GetInnerRML() + Rml::String(recipeHTML.c_str())).c_str());
+        gridHTML += "<div class='recipe-slot";
+        gridHTML += canCraft ? " craftable" : " not-craftable";
+        gridHTML += "' id='slot_" + recipe.id + "'>";
+        gridHTML += "<img class='recipe-slot-icon' src='" + iconPath + "'/>";
+        gridHTML += "</div>";
     }
 
-    // Add click listeners to craft buttons
+    recipeGrid->SetInnerRML(gridHTML.c_str());
+
+    // Add click listeners to recipe slots
     for (const auto& recipe : recipes) {
-        auto craftButton = craftingDocument->GetElementById(("craft_" + recipe.id).c_str());
-        if (craftButton) {
-            craftButton->AddEventListener(Rml::EventId::Click,
-                new CraftRecipeListener(this, recipe.id));
+        auto slot = craftingDocument->GetElementById(("slot_" + recipe.id).c_str());
+        if (slot) {
+            slot->AddEventListener(Rml::EventId::Click, new RecipeSlotListener(this, recipe.id));
         }
+    }
+}
+
+void InventoryController::updateSelectedRecipeDetails() {
+    if (!craftingDocument || !craftingSystem) return;
+
+    auto detailsPanel = craftingDocument->GetElementById("item_details");
+    if (!detailsPanel) return;
+
+    if (selectedRecipeId.empty()) {
+        detailsPanel->SetInnerRML("<div class='no-selection'>Select an item to craft</div>");
+        return;
+    }
+
+    const CraftingRecipe* recipe = craftingSystem->getRecipe(selectedRecipeId);
+    if (!recipe) {
+        detailsPanel->SetInnerRML("<div class='no-selection'>Recipe not found</div>");
+        return;
+    }
+
+    bool canCraft = craftingSystem->canCraft(*recipe, this);
+    std::string iconPath = getRecipeOutputIconPath(recipe->id);
+    std::string itemName = formatItemName(recipe->output.itemId);
+
+    std::string html;
+
+    // Header with item icon and name
+    html += "<div class='selected-item-header'>";
+    html += "<div class='selected-item-icon'><img src='" + iconPath + "'/></div>";
+    html += "<div class='selected-item-info'>";
+    html += "<div class='selected-item-name'>" + itemName + "</div>";
+    html += "</div>";
+    html += "</div>";
+
+    // Materials section
+    html += "<div class='materials-section'>";
+    html += "<div class='materials-title'>Materials Required:</div>";
+    html += "<div class='materials-list'>";
+
+    for (const auto& ingredient : recipe->ingredients) {
+        std::string matIconPath = getMaterialIconPath(ingredient.itemId);
+        std::string matName = formatItemName(ingredient.itemId);
+
+        // Count how many of this material we have
+        int haveAmount = countMaterials(
+            ingredient.itemId == "wood" ? MaterialType::WOOD :
+            ingredient.itemId == "stone" ? MaterialType::STONE :
+            ingredient.itemId == "leather" ? MaterialType::LEATHER :
+            ingredient.itemId == "iron" ? MaterialType::IRON :
+            ingredient.itemId == "steel" ? MaterialType::STEEL :
+            ingredient.itemId == "dragonscale" ? MaterialType::DRAGONSCALE :
+            ingredient.itemId == "gold" ? MaterialType::GOLD :
+            ingredient.itemId == "bronze" ? MaterialType::BRONZE :
+            ingredient.itemId == "copper" ? MaterialType::COPPER :
+            MaterialType::NONE
+        );
+
+        bool sufficient = haveAmount >= ingredient.amount;
+
+        html += "<div class='material-row " + std::string(sufficient ? "sufficient" : "insufficient") + "'>";
+        html += "<img class='material-icon' src='" + matIconPath + "'/>";
+        html += "<span class='material-name'>" + matName + "</span>";
+        html += "<span class='material-count " + std::string(sufficient ? "sufficient" : "insufficient") + "'>";
+        html += std::to_string(haveAmount) + "/" + std::to_string(ingredient.amount);
+        html += "</span>";
+        html += "</div>";
+    }
+
+    html += "</div>";
+    html += "</div>";
+
+    // Craft button
+    html += "<div class='craft-section'>";
+    html += "<div class='craft-button" + std::string(canCraft ? "" : " disabled") + "' id='craft_selected'>Craft</div>";
+    html += "</div>";
+
+    detailsPanel->SetInnerRML(html.c_str());
+
+    // Add click listener to craft button
+    auto craftButton = craftingDocument->GetElementById("craft_selected");
+    if (craftButton) {
+        craftButton->AddEventListener(Rml::EventId::Click, new CraftRecipeListener(this, selectedRecipeId));
     }
 }
 
@@ -1006,6 +1334,7 @@ void InventoryController::craftRecipe(const std::string& recipeId) {
         }
     }
 
-    // Refresh the recipe list to update craftable status
-    updateCraftingRecipeList();
+    // Refresh the UI to update craftable status and material counts
+    updateCraftingRecipeGrid();
+    updateSelectedRecipeDetails();
 }

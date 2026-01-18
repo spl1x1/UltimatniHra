@@ -204,6 +204,14 @@ std::unique_ptr<Item> CraftingSystem::createItemFromRecipe(const CraftingOutput&
     } else if (typePart == "boots") {
         return ItemFactory::createBoots(material);
     }
+    // Amulets
+    else if (typePart == "ring") {
+        return ItemFactory::createDamageAmulet(10);
+    } else if (typePart == "necklace") {
+        return ItemFactory::createSpeedAmulet(10);
+    } else if (typePart == "crown") {
+        return ItemFactory::createArmourAmulet(10);
+    }
 
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "CraftingSystem: Unknown item type in id: %s", itemId.c_str());
     return nullptr;
@@ -216,6 +224,9 @@ MaterialType CraftingSystem::parseMaterialType(const std::string& materialStr) {
     if (materialStr == "iron") return MaterialType::IRON;
     if (materialStr == "steel") return MaterialType::STEEL;
     if (materialStr == "dragonscale") return MaterialType::DRAGONSCALE;
+    if (materialStr == "gold") return MaterialType::GOLD;
+    if (materialStr == "bronze") return MaterialType::BRONZE;
+    if (materialStr == "copper") return MaterialType::COPPER;
     return MaterialType::NONE;
 }
 

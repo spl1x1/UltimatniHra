@@ -12,6 +12,7 @@
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Window/Window.h"
 #include "../../include/Items/inventory.h"
+#include "../../include/Items/Crafting.h"
 
 #include <RmlUi/Core/Core.h>
 #include <RmlUi/Core/ElementDocument.h>
@@ -167,8 +168,17 @@ void UIComponent::Init() {
 
     RegisterButtonBindings(windowClass);
 
+    // Initialize crafting system
+    craftingSystem = std::make_unique<CraftingSystem>();
+    if (!craftingSystem->loadRecipes("assets/jsons/crafting/crafting_recipes.json")) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load crafting recipes!");
+    }
+
     // Initialize inventory controller
     inventoryController = std::make_unique<InventoryController>(windowClass, this);
+
+    // Connect crafting system to inventory controller
+    inventoryController->setCraftingSystem(craftingSystem.get());
 }
 
 void UIComponent::HandleEvent(const SDL_Event *e) {
@@ -214,6 +224,31 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                 static_cast<int>(e->button.y),
                 0);
             RmlContext->ProcessMouseButtonUp(rml_button, 0);
+            break;
+        }
+
+        case SDL_EVENT_MOUSE_WHEEL:
+        {
+            // Scroll wheel to change hotbar slot
+            bool inGame = !documents.at("main_menu")->IsVisible() &&
+                          !documents.at("pause_menu")->IsVisible() &&
+                          !blockInput;
+            if (inventoryController && inGame) {
+                int currentSlot = inventoryController->getSelectedQuickbarSlot();
+                int newSlot = currentSlot;
+
+                if (e->wheel.y > 0) {
+                    // Scroll up - previous slot
+                    newSlot = (currentSlot - 1 + InventoryController::QUICKBAR_SIZE) % InventoryController::QUICKBAR_SIZE;
+                } else if (e->wheel.y < 0) {
+                    // Scroll down - next slot
+                    newSlot = (currentSlot + 1) % InventoryController::QUICKBAR_SIZE;
+                }
+
+                if (newSlot != currentSlot) {
+                    inventoryController->setSelectedQuickbarSlot(newSlot);
+                }
+            }
             break;
         }
 
@@ -276,6 +311,17 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                 if (inventoryController && inGame) {
                     inventoryController->toggle();
                     SDL_Log("Inventory toggled");
+                }
+            }
+
+            // Hotbar slot selection with keys 1-5
+            if (keycode >= SDLK_1 && keycode <= SDLK_5) {
+                bool inGame = !documents.at("main_menu")->IsVisible() &&
+                              !documents.at("pause_menu")->IsVisible() &&
+                              !blockInput;
+                if (inventoryController && inGame) {
+                    int slot = keycode - SDLK_1;  // SDLK_1 -> 0, SDLK_2 -> 1, etc.
+                    inventoryController->setSelectedQuickbarSlot(slot);
                 }
             }
             break;

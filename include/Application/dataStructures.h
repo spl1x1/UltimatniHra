@@ -4,7 +4,7 @@
 
 #ifndef ULTIMATNIHRA_DATASTRUCTURES_H
 #define ULTIMATNIHRA_DATASTRUCTURES_H
-
+#include <string>
 //Defines a 2D coordinate
 
 #include <vector>

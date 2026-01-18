@@ -276,12 +276,29 @@
     },
     {
       "id": "gold_ring",
-      "category": "accessory",
+      "category": "amulet",
       "ingredients": [
         { "item": "gold", "amount": 2 },
         { "item": "bronze", "amount": 1 }
       ],
       "output": { "item": "gold_ring", "amount": 1 }
+    },
+    {
+      "id": "bronze_necklace",
+      "category": "amulet",
+      "ingredients": [
+        { "item": "bronze", "amount": 2 },
+        { "item": "copper", "amount": 1 }
+      ],
+      "output": { "item": "bronze_necklace", "amount": 1 }
+    },
+    {
+      "id": "copper_crown",
+      "category": "amulets",
+        "ingredients": [
+        { "item": "copper", "amount": 3 }
+          ],
+        "output": { "item": "copper_crown", "amount": 1 }
     }
 
   ]

@@ -984,7 +984,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
         if (window) {
             auto* inventory = window->data.uiComponent->getInventoryController();
             if (inventory) {
-                // Parse item name and amount from args (e.g. "stone_sword", "iron_axe 5")
+                // Parse item name and amount from args (e.g. "stone_sword", "iron_axe 5", "wood 10")
                 std::string itemName = "wood_sword";
                 int amount = 1;
 
@@ -1003,10 +1003,37 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
                     }
                 }
 
-                // Parse material and type from item name (e.g. "stone_sword" -> stone, sword)
+                // Helper lambda to parse material type from string
+                auto parseMaterial = [](const std::string& str) -> MaterialType {
+                    if (str == "wood" || str == "wooden") return MaterialType::WOOD;
+                    if (str == "stone") return MaterialType::STONE;
+                    if (str == "leather") return MaterialType::LEATHER;
+                    if (str == "iron") return MaterialType::IRON;
+                    if (str == "steel") return MaterialType::STEEL;
+                    if (str == "dragonscale") return MaterialType::DRAGONSCALE;
+                    if (str == "gold") return MaterialType::GOLD;
+                    if (str == "bronze") return MaterialType::BRONZE;
+                    if (str == "copper") return MaterialType::COPPER;
+                    return MaterialType::NONE;
+                };
+
+                // Check if this is a raw material (no underscore)
                 size_t underscorePos = itemName.find('_');
                 if (underscorePos == std::string::npos) {
-                    printf("Invalid item format: %s (use: material_type, e.g. stone_sword)\n", itemName.c_str());
+                    // Try to parse as a raw material
+                    MaterialType matType = parseMaterial(itemName);
+                    if (matType != MaterialType::NONE) {
+                        auto material = ItemFactory::createMaterial(matType);
+                        if (amount > 1) {
+                            material->addToStack(amount - 1);
+                        }
+                        inventory->addItem(std::move(material));
+                        printf("Added %d x %s to inventory\n", amount, itemName.c_str());
+                        inventory->show();
+                        return;
+                    }
+                    printf("Invalid item format: %s\n", itemName.c_str());
+                    printf("  Use: material_type (e.g. stone_sword) or just material name (e.g. wood, iron)\n");
                     return;
                 }
 
@@ -1014,13 +1041,12 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
                 std::string weaponType = itemName.substr(underscorePos + 1);
 
                 // Parse material
-                MaterialType material = MaterialType::WOOD;
-                if (materialStr == "wood" || materialStr == "wooden") material = MaterialType::WOOD;
-                else if (materialStr == "leather") material = MaterialType::LEATHER;
-                else if (materialStr == "stone") material = MaterialType::STONE;
-                else if (materialStr == "iron") material = MaterialType::IRON;
-                else if (materialStr == "steel") material = MaterialType::STEEL;
-                else if (materialStr == "dragonscale") material = MaterialType::DRAGONSCALE;
+                MaterialType material = parseMaterial(materialStr);
+                if (material == MaterialType::NONE && materialStr != "speed" && materialStr != "damage" && materialStr != "armour" && materialStr != "armor") {
+                    printf("Unknown material: %s\n", materialStr.c_str());
+                    printf("  Materials: wood, stone, leather, iron, steel, dragonscale, gold, bronze, copper\n");
+                    return;
+                }
 
                 // Create weapons based on amount
                 for (int i = 0; i < amount; i++) {
@@ -1036,25 +1062,15 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
                     // Amulets - parse effect value from material string (e.g. "10_amulet" or "speed_amulet")
                     else if (weaponType == "amulet") {
                         int effectValue = 10; // default
-                        // Try to parse material as number for effect value
-                        auto result = std::from_chars(materialStr.data(), materialStr.data() + materialStr.size(), effectValue);
-                        if (result.ec != std::errc()) {
-                            // Not a number, try as amulet type
-                            if (materialStr == "speed") {
-                                item = ItemFactory::createSpeedAmulet(effectValue);
-                            } else if (materialStr == "damage") {
-                                item = ItemFactory::createDamageAmulet(effectValue);
-                            } else if (materialStr == "armour" || materialStr == "armor") {
-                                item = ItemFactory::createArmourAmulet(effectValue);
-                            } else {
-                                printf("Unknown amulet type: %s (use: speed, damage, armour)\n", materialStr.c_str());
-                                return;
-                            }
+                        // Not a number, try as amulet type
+                        if (materialStr == "speed") {
+                            item = ItemFactory::createSpeedAmulet(effectValue);
+                        } else if (materialStr == "damage") {
+                            item = ItemFactory::createDamageAmulet(effectValue);
+                        } else if (materialStr == "armour" || materialStr == "armor") {
+                            item = ItemFactory::createArmourAmulet(effectValue);
                         } else {
-                            // Number provided, need amulet type as third arg
-                            printf("For amulets use: /itemshow <type>_amulet [amount]\n");
-                            printf("  Types: speed, damage, armour\n");
-                            printf("  Example: /itemshow speed_amulet 2\n");
+                            printf("Unknown amulet type: %s (use: speed, damage, armour)\n", materialStr.c_str());
                             return;
                         }
                     }
@@ -1063,6 +1079,7 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
                         printf("  Weapons: sword, axe, pickaxe, bow\n");
                         printf("  Armour: helmet, chestplate, leggings, boots\n");
                         printf("  Amulets: speed_amulet, damage_amulet, armour_amulet\n");
+                        printf("  Materials: wood, stone, leather, iron, steel, dragonscale, gold, bronze, copper\n");
                         return;
                     }
 
@@ -1170,10 +1187,11 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
         printf("  /rmlhide <name>     - Hide an RML document\n");
         printf("  /rmllist            - List all loaded documents\n");
         printf("  /itemshow <item> [amount] - Add item to inventory\n");
-        printf("      Items: <material>_<type>\n");
-        printf("      Materials: wood, stone, leather, iron, steel, dragonscale\n");
+        printf("      Items: <material>_<type> or just <material>\n");
+        printf("      Materials: wood, stone, leather, iron, steel, dragonscale, gold, bronze, copper\n");
         printf("      Types: sword, axe, pickaxe, bow, helmet, chestplate, leggings, boots\n");
         printf("      Amulets: speed_amulet, damage_amulet, armour_amulet\n");
+        printf("      Examples: /itemshow iron 10, /itemshow wood_sword 2, /itemshow gold 5\n");
         printf("  /damageplayer <amount> - Sends damage event to player\n");
         printf("  /crafting           - Toggle crafting table proximity (for testing)\n");
         printf("  /help               - Show this help message\n");

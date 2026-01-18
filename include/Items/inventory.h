@@ -105,6 +105,19 @@ public:
     void toggleCraftingUI();
     bool isCraftingUIVisible() const { return craftingVisible; }
     void craftRecipe(const std::string& recipeId);
+    void selectRecipe(const std::string& recipeId);
+    void setCategory(const std::string& category);
+
+    // Equipment access - returns nullptr if slot is empty
+    Item* getEquippedHelmet();
+    Item* getEquippedChestplate();
+    Item* getEquippedLeggings();
+    Item* getEquippedBoots();
+    Item* getEquippedAmulet();
+    Item* getEquippedItem(const std::string& slotId);
+
+    // Get total defense from all equipped armor
+    int getTotalArmorDefense() const;
 
 private:
     Window* window;
@@ -147,9 +160,15 @@ private:
     Rml::ElementDocument* craftingDocument = nullptr;
     bool nearCraftingTable = false;
     bool craftingVisible = false;
+    std::string selectedRecipeId;  // Currently selected recipe
+    std::string currentCategory = "all";  // Current category filter
     void setupCraftingUI();
     void updateCraftingButton();
-    void updateCraftingRecipeList();
+    void updateCraftingRecipeGrid();
+    void updateSelectedRecipeDetails();
+    static std::string getMaterialIconPath(const std::string& materialId);
+    static std::string getRecipeOutputIconPath(const std::string& recipeId);
+    static std::string formatItemName(const std::string& itemId);
 };
 
 

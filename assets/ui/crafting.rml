@@ -9,9 +9,28 @@
             <span class="crafting-title">Crafting</span>
             <div class="close-button" id="crafting_close">x</div>
         </div>
+
+        <!-- Category Tabs -->
+        <div class="category-tabs" id="category_tabs">
+            <div class="category-tab active" id="tab_all">All</div>
+            <div class="category-tab" id="tab_weapon">Weapons</div>
+            <div class="category-tab" id="tab_tool">Tools</div>
+            <div class="category-tab" id="tab_armor">Armor</div>
+            <div class="category-tab" id="tab_material">Materials</div>
+            <div class="category-tab" id="tab_amulet">Amulets</div>
+        </div>
+
         <div class="crafting-content">
-            <div class="recipe-list" id="recipe_list">
-                <!-- Recipes will be added dynamically -->
+            <!-- Left: Recipe List -->
+            <div class="recipe-list-panel">
+                <div class="recipe-grid" id="recipe_grid">
+                    <!-- Recipe items will be added dynamically -->
+                </div>
+            </div>
+
+            <!-- Right: Selected Item Details -->
+            <div class="item-details-panel" id="item_details">
+                <div class="no-selection">Select an item to craft</div>
             </div>
         </div>
     </div>
