@@ -615,3 +615,162 @@ void EventBindings::InitializeBindings() {
 
 }
 
+// EntityInventoryComponent methods
+int EntityInventoryComponent::nextInventoryId = 0;
+
+EntityInventoryComponent::EntityInventoryComponent() {
+    inventoryId = nextInventoryId++;
+}
+
+bool EntityInventoryComponent::addItem(std::unique_ptr<Item> item) {
+    if (!item) return false;
+
+    // Try to stack with existing item if stackable
+    if (item->isStackable()) {
+        int existingSlot = findStackableSlot(item.get());
+        if (existingSlot != -1) {
+            Item* existingItem = items[existingSlot].get();
+            int spaceLeft = existingItem->getMaxStackSize() - existingItem->getStackSize();
+
+            if (spaceLeft > 0) {
+                int toAdd = std::min(spaceLeft, item->getStackSize());
+                existingItem->addToStack(toAdd);
+
+                if (toAdd >= item->getStackSize()) {
+                    return true;
+                }
+                item->removeFromStack(toAdd);
+            }
+        }
+    }
+
+    int emptySlot = findEmptySlot();
+    if (emptySlot == -1) {
+        return false;  // Inventory full
+    }
+
+    items[emptySlot] = std::move(item);
+    return true;
+}
+
+bool EntityInventoryComponent::removeItem(int slotIndex, int count) {
+    auto it = items.find(slotIndex);
+    if (it == items.end()) {
+        return false;
+    }
+
+    Item* item = it->second.get();
+
+    if (item->isStackable() && item->getStackSize() > count) {
+        item->removeFromStack(count);
+    } else {
+        items.erase(it);
+    }
+
+    return true;
+}
+
+bool EntityInventoryComponent::moveItem(int fromSlot, int toSlot) {
+    if (fromSlot == toSlot) return false;
+
+    auto fromIt = items.find(fromSlot);
+    if (fromIt == items.end()) return false;
+
+    auto toIt = items.find(toSlot);
+
+    if (toIt == items.end()) {
+        // Target slot is empty - move item
+        items[toSlot] = std::move(fromIt->second);
+        items.erase(fromIt);
+    } else {
+        // Target slot has item - try to stack or swap
+        Item* fromItem = fromIt->second.get();
+        Item* toItem = toIt->second.get();
+
+        if (fromItem->isStackable() && toItem->isStackable() &&
+            fromItem->getName() == toItem->getName()) {
+
+            int fromAmount = fromItem->getStackSize();
+            int maxStack = toItem->getMaxStackSize();
+            int spaceInTarget = maxStack - toItem->getStackSize();
+
+            if (spaceInTarget > 0) {
+                int transferAmount = std::min(fromAmount, spaceInTarget);
+                toItem->addToStack(transferAmount);
+                fromItem->removeFromStack(transferAmount);
+
+                if (fromItem->getStackSize() <= 0) {
+                    items.erase(fromIt);
+                }
+            } else {
+                std::swap(fromIt->second, toIt->second);
+            }
+        } else {
+            std::swap(fromIt->second, toIt->second);
+        }
+    }
+
+    return true;
+}
+
+void EntityInventoryComponent::clearSlot(int slotIndex) {
+    items.erase(slotIndex);
+}
+
+Item* EntityInventoryComponent::getItem(int slotIndex) const {
+    auto it = items.find(slotIndex);
+    if (it != items.end()) {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+bool EntityInventoryComponent::hasItem(int slotIndex) const {
+    return items.find(slotIndex) != items.end();
+}
+
+int EntityInventoryComponent::findEmptySlot() const {
+    for (int i = 0; i < totalSlots; i++) {
+        if (items.find(i) == items.end()) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int EntityInventoryComponent::findStackableSlot(Item* item) const {
+    if (!item || !item->isStackable()) return -1;
+
+    for (const auto& [slotIndex, slotItem] : items) {
+        if (slotItem->getName() == item->getName() &&
+            slotItem->isStackable() &&
+            slotItem->getStackSize() < slotItem->getMaxStackSize()) {
+            return slotIndex;
+        }
+    }
+    return -1;
+}
+
+int EntityInventoryComponent::countItems(ItemType type) const {
+    int count = 0;
+    for (const auto& [slotIndex, item] : items) {
+        if (item->getType() == type) {
+            count += item->getStackSize();
+        }
+    }
+    return count;
+}
+
+int EntityInventoryComponent::countMaterials(MaterialType materialType) const {
+    int count = 0;
+    for (const auto& [slotIndex, item] : items) {
+        if (item->getType() == ItemType::MATERIAL) {
+            auto* material = dynamic_cast<Material*>(item.get());
+            if (material && material->getMaterialType() == materialType) {
+                count += item->getStackSize();
+            }
+        }
+    }
+    return count;
+}
+

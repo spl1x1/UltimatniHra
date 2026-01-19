@@ -18,6 +18,7 @@
 #include "../Server/Server.h"
 #include "../Sprites/Sprite.hpp"
 #include "../Entities/EntityEvent.h"
+#include "../Items/Item.h"
 
 class IEntity;
 class EventBindings;
@@ -175,8 +176,41 @@ public:
 
 class EntityInventoryComponent {
     friend class EventBindings;
-    //Inventory data and methods would go here
-    //To be implemented
+
+    int inventoryId{-1};  // Unique identifier for this inventory (-1 = unassigned)
+    static int nextInventoryId;  // Static counter for generating unique IDs
+
+    std::unordered_map<int, std::unique_ptr<Item>> items;  // slot index -> item
+    int totalSlots{20};  // Default inventory size
+
+public:
+    // Constructor - automatically assigns unique ID
+    EntityInventoryComponent();
+
+    // ID management
+    [[nodiscard]] int getInventoryId() const { return inventoryId; }
+    void setInventoryId(int id) { inventoryId = id; }
+
+    // Slot management
+    [[nodiscard]] int getTotalSlots() const { return totalSlots; }
+    void setTotalSlots(int slots) { totalSlots = slots; }
+
+    // Item management
+    bool addItem(std::unique_ptr<Item> item);
+    bool removeItem(int slotIndex, int count = 1);
+    bool moveItem(int fromSlot, int toSlot);
+    void clearSlot(int slotIndex);
+    [[nodiscard]] Item* getItem(int slotIndex) const;
+    [[nodiscard]] bool hasItem(int slotIndex) const;
+    [[nodiscard]] int findEmptySlot() const;
+    [[nodiscard]] int findStackableSlot(Item* item) const;
+
+    // Inventory queries
+    [[nodiscard]] int countItems(ItemType type) const;
+    [[nodiscard]] int countMaterials(MaterialType materialType) const;
+    [[nodiscard]] const std::unordered_map<int, std::unique_ptr<Item>>& getItems() const { return items; }
+    [[nodiscard]] bool isEmpty() const { return items.empty(); }
+    [[nodiscard]] bool isFull() const { return findEmptySlot() == -1; }
 };
 
 class EventBindings {
