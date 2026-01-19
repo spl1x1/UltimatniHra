@@ -588,6 +588,7 @@ void Window::initGame(bool loadingSave) {
         SDL_SetTextureScaleMode(textures.at("FinalTexture"), SDL_SCALEMODE_PIXELART);
         data.wasLoaded = true;
     }
+    server->Reset();
     if (!loadingSave) {
         server->GenerateWorld();
         WorldRender(*this).GenerateWorldTexture();

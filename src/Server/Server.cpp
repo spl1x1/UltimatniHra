@@ -391,8 +391,6 @@ void Server::SaveServerState() {
 }
 
 void Server::LoadServerState() {
-    Reset();
-
     const auto fileName{"saves/slot_" + std::to_string(SaveManager::getInstance().getCurrentSlot()) + "_server_state.json"};
     if (!std::filesystem::exists(fileName)) {
         SDL_Log("Save file does not exist: %s", fileName.c_str());
@@ -433,9 +431,15 @@ void Server::Reset() {
     nextEntityId = 1;
     nextStructureId = 0;
     reclaimedStructureIds.clear();
+    structuresToRemove.clear();
+    entitiesToRemove.clear();
     localPlayer = nullptr;
     damagePoints.clear();
     aiManager.unregisterAllEntities();
+    deltaTime = 0.0f;
+    lastDamagePoints.clear();
+    cacheValidityData.isCacheValid = false;
+    StructureIdCache.clear();
 }
 
 void Server::PlayerUpdate(std::unique_ptr<EntityEvent> e, int playerId) {
