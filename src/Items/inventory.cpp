@@ -106,6 +106,16 @@ InventoryController::InventoryController(Window* window, UIComponent* uiComponen
     } else {
         SDL_Log("InventoryController: crafting document NOT found!");
     }
+
+    // Setup hotbar document
+    if (documents->contains("hotbar")) {
+        hotbarDocument = documents->at("hotbar").get();
+        SDL_Log("InventoryController: Found hotbar document");
+        setupHotbarUI();
+        hotbarDocument->Show();  // Hotbar is always visible during gameplay
+    } else {
+        SDL_Log("InventoryController: hotbar document NOT found!");
+    }
 }
 
 InventoryController::~InventoryController() {
@@ -114,6 +124,9 @@ InventoryController::~InventoryController() {
     }
     if (craftingDocument) {
         craftingDocument->Close();
+    }
+    if (hotbarDocument) {
+        hotbarDocument->Close();
     }
 }
 
@@ -901,6 +914,9 @@ void InventoryController::updateQuickbarSlot(int slot) {
         quickbarSlots[slot].stackSize = 0;
         quickbarSlots[slot].itemType = ItemType::MATERIAL;
     }
+
+    // Also update the hotbar UI
+    updateHotbarSlot(slot);
 }
 
 QuickbarSlotInfo InventoryController::getQuickbarSlot(int slot) const {
@@ -915,7 +931,7 @@ void InventoryController::setSelectedQuickbarSlot(int slot) {
         int oldSlot = selectedQuickbarSlot;
         selectedQuickbarSlot = slot;
 
-        // Update visual highlighting
+        // Update visual highlighting in inventory UI
         if (document) {
             // Remove highlight from old slot
             if (oldSlot >= 0 && oldSlot < QUICKBAR_SIZE) {
@@ -930,6 +946,9 @@ void InventoryController::setSelectedQuickbarSlot(int slot) {
                 newElement->SetClass("active-hotbar", true);
             }
         }
+
+        // Update hotbar UI selection
+        updateHotbarSelection();
 
         SDL_Log("Selected hotbar slot %d", slot);
     }
@@ -1337,4 +1356,87 @@ void InventoryController::craftRecipe(const std::string& recipeId) {
     // Refresh the UI to update craftable status and material counts
     updateCraftingRecipeGrid();
     updateSelectedRecipeDetails();
+}
+
+// Hotbar UI implementation
+void InventoryController::setupHotbarUI() {
+    if (!hotbarDocument) return;
+
+    // Initialize all hotbar slots
+    updateAllHotbarSlots();
+    updateHotbarSelection();
+
+    SDL_Log("InventoryController: Hotbar UI setup complete");
+}
+
+void InventoryController::updateHotbarSlot(int slot) {
+    if (!hotbarDocument || slot < 0 || slot >= QUICKBAR_SIZE) return;
+
+    std::string slotId = "hotbar_" + std::to_string(slot);
+    auto slotElement = hotbarDocument->GetElementById(slotId.c_str());
+    if (!slotElement) return;
+
+    auto it = items.find(slot);
+    if (it != items.end() && it->second) {
+        Item* item = it->second.get();
+
+        // Create item visual with icon
+        std::string itemHTML = "<div class='hotbar-item'>";
+
+        if (!item->getIconPath().empty()) {
+            std::string iconPath = item->getIconPath();
+            // Adjust path for RmlUI (relative to assets/ui/)
+            if (iconPath.rfind("assets/", 0) == 0) {
+                iconPath = "../" + iconPath.substr(7);
+            } else if (iconPath.rfind("textures/", 0) == 0) {
+                iconPath = "../" + iconPath;
+            }
+            itemHTML += "<img class='item-icon' src='" + iconPath + "'/>";
+        }
+
+        // Show stack count if stackable and more than 1
+        if (item->isStackable() && item->getStackSize() > 1) {
+            itemHTML += "<span class='item-count'>" + std::to_string(item->getStackSize()) + "</span>";
+        }
+
+        itemHTML += "</div>";
+
+        slotElement->SetInnerRML(itemHTML.c_str());
+        slotElement->SetClass("occupied", true);
+    } else {
+        // Empty slot
+        slotElement->SetInnerRML("");
+        slotElement->SetClass("occupied", false);
+    }
+}
+
+void InventoryController::updateAllHotbarSlots() {
+    for (int i = 0; i < QUICKBAR_SIZE; i++) {
+        updateHotbarSlot(i);
+    }
+}
+
+void InventoryController::updateHotbarSelection() {
+    if (!hotbarDocument) return;
+
+    // Update selection highlight on all hotbar slots
+    for (int i = 0; i < QUICKBAR_SIZE; i++) {
+        std::string slotId = "hotbar_" + std::to_string(i);
+        auto slotElement = hotbarDocument->GetElementById(slotId.c_str());
+        if (slotElement) {
+            slotElement->SetClass("selected", i == selectedQuickbarSlot);
+        }
+    }
+}
+
+void InventoryController::showHotbar() {
+    if (hotbarDocument) {
+        hotbarDocument->Show();
+    }
+}
+
+void InventoryController::hideHotbar() {
+    if (hotbarDocument) {
+        hotbarDocument->Hide();
+    }
 }

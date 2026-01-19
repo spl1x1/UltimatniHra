@@ -1,0 +1,88 @@
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Andy;
+}
+
+#hotbar-container {
+    position: absolute;
+    bottom: 7dp;
+    left: 50%;
+    margin-left: -65dp; /* Half of total width (5 slots * 21dp + gaps) */
+    display: flex;
+    flex-direction: row;
+    gap: 4dp;
+    background-color: rgba(44, 62, 80, 0.8);
+    border: 2dp solid #7f8c8d;
+    padding: 4dp;
+    border-radius: 4dp;
+}
+
+.hotbar-slot {
+    width: 21dp;
+    height: 21dp;
+    background-color: #34495e;
+    border: 2dp solid #7f8c8d;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hotbar-slot:hover {
+    background-color: #4a6278;
+    border-color: #bdc3c7;
+}
+
+.hotbar-slot.occupied {
+    border-color: #00ff99;
+}
+
+/* Selected/active hotbar slot */
+.hotbar-slot.selected {
+    border: 3dp solid #ff9900;
+    background-color: #4a5040;
+}
+
+/* Slot number indicator */
+.hotbar-slot::before {
+    position: absolute;
+    top: 1dp;
+    left: 3dp;
+    font-size: 9dp;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#hotbar_0::before { content: "1"; }
+#hotbar_1::before { content: "2"; }
+#hotbar_2::before { content: "3"; }
+#hotbar_3::before { content: "4"; }
+#hotbar_4::before { content: "5"; }
+
+.hotbar-item {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.item-icon {
+    width: 17dp;
+    height: 17dp;
+    margin: 2dp auto;
+    display: block;
+    image-rendering: pixelated;
+}
+
+.item-count {
+    position: absolute;
+    bottom: 1dp;
+    right: 3dp;
+    color: #ffff00;
+    font-size: 11dp;
+    font-weight: bold;
+    text-shadow: 1dp 1dp 1dp #000000;
+}

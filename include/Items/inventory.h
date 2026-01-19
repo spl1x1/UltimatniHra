@@ -169,6 +169,19 @@ private:
     static std::string getMaterialIconPath(const std::string& materialId);
     static std::string getRecipeOutputIconPath(const std::string& recipeId);
     static std::string formatItemName(const std::string& itemId);
+
+    // Hotbar UI
+    Rml::ElementDocument* hotbarDocument = nullptr;
+    void setupHotbarUI();
+    void updateHotbarSlot(int slot);
+    void updateAllHotbarSlots();
+    void updateHotbarSelection();
+
+public:
+    // Hotbar visibility (always visible during gameplay)
+    void showHotbar();
+    void hideHotbar();
+    bool isHotbarVisible() const { return hotbarDocument && hotbarDocument->IsVisible(); }
 };
 
 
