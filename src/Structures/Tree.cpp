@@ -46,11 +46,11 @@ Coordinates Tree::GetCoordinates() const {
 }
 
 int Tree::GetVariant() const {
-    return variant; // Example variant, change as needed
+    return InnerVariant; // Example variant, change as needed
 }
 
 int Tree::GetInnerType() const {
-    return InnerVariant;
+    return variant;
 }
 
 

@@ -44,9 +44,9 @@ int OreNode::GetInnerType() const {
 
 OreNode::OreNode(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int type, const int variant)
 : id(id),hitboxComponent(server), type(type) {
-    if (variant)
-    renderingComponent.SetVariant(type);
-    renderingComponent.GetSprite()->SetCurrentFrame(variant);
+
+    renderingComponent.SetVariant(variant);
+    renderingComponent.GetSprite()->SetCurrentFrame(type);
     topLeftCorner.x -= 32.0f; // Hitbox alignment
     topLeftCorner.y -= 32.0f;
     hitboxComponent.SetTopLeftCorner(topLeftCorner);

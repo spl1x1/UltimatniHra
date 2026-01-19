@@ -693,8 +693,7 @@ void CreateWorldConfirmListener::ProcessEvent(Rml::Event& event) {
         documents->at("create_world")->Hide();
     }
 
-    window->server->SetSeed(seed);
-    window->server->GenerateWorld();
+    window->server->SetSeed(static_cast<int>(seed));
 
     window->initGame(false);
 

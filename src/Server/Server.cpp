@@ -196,7 +196,7 @@ void Server::SetMapValue(int x, int y, WorldData::MapType mapType, int value) {
     worldData.updateMapValue(x,y, mapType, value);
 }
 
-void Server::SetMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) const {
+void Server::SetMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) {
     worldData.updateMapValue(x,y, mapType, value);
 }
 
@@ -347,12 +347,13 @@ void Server::SaveServerState() {
     sb.append_colon();
     sb.start_array();
     for (size_t i = 0; i < structuresData.size(); ++i) {
+         const auto type = StructureRenderingComponent::TypeToString(static_cast<structureType>(structuresData.at(i).type));
         sb.start_object();
         sb.append_key_value("type", structuresData.at(i).type);
         sb.append_comma();
-        sb.append_key_value("innerType", structuresData.at(i).innerType);
+        sb.append_key_value("variant", structuresData.at(i).innerType);
         sb.append_comma();
-        sb.append_key_value("variant", structuresData.at(i).variant);
+        sb.append_key_value("innerType", structuresData.at(i).variant);
         sb.append_comma();
         sb.append_key_value("inventoryId", structuresData.at(i).inventoryId);
         sb.append_comma();
@@ -384,13 +385,9 @@ void Server::SaveServerState() {
     sb.end_array();
     sb.end_object();
 
-    const std::string_view p = sb.view();
     std::fstream file("saves/slot_" + std::to_string(SaveManager::getInstance().getCurrentSlot()) + "_server_state.json", std::ios::out);
-    file << p;
+    file << sb.c_str();
     file.close();
-
-    SDL_Log("Server state saved: %s ", std::string(p).c_str());
-    SDL_Log("Server state is valid unicode: %s", sb.validate_unicode() ? "true" : "false");
 }
 
 void Server::LoadServerState() {
@@ -407,8 +404,17 @@ void Server::LoadServerState() {
 
     for (auto structureData : doc["structures"].get_array()) {
         auto obj = structureData.get_object();
-        Coordinates coords{static_cast<float>(obj["x"].get_double()), static_cast<float>(obj["y"].get_double())};
-        AddStructure(coords,static_cast<structureType>(static_cast<int>(obj["type"].get_int64())),obj["innerType"].get_int64(), obj["variant"].get_int64());
+
+        // Přečíst všechny hodnoty najednou do lokálních proměnných
+        double x = obj["x"].get_double();
+        double y = obj["y"].get_double();
+        int type = static_cast<int>(obj["type"].get_int64());
+        int innerType = static_cast<int>(obj["innerType"].get_int64());
+        int variant = static_cast<int>(obj["variant"].get_int64());
+
+        Coordinates coords{static_cast<float>(x), static_cast<float>(y)};
+
+        AddStructure(coords, static_cast<structureType>(type), innerType, variant);
     }
 
     for (auto entityData : doc["entities"].get_array()) {
@@ -743,15 +749,15 @@ void Server::GenerateStructures() {
 
 void Server::GenerateWorld(){
     std::lock_guard lock(serverMutex);
-    auto *generaceMapy = new GeneraceMapy(8);
+    GeneraceMapy generaceMapy(seed);
 
     std::mt19937 mt(seed);
     std::uniform_real_distribution<double> dist(1.0,VARIATION_LEVELS);
 
     //TODO: implementovat přímo do generace generace mapy
-    for (int x = 0; x < generaceMapy->biomMapa.size(); x++) {
-        for (int y = 0; y < generaceMapy->biomMapa.at(x).size(); y++) {
-            int biomeValue = generaceMapy->biomMapa.at(x).at(y);
+    for (int x = 0; x < generaceMapy.biomMapa.size(); x++) {
+        for (int y = 0; y < generaceMapy.biomMapa.at(x).size(); y++) {
+            int biomeValue = generaceMapy.biomMapa.at(x).at(y);
             //přesun dat do matice
             worldData.updateMapValue(x,y,WorldData::BIOME_MAP,biomeValue);
 
@@ -763,5 +769,4 @@ void Server::GenerateWorld(){
             else worldData.updateMapValue(x,y,WorldData::COLLISION_MAP,0);
         }
     }
-    delete generaceMapy;
 }

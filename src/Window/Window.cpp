@@ -343,6 +343,9 @@ bool Window::LoadSurface(const std::string& Path) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
+    if (surfaces.contains(Path)) {
+        SDL_DestroySurface(surfaces.at(Path));
+    }
     if (!surfaces.insert_or_assign(Path,surface).second) {
         SDL_Log("Failed to load surface %s loaded as %s", Path.c_str(), Path.c_str());
         return false;
@@ -356,6 +359,9 @@ bool Window::LoadSurface(const std::string& Path, const std::string& SaveAs) {
     if (!surface) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
+    }
+    if (surfaces.contains(SaveAs)) {
+        SDL_DestroySurface(surfaces.at(SaveAs));
     }
     if (!surfaces.insert_or_assign(SaveAs,surface).second) {
         SDL_Log("Failed to load surface %s loaded as %s", Path.c_str(), SaveAs.c_str());
@@ -372,6 +378,9 @@ bool Window::LoadTexture(const std::string& Path) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
+    if (textures.contains(Path)) {
+        SDL_DestroyTexture(textures.at(Path));
+    }
     if (!textures.insert_or_assign(Path,texture).second) {
         SDL_Log("Failed to load texture %s loaded as %s", Path.c_str(), Path.c_str());
         return false;
@@ -387,6 +396,9 @@ bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
 
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
+    }
+    if (textures.contains(SaveAs)) {
+        SDL_DestroyTexture(textures.at(SaveAs));
     }
     if (!textures.insert_or_assign(SaveAs,texture).second) {
         SDL_Log("Failed to load texture %s loaded as %s", Path.c_str(), SaveAs.c_str());
@@ -409,6 +421,9 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
     if (!texture) {
         SDL_Log("Failed to create texture from surface %s: %s", SurfacePath.c_str(), SDL_GetError());
         return false;
+    }
+    if (textures.contains(TexturePath)) {
+        SDL_DestroyTexture(textures.at(TexturePath));
     }
     if (!textures.insert_or_assign(TexturePath,texture).second) {
         SDL_Log("Failed to load texture %s loaded as %s", SurfacePath.c_str(), TexturePath.c_str());
@@ -574,6 +589,7 @@ void Window::initGame(bool loadingSave) {
         data.wasLoaded = true;
     }
     if (!loadingSave) {
+        server->GenerateWorld();
         WorldRender(*this).GenerateWorldTexture();
         server->GenerateStructures();
     }

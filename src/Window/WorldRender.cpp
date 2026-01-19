@@ -12,7 +12,6 @@
 
 
 void WorldRender::GenerateTextures() const {
-    window.loadSurfacesFromDirectory("assets/textures/world");
     window.loadTexturesFromDirectory("assets/textures/world/water");
     window.loadTexturesFromDirectory("assets/textures/structures");
     window.loadTexturesFromDirectory("assets/textures/entities");
@@ -73,6 +72,7 @@ void WorldRender::GenerateWaterTextures() const {
 }
 
 void WorldRender::GenerateWorldTexture() const {
+    window.loadSurfacesFromDirectory("assets/textures/world");
     SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 
     for (int x = 0; x < MAPSIZE; x++) {

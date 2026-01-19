@@ -47,7 +47,8 @@ int OreDeposit::GetInnerType() const {
 OreDeposit::OreDeposit(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int type, const int variant)
 : id(id),hitboxComponent(server), type(type) {
 
-    renderingComponent.SetVariant(type);
+    renderingComponent.SetVariant(variant);
+    renderingComponent.GetSprite()->SetCurrentFrame(type);
     topLeftCorner.x -= 32.0f; // Hitbox alignment
     topLeftCorner.y -= 32.0f;
     hitboxComponent.SetTopLeftCorner(topLeftCorner);

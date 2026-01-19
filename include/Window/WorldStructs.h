@@ -4,13 +4,14 @@
 
 #ifndef WORLDDATASTRUCT_H
 #define WORLDDATASTRUCT_H
+#include <vector>
 
 
 class WorldData {
     //Zmena na 1D pole, step zname je to MAPSIZE tak usetrime pamet
-    int* biomeMap;
-    int* blockVariantionMap;
-    int* collisionMap;
+    std::vector<int> biomeMap;
+    std::vector<int> blockVariantionMap;
+    std::vector<int> collisionMap;
 
 public:
     enum MapType {
@@ -20,11 +21,10 @@ public:
     };
 
 
-    void updateMapValue(int x, int y, MapType mapType, int newValue) const;
+    void updateMapValue(int x, int y, MapType mapType, int newValue);
     [[nodiscard]] int getMapValue(int x, int y, MapType mapType) const;
 
     WorldData();
-    ~WorldData();
 };
 
 #endif //WORLDDATASTRUCT_H
