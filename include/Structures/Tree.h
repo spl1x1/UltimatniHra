@@ -19,16 +19,24 @@ public:
         FOREST,
         NONE
     };
+
+    int variant{0};
+    int InnerVariant{0};
+
     //Interface implementation
     [[nodiscard]] structureType getType() const override;
     [[nodiscard]] int getId() const override;
     bool wasProperlyInitialized() override;
     void Tick(float deltaTime) override;
+    [[nodiscard]] int GetInventoryId() const override;
     [[nodiscard]] RenderingContext GetRenderingContext() const override;
     [[nodiscard]] HitboxContext GetHitboxContext() override;
+    [[nodiscard]] Coordinates GetCoordinates() const override;
+    [[nodiscard]] int GetVariant() const override;
+    [[nodiscard]] int GetInnerType() const override;
 
     //Constructor
-    Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, TreeVariant variant);
+    Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int innerType);
     ~Tree() override;
 };
 

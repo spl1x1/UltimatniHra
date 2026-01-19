@@ -8,16 +8,14 @@
 
 #include <SDL3_image/SDL_image.h>
 
+#include "../../include/Application/SaveGame.h"
+
 
 void WorldRender::GenerateTextures() const {
-    window.loadSurfacesFromDirectory("assets/textures/world");
     window.loadTexturesFromDirectory("assets/textures/world/water");
     window.loadTexturesFromDirectory("assets/textures/structures");
     window.loadTexturesFromDirectory("assets/textures/entities");
     window.loadTexturesFromDirectory("assets/textures/gui");
-    GenerateWorldTexture();
-    //GenerateWaterTextures(); // Generace vody, textury jsou predgenerovany a nahrany ze slozky
-    ReleaseResources();
 }
 
 
@@ -74,6 +72,7 @@ void WorldRender::GenerateWaterTextures() const {
 }
 
 void WorldRender::GenerateWorldTexture() const {
+    window.loadSurfacesFromDirectory("assets/textures/world");
     SDL_Surface* finalSurface = SDL_CreateSurface(512*TEXTURERES,512*TEXTURERES,SDL_PIXELFORMAT_ABGR8888);
 
     for (int x = 0; x < MAPSIZE; x++) {
@@ -131,7 +130,9 @@ void WorldRender::GenerateWorldTexture() const {
 
         }
     }
-    window.surfaces["WorldMap"] = finalSurface;
+    window.surfaces.insert_or_assign("WorldMap", finalSurface);
     window.CreateTextureFromSurface("WorldMap","WorldMap");
-    IMG_SavePNG(finalSurface, "assets/worldmap.png");
+    const auto currentSlot{SaveManager::getInstance().getCurrentSlot()};
+    IMG_SavePNG(finalSurface, ("saves/worldmap_slot_" + std::to_string(currentSlot) + ".png").c_str());
+    ReleaseResources();
 };

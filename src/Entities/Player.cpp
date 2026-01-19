@@ -59,6 +59,7 @@ void Player::Load(Server* server, int slotId) {
     // Load saved data into player
     SaveManager::getInstance().loadGame(slotId, server);
 }
+
 void Player::Save(Server* server) {
     int currentSlot = SaveManager::getInstance().getCurrentSlot();
     if (currentSlot >= 0) {
@@ -114,6 +115,12 @@ void Player::AddEvent(std::unique_ptr<EntityEvent> eventData) {
     entityLogicComponent.AddEvent(std::move(eventData));
 }
 
+void Player::SetPlayerUUID(const int newPlayerId) { uuid = newPlayerId; }
+
+void Player::SetInventoryId(int newInventoryId) {
+    inventoryId = newInventoryId;
+}
+
 Coordinates Player::GetCoordinates() const {
     return entityLogicComponent.GetCoordinates();
 }
@@ -158,6 +165,12 @@ float Player::GetAttackRange() const { return 0; }
 
 EntityType Player::GetType() const {
     return EntityType::PLAYER;
+}
+
+int Player::GetPlayerUUID() const { return uuid; }
+
+int Player::GetInventoryId() const {
+    return inventoryId;
 }
 
 EntityCollisionComponent * Player::GetCollisionComponent() {

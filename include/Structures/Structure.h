@@ -21,19 +21,6 @@ enum class structureType{
     ORE_DEPOSIT
 };
 
-
-class IStructure {
-
-public:
-    virtual ~IStructure() = default;
-    [[nodiscard]] virtual structureType getType() const = 0;
-    [[nodiscard]] virtual int getId() const = 0;
-    virtual bool wasProperlyInitialized() = 0;
-    virtual void Tick(float deltaTime) = 0;
-    [[nodiscard]] virtual RenderingContext GetRenderingContext() const = 0;
-    [[nodiscard]] virtual HitboxContext GetHitboxContext() = 0;
-};
-
 class StructureRenderingComponent {
     std::unique_ptr<ISprite> sprite;
     public:
@@ -42,6 +29,7 @@ class StructureRenderingComponent {
     [[nodiscard]] RenderingContext getRenderingContext() const;
     void Tick(float deltaTime) const;
     void SetVariant(int variant) const;
+    int GetVariant() const;
     [[nodiscard]] ISprite* GetSprite() const;
     static std::string TypeToString(structureType type);
 
@@ -101,5 +89,28 @@ public:
     StructureHitboxComponent(const std::shared_ptr<Server>& server ); //Empty constructor for default initialization
 };
 
+class InventoryComponent {
+    //To be implemented
+    int inventoryId{-1};
+public:
+    int GetInventoryId() const;
+    InventoryComponent() = default;
+};
+
+class IStructure {
+
+public:
+    virtual ~IStructure() = default;
+    [[nodiscard]] virtual structureType getType() const = 0;
+    [[nodiscard]] virtual int getId() const = 0;
+    virtual bool wasProperlyInitialized() = 0;
+    virtual void Tick(float deltaTime) = 0;
+    [[nodiscard]] virtual int GetInventoryId() const = 0;
+    [[nodiscard]] virtual RenderingContext GetRenderingContext() const = 0;
+    [[nodiscard]] virtual HitboxContext GetHitboxContext() = 0;
+    [[nodiscard]] virtual Coordinates GetCoordinates() const = 0;
+    [[nodiscard]] virtual int GetVariant() const = 0;
+    [[nodiscard]] virtual int GetInnerType() const = 0;
+};
 
 #endif //ULTIMATNIHRA_STRUCTURE_H

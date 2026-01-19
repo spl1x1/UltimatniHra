@@ -17,9 +17,13 @@ void StructureRenderingComponent::Tick(float deltaTime) const {
     sprite->Tick(deltaTime);
 }
 
-void StructureRenderingComponent::SetVariant(int variant) const {
+void StructureRenderingComponent::SetVariant(const int variant) const {
     if (!sprite) return;
     sprite->SetVariant(variant);
+}
+
+int StructureRenderingComponent::GetVariant() const {
+    return sprite ? sprite->GetSpriteRenderingContext()->GetVariant() : 1;
 }
 
 ISprite* StructureRenderingComponent::GetSprite() const {
@@ -53,6 +57,10 @@ StructureHitboxComponent::StructureHitboxComponent(const std::shared_ptr<Server>
 }
 
 StructureHitboxComponent::StructureHitboxComponent(const std::shared_ptr<Server>& server) : server(server) {}
+
+int InventoryComponent::GetInventoryId() const {
+    return inventoryId;
+}
 
 void StructureHitboxComponent::updateCollisionMap(int value, int checkValue) const {
     for (const TrueCoordinates& point : hitboxPoints) {

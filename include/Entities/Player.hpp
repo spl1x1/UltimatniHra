@@ -33,6 +33,9 @@ class Player final : public IEntity {
     bool isGhostMode{false}; //If true, player is in ghost mode
     bool beingRevived{false};
 
+    int uuid{0};
+    int inventoryId{0};
+
 public:
     //Interface methods implementation
     void Tick() override;
@@ -41,10 +44,10 @@ public:
     static void Create(Server* server, int slotId) ;
     static void Load(Server* server, int slotId);
     static void Save(Server* server);
+
     void SetGhostMode(bool enable);
     void ReviveFromGhostMode();
     [[nodiscard]] bool IsBeingRevived() const;
-
     [[nodiscard]] bool IsGhostMode() const;
 
     //Setters
@@ -57,6 +60,8 @@ public:
     void SetEntityCollision(bool disable) override;
     //Event
     void AddEvent(std::unique_ptr<EntityEvent> eventData) override;
+    void SetPlayerUUID(int newPlayerId);
+    void SetInventoryId(int newInventoryId);
 
     //Getters
 
@@ -74,6 +79,8 @@ public:
     [[nodiscard]] float GetDetectionRange() const override;;
     [[nodiscard]] float GetAttackRange() const override;;
     [[nodiscard]] EntityType GetType() const override;
+    [[nodiscard]] int GetPlayerUUID() const;
+    [[nodiscard]] int GetInventoryId() const;
 
     EntityCollisionComponent* GetCollisionComponent() override;
     //Get EntityLogicComponent

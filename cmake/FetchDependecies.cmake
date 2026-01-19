@@ -34,7 +34,6 @@ CPMAddPackage(
 #other libs
 CPMAddPackage("gh:simdjson/simdjson#8b69401")
 CPMAddPackage("gh:mikke89/RmlUi#58c7515")
-CPMAddPackage("gh:ocornut/imgui#683f916")
 #CPMAddPackage("gh:ValveSoftware/GameNetworkingSockets#fa569cb") #nepouzivame sockets knihovna
 
 # HWINFO nefunguje pro Windows

@@ -20,7 +20,7 @@ void GhostSprite::PlayAnimation(const AnimationType newAnimation, const Directio
     renderingContext.PlayAnimation(newAnimation, direction, ForceReset);
 }
 
-std::tuple<std::string, SDL_FRect*> GhostSprite::GetFrame() {
+std::tuple<std::string, SDL_FRect> GhostSprite::GetFrame() {
     std::string texture = renderingContext.GetTexture();
     return  {texture, renderingContext.GetFrameRect()};
 }

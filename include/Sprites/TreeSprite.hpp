@@ -17,7 +17,7 @@ public:
     void SetVariant(int newVariant) override;
     void SetCurrentFrame(int newCurrentFrame) override{};
 
-    std::tuple<std::string,SDL_FRect*> GetFrame() override;
+    std::tuple<std::string,SDL_FRect> GetFrame() override;
     RenderingContext GetRenderingContext() override;
     [[nodiscard]] int GetWidth() const override;
     [[nodiscard]] int GetHeight() const override;

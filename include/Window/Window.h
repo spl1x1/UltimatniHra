@@ -22,7 +22,6 @@ constexpr float cameraOffsetY = (static_cast<float>(GAMERESH) / 2.0f -static_cas
 struct WindowData {
     std::unique_ptr<SDL_FRect> cameraRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
     std::unique_ptr<SDL_FRect> cameraWaterRect = std::make_unique<SDL_FRect>(0.0f,0.0f,static_cast<float>(GAMERESW),static_cast<float>(GAMERESH));
-    std::unique_ptr<SDL_FRect> mousePreviewRect = std::make_unique<SDL_FRect>(0.0f,0.0f,32.0f,32.0f);
 
 #ifdef DEBUG
     int playerAngle{0};
@@ -118,7 +117,7 @@ public:
 
     void tick();
 
-    void initGame();
+    void initGame(bool loadingSave = false);
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
     void Destroy();
     ~Window();

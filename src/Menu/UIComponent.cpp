@@ -271,7 +271,9 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     SDL_Log("Toggling ImGui visibility to %s", menuData.showImgui ? "true" : "false");
                     break;
                 }
-                case SDL_SCANCODE_GRAVE:
+                case SDL_SCANCODE_X: {
+                    windowClass->server->SaveServerState();
+                }
                 case SDL_SCANCODE_F1: {
                     if (blockInput) break;
                     auto& consoleHandler = ConsoleHandler::GetInstance();

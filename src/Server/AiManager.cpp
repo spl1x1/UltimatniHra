@@ -62,6 +62,10 @@ void AiManager::unregisterEntity(IEntity* entity) {
     entityStates.erase(entity);
 }
 
+void AiManager::unregisterAllEntities() {
+    entityStates.clear();
+}
+
 void AiManager::sendEvent(IEntity* entity, AiEvent event) {
     eventQueue.push({entity, event});
 }

@@ -491,6 +491,7 @@ void EntityHealthComponent::Tick(const float deltaTime) {
 }
 
 void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
+    if (IsDead() || damage <= 0) return;
     health -= damage;
 
     auto renderingComponent{entity.GetRenderingComponent()};

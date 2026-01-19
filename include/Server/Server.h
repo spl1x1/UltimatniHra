@@ -69,12 +69,13 @@ class Server : public std::enable_shared_from_this<Server> {
 public:
 
     //Setters
-    void SetSeed(const int newSeed) {seed = newSeed;} //Teoreticky nemusi byt thread safe callujeme jen pri inicializaci
+    void SetSeed(const int newSeed) {seed = newSeed;} //Teoreticky nemusi byt thread safe callujeme jen pri inicializaci)
+    void SetSpawnPoint(Coordinates newSpawnPoint);//Teoreticky nemusi byt thread safe callujeme jen pri inicializaci)
     void SetDeltaTime(float dt); //Musi byt thread safe protoze se vola kazdy frame, a k datum muze pristupovat vice threadu
     void SetEntityPos(int entityId, Coordinates newCoordinates); //Musi byt thread safe, nastavuje pozici entity podle id
     void SetEntityCollision(int entityId, bool disable); //Musi byt thread safe, nastavuje zda ma entity kolidovat
     void SetMapValue(int x, int y, WorldData::MapType mapType, int value); //Musi byt thread safe, nastavuje hodnotu collision mapy na danych souradnicich
-    void SetMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) const; //Unprotected verze setMapValue , nastavuje hodnotu collision mapy na danych souradnicich
+    void SetMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value); //Unprotected verze setMapValue , nastavuje hodnotu collision mapy na danych souradnicich
 
     //Getters
     [[nodiscard]] float GetDeltaTime(); //Musi byt thread safe protoze se vola kazdy frame, a k datum muze pristupovat vice threadu
@@ -107,9 +108,10 @@ public:
     void ApplyDamageAt_unprotected(int damage, const std::vector<Coordinates>& positions, int entityId = -1); //Aplikuje damage vsem entitam v okoli dane pozice, non thread safe
     static int CalculateAngle(Coordinates center, Coordinates point); //Vypocita uhel mezi dvema objekty, nemusi byt thread safe
     std::vector<std::string> GetTileInfo(float x, float y);
+    void InvalidateStructureCache(); //Invaliduje cache pro struktury
 
-    void AddEntity(Coordinates coordinates, EntityType type, int variant = 1); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
-    void AddEntity_unprotected(const std::shared_ptr<IEntity>& entity); //Prida na server entitu
+    IEntity* AddEntity(Coordinates coordinates, EntityType type, int variant = 1); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
+    IEntity* AddEntity_unprotected(const std::shared_ptr<IEntity>& entity); //Prida na server entitu
     void AddEntity(const std::shared_ptr<IEntity>& entity); //Prida na server entitu, thread safe verze
     void AddLocalPlayer(const std::shared_ptr<Player>& player); //Prida na server lokalni instanci hrace
 
@@ -121,6 +123,13 @@ public:
     void RemoveEntity(int entityId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety
     void RemoveEntity_unprotected(int entityId);
     void RemoveStructure(int structureId); //Remove entity from server TODO: implementovat, nezapomenout na thread safety
+
+    static StructureData GetStructureData(const IStructure* structure);
+    static EntityData GetEntityData(IEntity* entity);
+
+    void SaveServerState();
+    void LoadServerState();
+    void Reset();
 };
 
 #endif //SERVERSTRUCS_H

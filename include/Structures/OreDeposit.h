@@ -12,7 +12,8 @@ class OreDeposit final : public IStructure {
     StructureRenderingComponent renderingComponent = StructureRenderingComponent(std::make_unique<OreDepositSprite>());
     StructureHitboxComponent hitboxComponent;
     bool initialized{false};
-    OreType type;
+    int type{0};
+    int InnerVariant{0};
 
 public:
     //Interface implementation
@@ -20,14 +21,18 @@ public:
     [[nodiscard]] int getId() const override;
     bool wasProperlyInitialized() override;
     void Tick(float deltaTime) override {};
+    [[nodiscard]] int GetInventoryId() const override;
     [[nodiscard]] RenderingContext GetRenderingContext() const override;
     [[nodiscard]] HitboxContext GetHitboxContext() override;
+    [[nodiscard]] Coordinates GetCoordinates() const override;
+    [[nodiscard]] int GetVariant() const override;
+    [[nodiscard]] int GetInnerType() const override;
 
 
     //Structure specific methods
 
     //Constructors and Destructor
-    OreDeposit(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, OreType type, int variant);
+    OreDeposit(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int type, int variant);
     ~OreDeposit() override;
 };
 

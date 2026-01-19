@@ -11,6 +11,7 @@
 #include <utility>
 #include <cmath>
 
+#include "../../include/Application/SaveGame.h"
 #include "../../include/Sprites/WaterSprite.hpp"
 #include "../../include/Menu/Menu_listeners.h"
 #include "../../include/Entities/Player.hpp"
@@ -132,14 +133,14 @@ void Window::handlePlayerInput() const {
 }
 
 void Window::renderAt(const RenderingContext& context) const {
-    if (!textures.contains(context.textureName) || !context.rect) return;
+    if (!textures.contains(context.textureName)) return;
     SDL_FRect rect;
     rect.x = static_cast<float>(std::lround(context.coordinates.x - data.cameraRect->x));
     rect.y =  static_cast<float>(std::lround(context.coordinates.y - data.cameraRect->y));
-    rect.w = context.rect->w;
-    rect.h = context.rect->h;
+    rect.w = context.rect.w;
+    rect.h = context.rect.h;
 
-    SDL_RenderTexture(data.Renderer, textures.at(context.textureName), context.rect, &rect);
+    SDL_RenderTexture(data.Renderer, textures.at(context.textureName), &context.rect, &rect);
 }
 
 void Window::drawHitbox(const HitboxContext& context) const {
@@ -194,7 +195,7 @@ void Window::renderHud() {
     if (data.drawMousePreview) {
         RenderingContext cursor;
         cursor.coordinates = {data.mouseData.x,data.mouseData.y};
-        cursor.rect = data.mousePreviewRect.get();
+        cursor.rect = SDL_FRect{0.0f,0.0f,32.0f,32.0f};
         cursor.textureName = "cursor";
         renderAt(cursor);
 
@@ -272,6 +273,7 @@ void Window::advanceFrame() {
 
     textures.at("FinalTexture");
     SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
+    SDL_RenderClear(data.Renderer);
     Coordinates coords = server->GetPlayer()->GetCoordinates();
 
     data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
@@ -341,6 +343,9 @@ bool Window::LoadSurface(const std::string& Path) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
+    if (surfaces.contains(Path)) {
+        SDL_DestroySurface(surfaces.at(Path));
+    }
     if (!surfaces.insert_or_assign(Path,surface).second) {
         SDL_Log("Failed to load surface %s loaded as %s", Path.c_str(), Path.c_str());
         return false;
@@ -354,6 +359,9 @@ bool Window::LoadSurface(const std::string& Path, const std::string& SaveAs) {
     if (!surface) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
+    }
+    if (surfaces.contains(SaveAs)) {
+        SDL_DestroySurface(surfaces.at(SaveAs));
     }
     if (!surfaces.insert_or_assign(SaveAs,surface).second) {
         SDL_Log("Failed to load surface %s loaded as %s", Path.c_str(), SaveAs.c_str());
@@ -370,6 +378,9 @@ bool Window::LoadTexture(const std::string& Path) {
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
     }
+    if (textures.contains(Path)) {
+        SDL_DestroyTexture(textures.at(Path));
+    }
     if (!textures.insert_or_assign(Path,texture).second) {
         SDL_Log("Failed to load texture %s loaded as %s", Path.c_str(), Path.c_str());
         return false;
@@ -385,6 +396,9 @@ bool Window::LoadTexture(const std::string& Path, const std::string& SaveAs) {
 
         SDL_Log("Failed to load image %s: %s", Path.c_str(), SDL_GetError());
         return false;
+    }
+    if (textures.contains(SaveAs)) {
+        SDL_DestroyTexture(textures.at(SaveAs));
     }
     if (!textures.insert_or_assign(SaveAs,texture).second) {
         SDL_Log("Failed to load texture %s loaded as %s", Path.c_str(), SaveAs.c_str());
@@ -407,6 +421,9 @@ bool Window::CreateTextureFromSurface(const std::string& SurfacePath, const std:
     if (!texture) {
         SDL_Log("Failed to create texture from surface %s: %s", SurfacePath.c_str(), SDL_GetError());
         return false;
+    }
+    if (textures.contains(TexturePath)) {
+        SDL_DestroyTexture(textures.at(TexturePath));
     }
     if (!textures.insert_or_assign(TexturePath,texture).second) {
         SDL_Log("Failed to load texture %s loaded as %s", SurfacePath.c_str(), TexturePath.c_str());
@@ -443,6 +460,7 @@ void Window::initDebugMenu() {
 
     SDL_Log("Debug menu initialized");
 }
+
 
 
 void Window::HandleInputs() {
@@ -552,35 +570,42 @@ void Window::tick() {
 }
 
 
-void Window::initGame() {
+void Window::initGame(bool loadingSave) {
     data.mainScreen = false;
     data.inMenu = false;
     data.last = SDL_GetPerformanceCounter();
-    if (data.wasLoaded) return; //TODO: Fix loading, rozdelit na load cast a init cast
-    data.wasLoaded = true;
+    if (!data.wasLoaded) {
+        WaterSprite::Init();
+        EventBindings::InitializeBindings();
+        SpriteAnimationBinding::Init();
+        WorldRender(*this).GenerateTextures();
 
-    WaterSprite::Init();
-    EventBindings::InitializeBindings();
-    SpriteAnimationBinding::Init();
+        textures.insert_or_assign("FinalTexture", SDL_CreateTexture(data.Renderer,
+                                                SDL_PIXELFORMAT_RGBA8888,
+                                                SDL_TEXTUREACCESS_TARGET,
+                                                GAMERESW,
+                                                GAMERESH));
+        SDL_SetTextureScaleMode(textures.at("FinalTexture"), SDL_SCALEMODE_PIXELART);
+        data.wasLoaded = true;
+    }
+    server->Reset();
+    if (!loadingSave) {
+        server->GenerateWorld();
+        WorldRender(*this).GenerateWorldTexture();
+        server->GenerateStructures();
+    }
+    else {
+        server->LoadServerState();
+        LoadTexture("saves/worldmap_slot_"+ std::to_string(SaveManager::getInstance().getCurrentSlot()) +".png","WorldMap");
+    };
+
     Coordinates coordinates = server->GetEntityPos(0);
-
     data.cameraRect->x = coordinates.x - cameraOffsetX;
     data.cameraRect->y = coordinates.y * cameraOffsetY;
 
     data.cameraWaterRect->x = 64;
     data.cameraWaterRect->y = 64;
-
-    server->GenerateWorld();
-    const WorldRender wr(*this);
-    wr.GenerateTextures();
-    server->GenerateStructures();
-
-    textures.insert_or_assign("FinalTexture", SDL_CreateTexture(data.Renderer,
-                                                    SDL_PIXELFORMAT_RGBA8888,
-                                                    SDL_TEXTUREACCESS_TARGET,
-                                                    GAMERESW,
-                                                    GAMERESH));
-    SDL_SetTextureScaleMode(textures.at("FinalTexture"), SDL_SCALEMODE_PIXELART);
+    server->InvalidateStructureCache();
 }
 
 void Window::init(const std::string& title, const int width, const int height) {

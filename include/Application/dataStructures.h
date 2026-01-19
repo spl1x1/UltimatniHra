@@ -48,7 +48,7 @@ struct CollisionStatus{
 struct RenderingContext {
     std::string textureName;
     Coordinates coordinates;
-    SDL_FRect* rect = nullptr;
+    SDL_FRect rect;
 };
 
 struct HitboxContext {
@@ -90,6 +90,27 @@ struct PointData {
     int g{0};
     int b{0};
     int a{255};
+};
+
+struct StructureData {
+    int type;
+    int innerType;
+    int variant;
+    int inventoryId;
+    int x = 0,y = 0;
+};
+
+struct EntityData {
+    int type;
+    float health;
+    float x = 0.0f, y = 0.0f;
+};
+
+struct PlayerData {
+    float health;
+    float x = 0.0f, y = 0.0f;
+    int inventoryId;
+    int uuid{-1};
 };
 
 

@@ -16,7 +16,7 @@ void OreNodeSprite::SetCurrentFrame(const int newCurrentFrame) {
     renderingContext.SetCurrentFrame(newCurrentFrame);
 }
 
-std::tuple<std::string, SDL_FRect*> OreNodeSprite::GetFrame() {
+std::tuple<std::string, SDL_FRect> OreNodeSprite::GetFrame() {
     return {renderingContext.GetTexture(), renderingContext.GetFrameRect()};
 }
 

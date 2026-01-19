@@ -4,11 +4,18 @@
 
 #include "../../include/Server/Server.h"
 
+#include <filesystem>
+#include <fstream>
 #include <mutex>
 #include <ranges>
 #include <shared_mutex>
+#include <simdjson/builder.h>
+#include <simdjson/builtin/ondemand.h>
+#include <simdjson/dom/document_stream-inl.h>
+#include <simdjson/fallback/ondemand.h>
 
 #include "../../include/Application/MACROS.h"
+#include "../../include/Application/SaveGame.h"
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
@@ -153,6 +160,8 @@ void Server::setupSlimeAi(IEntity* entity) {
 }
 
 
+void Server::SetSpawnPoint(Coordinates newSpawnPoint) {spawnPoint = newSpawnPoint;}
+
 void Server::SetDeltaTime(float dt) {
     std::lock_guard lock(serverMutex);
     deltaTime = dt;
@@ -187,7 +196,7 @@ void Server::SetMapValue(int x, int y, WorldData::MapType mapType, int value) {
     worldData.updateMapValue(x,y, mapType, value);
 }
 
-void Server::SetMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) const {
+void Server::SetMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) {
     worldData.updateMapValue(x,y, mapType, value);
 }
 
@@ -198,10 +207,11 @@ void Server::AddLocalPlayer(const std::shared_ptr<Player>& player) {
     player->SetId(0); //Local player always has ID 0
 }
 
-void Server::AddEntity_unprotected(const std::shared_ptr<IEntity>& entity) {
+IEntity* Server::AddEntity_unprotected(const std::shared_ptr<IEntity>& entity) {
     const int newId = getNextEntityId();
     entities.insert_or_assign(newId, entity);
     entity->SetId(newId);
+    return entity.get();
 }
 
 void Server::AddEntity(const std::shared_ptr<IEntity>& entity) {
@@ -219,15 +229,15 @@ void Server::AddStructure(Coordinates coordinates, structureType type, int inner
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
         case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, GetSharedPtr(), static_cast<Tree::TreeVariant>(innerType));
+            newStructure = std::make_shared<Tree>(newId, coordinates, GetSharedPtr(), innerType);
             break;
         }
         case structureType::ORE_NODE: {
-            newStructure = std::make_shared<OreNode>(newId, coordinates, GetSharedPtr(), static_cast<OreType>(innerType), variant);
+            newStructure = std::make_shared<OreNode>(newId, coordinates, GetSharedPtr(), innerType, variant);
             break;
         }
             case structureType::ORE_DEPOSIT: {
-            newStructure = std::make_shared<OreDeposit>(newId, coordinates, GetSharedPtr(), static_cast<OreType>(innerType), variant);
+            newStructure = std::make_shared<OreDeposit>(newId, coordinates, GetSharedPtr(), innerType, variant);
         }
         default:
             break;
@@ -241,21 +251,21 @@ void Server::AddStructure(Coordinates coordinates, structureType type, int inner
     structures[newId] =newStructure;
 }
 
-bool Server::AddStructure_unprotected(Coordinates coordinates, structureType type, int innerType, int variant) {
+bool Server::AddStructure_unprotected(Coordinates coordinates, const structureType type, int innerType, int variant) {
     int newId = getNextStructureId();
 
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
         case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, GetSharedPtr(), static_cast<Tree::TreeVariant>(innerType));
+            newStructure = std::make_shared<Tree>(newId, coordinates, GetSharedPtr(), innerType);
             break;
         }
         case structureType::ORE_NODE: {
-            newStructure = std::make_shared<OreNode>(newId, coordinates, GetSharedPtr(), static_cast<OreType>(innerType), variant);
+            newStructure = std::make_shared<OreNode>(newId, coordinates, GetSharedPtr(), innerType, variant);
             break;
         }
         case structureType::ORE_DEPOSIT: {
-            newStructure = std::make_shared<OreDeposit>(newId, coordinates, GetSharedPtr(), static_cast<OreType>(innerType), variant);
+            newStructure = std::make_shared<OreDeposit>(newId, coordinates, GetSharedPtr(), innerType, variant);
         }
         default:
             break;
@@ -288,6 +298,148 @@ void Server::RemoveStructure(int structureId) {
     structures.erase(structureId);
     reclaimedStructureIds.emplace_back(structureId);
     cacheValidityData.isCacheValid = false; //Invalidae cache
+}
+
+StructureData Server::GetStructureData(const IStructure *structure) {
+    StructureData data;
+    data.type = static_cast<int>(structure->getType());
+    data.innerType = structure->GetInnerType();
+    data.variant = structure->GetVariant();
+    data.inventoryId = structure->GetInventoryId();
+    const auto coords{structure->GetCoordinates()};
+    data.x = static_cast<int>(coords.x);
+    data.y = static_cast<int>(coords.y);
+    return data;
+}
+
+EntityData Server::GetEntityData(IEntity *entity) {
+    EntityData data;
+    data.type = static_cast<int>(entity->GetType());
+    data.health = entity->GetHealthComponent()->GetHealth();
+    const auto coords{entity->GetCoordinates()};
+    data.x = coords.x;
+    data.y = coords.y;
+    return data;
+}
+
+
+
+void Server::SaveServerState() {
+    vector<StructureData> structuresData;
+    {
+        std::shared_lock lock(serverMutex);
+        for (const auto &structure: structures | std::views::values) {
+            structuresData.emplace_back(GetStructureData(structure.get()));
+        }
+    }
+    vector<EntityData> entitiesData;
+    {
+        std::shared_lock lock(serverMutex);
+        for (const auto &entity: entities | std::views::values) {
+            if (entity->GetType() == EntityType::PLAYER) continue;
+            entitiesData.emplace_back(GetEntityData(entity.get()));
+        }
+    }
+
+    simdjson::builder::string_builder sb;
+    sb.start_object();
+    sb.append("structures");
+    sb.append_colon();
+    sb.start_array();
+    for (size_t i = 0; i < structuresData.size(); ++i) {
+         const auto type = StructureRenderingComponent::TypeToString(static_cast<structureType>(structuresData.at(i).type));
+        sb.start_object();
+        sb.append_key_value("type", structuresData.at(i).type);
+        sb.append_comma();
+        sb.append_key_value("variant", structuresData.at(i).innerType);
+        sb.append_comma();
+        sb.append_key_value("innerType", structuresData.at(i).variant);
+        sb.append_comma();
+        sb.append_key_value("inventoryId", structuresData.at(i).inventoryId);
+        sb.append_comma();
+        sb.append_key_value("x", structuresData.at(i).x);
+        sb.append_comma();
+        sb.append_key_value("y", structuresData.at(i).y);
+        sb.end_object();
+        if (i + 1 < structuresData.size()) sb.append_comma();
+    }
+    sb.end_array();
+    sb.append_comma();
+
+
+    sb.append("entities");
+    sb.append_colon();
+    sb.start_array();
+    for (size_t i = 0; i < entitiesData.size(); ++i) {
+        sb.start_object();
+        sb.append_key_value("type", entitiesData.at(i).type);
+        sb.append_comma();
+        sb.append_key_value("health", entitiesData.at(i).health);
+        sb.append_comma();
+        sb.append_key_value("x", entitiesData.at(i).x);
+        sb.append_comma();
+        sb.append_key_value("y", entitiesData.at(i).y);
+        sb.end_object();
+        if (i + 1 < entitiesData.size()) sb.append_comma();
+    }
+    sb.end_array();
+    sb.end_object();
+
+    std::fstream file("saves/slot_" + std::to_string(SaveManager::getInstance().getCurrentSlot()) + "_server_state.json", std::ios::out);
+    file << sb.c_str();
+    file.close();
+}
+
+void Server::LoadServerState() {
+    const auto fileName{"saves/slot_" + std::to_string(SaveManager::getInstance().getCurrentSlot()) + "_server_state.json"};
+    if (!std::filesystem::exists(fileName)) {
+        SDL_Log("Save file does not exist: %s", fileName.c_str());
+        return;
+    }
+    const auto jsonContent{simdjson::padded_string::load(fileName)};
+    simdjson::ondemand::parser parser;
+    auto doc{parser.iterate(jsonContent)};
+
+    for (auto structureData : doc["structures"].get_array()) {
+        auto obj = structureData.get_object();
+
+        // Přečíst všechny hodnoty najednou do lokálních proměnných
+        double x = obj["x"].get_double();
+        double y = obj["y"].get_double();
+        int type = static_cast<int>(obj["type"].get_int64());
+        int innerType = static_cast<int>(obj["innerType"].get_int64());
+        int variant = static_cast<int>(obj["variant"].get_int64());
+
+        Coordinates coords{static_cast<float>(x), static_cast<float>(y)};
+
+        AddStructure(coords, static_cast<structureType>(type), innerType, variant);
+    }
+
+    for (auto entityData : doc["entities"].get_array()) {
+        auto obj = entityData.get_object();
+        Coordinates coords{static_cast<float>(obj["x"].get_double()), static_cast<float>(obj["y"].get_double())};
+        const auto entityType{static_cast<EntityType>(static_cast<int>(obj["type"].get_int64()))};
+        const float Health {static_cast<float>(obj["health"].get_double())};
+        AddEntity(coords, entityType)->GetHealthComponent()->SetHealth(Health);
+    }
+
+}
+
+void Server::Reset() {
+    entities.clear();
+    structures.clear();
+    nextEntityId = 1;
+    nextStructureId = 0;
+    reclaimedStructureIds.clear();
+    structuresToRemove.clear();
+    entitiesToRemove.clear();
+    localPlayer = nullptr;
+    damagePoints.clear();
+    aiManager.unregisterAllEntities();
+    deltaTime = 0.0f;
+    lastDamagePoints.clear();
+    cacheValidityData.isCacheValid = false;
+    StructureIdCache.clear();
 }
 
 void Server::PlayerUpdate(std::unique_ptr<EntityEvent> e, int playerId) {
@@ -364,24 +516,31 @@ std::vector<std::string> Server::GetTileInfo(const float x, const float y) {
     return text;
 }
 
-void Server::AddEntity(Coordinates coordinates, const EntityType type, const int variant)
+void Server::InvalidateStructureCache() {
+    std::lock_guard lock(serverMutex);
+    cacheValidityData.isCacheValid = false;
+}
+
+IEntity* Server::AddEntity(Coordinates coordinates, const EntityType type, const int variant)
 {
     std::unique_lock lock(serverMutex);
+    IEntity* entity{nullptr};
     switch (type) {
         case EntityType::SLIME: {
             const auto slime{std::make_shared<Slime>(GetSharedPtr().get(), coordinates)};
-            AddEntity_unprotected(slime);
+            entity = AddEntity_unprotected(slime);
             if (slime) setupSlimeAi(slime.get());
             break;
         }
         case EntityType::PLAYER: {
             const auto player{std::make_shared<Player>(GetSharedPtr().get(), coordinates)};
-            AddEntity_unprotected(player);
+            entity = AddEntity_unprotected(player);
             break;
         }
         default:
             break;
     }
+    return entity;
 }
 
 void Server::Tick() {
@@ -396,6 +555,7 @@ void Server::Tick() {
         else aiManager.sendEvent(entity, AiEvent::PlayerLost);
     };
     auto checkDamage = [this](const std::shared_ptr<IEntity>& entity) ->int {
+        if (entity->GetHealthComponent()->IsDead()) return 0;
         std::set<int> appliedDamageIds{};
         int totalDamage{0};
         for (const auto& damageArea : damagePoints) {
@@ -593,15 +753,15 @@ void Server::GenerateStructures() {
 
 void Server::GenerateWorld(){
     std::lock_guard lock(serverMutex);
-    auto *generaceMapy = new GeneraceMapy(8);
+    GeneraceMapy generaceMapy(seed);
 
     std::mt19937 mt(seed);
     std::uniform_real_distribution<double> dist(1.0,VARIATION_LEVELS);
 
     //TODO: implementovat přímo do generace generace mapy
-    for (int x = 0; x < generaceMapy->biomMapa.size(); x++) {
-        for (int y = 0; y < generaceMapy->biomMapa.at(x).size(); y++) {
-            int biomeValue = generaceMapy->biomMapa.at(x).at(y);
+    for (int x = 0; x < generaceMapy.biomMapa.size(); x++) {
+        for (int y = 0; y < generaceMapy.biomMapa.at(x).size(); y++) {
+            int biomeValue = generaceMapy.biomMapa.at(x).at(y);
             //přesun dat do matice
             worldData.updateMapValue(x,y,WorldData::BIOME_MAP,biomeValue);
 
@@ -613,5 +773,4 @@ void Server::GenerateWorld(){
             else worldData.updateMapValue(x,y,WorldData::COLLISION_MAP,0);
         }
     }
-    delete generaceMapy;
 }

@@ -5,30 +5,30 @@
 #include "../../include/Application/MACROS.h"
 
 
-void WorldData::updateMapValue(int x, int y, MapType mapType, int newValue) const {
+void WorldData::updateMapValue(int x, int y, MapType mapType, int newValue) {
     int step = x*MAPSIZE;
     switch (mapType) {
         case BIOME_MAP:
-            biomeMap[step + y]= newValue;
+            biomeMap.at(step + y)= newValue;
             break;
         case BLOCK_VARIATION_MAP:
-            blockVariantionMap[step + y] = newValue;
+            blockVariantionMap.at(step + y) = newValue;
             break;
         case COLLISION_MAP:
-            collisionMap[step + y] = newValue;
+            collisionMap.at(step + y) = newValue;
             break;
     }
 }
 
-int WorldData::getMapValue(int x, int y, MapType mapType) const {
+int WorldData::getMapValue(int x, int y, const MapType mapType) const {
     int step = x*MAPSIZE;
     switch (mapType) {
         case BIOME_MAP:
-            return biomeMap[step + y];
+            return biomeMap.at(step + y);
         case BLOCK_VARIATION_MAP:
-            return blockVariantionMap[step + y];
+            return blockVariantionMap.at(step + y);
         case COLLISION_MAP:
-            return collisionMap[step + y];
+            return collisionMap.at(step + y);
         default:
             return -1; // Invalid map type
     }
@@ -36,14 +36,8 @@ int WorldData::getMapValue(int x, int y, MapType mapType) const {
 
 WorldData::WorldData(){
     // Allocate memory for arrays
-    biomeMap = new int[MAPSIZE*MAPSIZE];
-    blockVariantionMap = new int[MAPSIZE*MAPSIZE];
-    collisionMap = new int[MAPSIZE*MAPSIZE];
-}
-
-WorldData::~WorldData() {
-    delete[] biomeMap;
-    delete[] blockVariantionMap;
-    delete[] collisionMap;
+    biomeMap.resize(MAPSIZE*MAPSIZE);
+    blockVariantionMap.resize(MAPSIZE*MAPSIZE);
+    collisionMap.resize(MAPSIZE*MAPSIZE);
 }
 

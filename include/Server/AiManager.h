@@ -61,6 +61,7 @@ class AiManager {
 public:
     void registerEntity(IEntity* entity);
     void unregisterEntity(IEntity* entity);
+    void unregisterAllEntities();
 
     void sendEvent(IEntity* entity, AiEvent event);
     void update(float deltaTime);
