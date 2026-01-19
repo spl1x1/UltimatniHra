@@ -77,6 +77,7 @@ class SpriteRenderingContext {
 
     bool blockAnimation{false};
     bool blockRotation{false};
+    bool inReverse{false};
 
     int spriteWidth;
     int spriteHeight;
@@ -98,6 +99,7 @@ public:
     void SetTexture(std::string texture);
     void SetCurrentFrame(int newCurrentFrame); //For special cases
     void PlayAnimation(AnimationType animationType, Direction direction, bool ForceReset); //Plays animation immediately
+    void PlayReversed();
     [[nodiscard]] float GetFrameDuration() const;
     [[nodiscard]] int GetCurrentFrameCount() const;
 

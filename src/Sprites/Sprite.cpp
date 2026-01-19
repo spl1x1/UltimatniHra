@@ -126,10 +126,15 @@ std::tuple<std::string,SDL_FRect*> SpriteRenderingContext::GetFrame() {
 void SpriteRenderingContext::PlayAnimation(const AnimationType animationType, const Direction direction, const bool ForceReset) {
     if (!ForceReset && animationType == activeAnimation && direction == activeDirection) return;
     activeAnimation = animationType;
+    inReverse = false;
     this->activeDirection = direction;
     const auto key = BuildKey();
     const auto node{SpriteAnimationBinding::GetAnimationNode(key)};
     ResetAnimation(node);
+}
+
+void SpriteRenderingContext::PlayReversed() {
+    inReverse = true;
 }
 
 float SpriteRenderingContext::GetFrameDuration() const { return frameDuration; }
@@ -172,8 +177,10 @@ int SpriteRenderingContext::GetCurrentFrame() const {
 
 SDL_FRect* SpriteRenderingContext::GetFrameRect() {
     if (!currentAnimationNode) currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());
-    frameRect->x = currentAnimationNode->frames.at(currentFrame-1).x;
-    frameRect->y = currentAnimationNode->frames.at(currentFrame-1).y;
+    auto frame{currentFrame};
+    if (inReverse) frame = currentAnimationNode->frameCount - frame;
+    frameRect->x = currentAnimationNode->frames.at(frame-1).x;
+    frameRect->y = currentAnimationNode->frames.at(frame-1).y;
     return frameRect.get();
 }
 

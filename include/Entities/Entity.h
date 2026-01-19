@@ -43,6 +43,7 @@ public:
 
     //Setters
     void PlayAnimation(AnimationType animation, Direction direction, int variant, bool ForceReset = false) const;
+    void PlayReversedAnimation(AnimationType animation, Direction direction, int variant, bool ForceReset = false) const;
 
     //Getters
     static Direction GetDirectionBaseOnAngle(int angle) ;

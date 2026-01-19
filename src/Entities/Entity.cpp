@@ -93,6 +93,14 @@ void EntityRenderingComponent::PlayAnimation(const AnimationType animation, cons
     sprite->PlayAnimation(animation, direction, ForceReset);
 }
 
+void EntityRenderingComponent::PlayReversedAnimation(const AnimationType animation, const Direction direction, const int variant,
+    const bool ForceReset) const {
+    if (!sprite) return;
+    sprite->SetVariant(variant);
+    sprite->PlayAnimation(animation, direction, ForceReset);
+    sprite->GetSpriteRenderingContext()->PlayReversed();
+}
+
 
 EntityRenderingComponent::EntityRenderingComponent(std::unique_ptr<ISprite> sprite) :sprite(std::move(sprite)) {
     rect = std::make_unique<SDL_FRect>();
@@ -485,7 +493,7 @@ void EntityHealthComponent::Tick(const float deltaTime) {
 void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
     health -= damage;
 
-    const auto renderingComponent{entity.GetRenderingComponent()};
+    auto renderingComponent{entity.GetRenderingComponent()};
     const auto direction{EntityRenderingComponent::GetDirectionBaseOnAngle(entity.GetLogicComponent()->GetAngle())};
     const auto logicComponent{entity.GetLogicComponent()};
 
@@ -495,7 +503,11 @@ void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
     if (health < 0) health = 0;
     if (IsDead()) {
         entity.GetLogicComponent()->SetInterrupted(true);
-        entity.GetRenderingComponent()->PlayAnimation(AnimationType::DEATH,direction, 1, true);
+        if (entity.GetType() == EntityType::PLAYER) {
+            dynamic_cast<Player*>(&entity)->SetGhostMode(true);
+            entity.GetRenderingComponent()->PlayReversedAnimation(AnimationType::DEATH,Direction::OMNI, 1, true);
+        }
+        else renderingComponent->PlayAnimation(AnimationType::DEATH,direction, 1, true);
         logicComponent->QueueUpEvent(Event_Death::Create());
         return;
     }
@@ -596,12 +608,9 @@ void EventBindings::InitializeBindings() {
         if (logicComponent->lock) {
             logicComponent->QueueUpEvent(Event_Death::Create());
             return;
-        };
-        if (entity->GetType() == EntityType::PLAYER) {
-            dynamic_cast<Player*>(entity)->SetGhostMode(true);
-            return;
         }
-        entity->GetServer()->RemoveEntity_unprotected(entity->GetId());
+        if (entity->GetType()!=EntityType::PLAYER)
+            entity->GetServer()->RemoveEntity_unprotected(entity->GetId());
     });
 
 }

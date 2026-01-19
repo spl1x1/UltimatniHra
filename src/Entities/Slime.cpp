@@ -7,6 +7,7 @@
 
 #include "../../include/Entities/Slime.h"
 #include <memory>
+#include <random>
 
 
 void Slime::Tick() {
@@ -139,5 +140,7 @@ Server* Slime::GetServer() const {
 Slime::Slime(Server* server, const Coordinates& coordinates) {
     this->server = server;
     entityLogicComponent.SetCoordinates(coordinates);
-    entityLogicComponent.SetSpeed(70.0f);
+    std::mt19937 generator(server->GetSeed());
+    std::uniform_real_distribution distribution(60.0f,80.0f);
+    entityLogicComponent.SetSpeed(distribution(generator));
 }
