@@ -25,13 +25,12 @@ class WorldRender {
     Window& window;
 
     void ReleaseResources() const;
-    void GenerateWorldTexture() const;
     void GenerateWaterTextures() const;
 
     public:
     explicit WorldRender(Window& window) : window(window) {};
     void GenerateTextures() const;
-
+    void GenerateWorldTexture() const;
 };
 
 

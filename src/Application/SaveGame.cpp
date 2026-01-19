@@ -106,6 +106,7 @@ bool SaveManager::saveGame(int slotId, Server* server) {
 
     // TODO: implementovat play time
     // save.playTime += sessionTime; //pripravene az to budu potrebovat
+    server->SaveServerState();
 
     std::string filepath = getSaveFilePath(slotId);
     return serializeSave(save, filepath);
@@ -159,6 +160,9 @@ bool SaveManager::deleteSave(int slotId) {
 
     saveSlots[slotId] = SaveGame();
     saveSlots[slotId].slotId = slotId;
+
+    std::filesystem::remove("saves/slot_" + std::to_string(slotId) +"_server_state.json");
+    std::filesystem::remove("saves/worldmap_slot_" + std::to_string(slotId) +".png");
 
     return true;
 }

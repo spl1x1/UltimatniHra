@@ -26,6 +26,10 @@ void Tree::Tick(float deltaTime) {
     renderingComponent.Tick(deltaTime);
 }
 
+int Tree::GetInventoryId() const {
+    return -1; // Trees do not have inventories
+}
+
 
 RenderingContext Tree::GetRenderingContext() const {
     auto context = renderingComponent.getRenderingContext();
@@ -37,15 +41,29 @@ HitboxContext Tree::GetHitboxContext() {
     return hitboxComponent.getHitboxContext();
 }
 
+Coordinates Tree::GetCoordinates() const {
+    return hitboxComponent.getTopLeftCorner() + Coordinates{32.0f, 32.0f}; // Center of the tree
+}
 
-Tree::Tree(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, TreeVariant variant)
+int Tree::GetVariant() const {
+    return variant; // Example variant, change as needed
+}
+
+int Tree::GetInnerType() const {
+    return InnerVariant;
+}
+
+
+
+Tree::Tree(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int innerType)
 : id(id),renderingComponent(std::make_unique<TreeSprite>()), hitboxComponent(server) {
-    renderingComponent.SetVariant(static_cast<int>(variant));
+    renderingComponent.SetVariant(innerType);
     topLeftCorner.x -= 32.0f; // Hitbox alignment
     topLeftCorner.y -= 32.0f;
     hitboxComponent.SetTopLeftCorner(topLeftCorner);
     hitboxComponent.addPoint(1, 1);
     initialized = hitboxComponent.finalize(id);
+    InnerVariant = innerType;
 }
 
 Tree::~Tree() {

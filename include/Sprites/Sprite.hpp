@@ -57,7 +57,6 @@ public:
 };
 
 class SpriteRenderingContext {
-    std::unique_ptr<SDL_FRect> frameRect = std::make_unique<SDL_FRect>();
     SpriteAnimationBinding::AnimationInfo* currentAnimationNode{nullptr};
 
     std::string textureName;
@@ -92,7 +91,7 @@ public:
     void ResetAnimation(SpriteAnimationBinding::AnimationInfo* animationNode = nullptr);
     void Tick(float deltaTime);
     [[nodiscard]] std::string GetTexture() const;
-    [[nodiscard]] SDL_FRect* GetFrameRect();
+    [[nodiscard]] SDL_FRect GetFrameRect();
 
     //Getters and Setters
     void SetVariant(int newVariant);
@@ -100,6 +99,8 @@ public:
     void SetCurrentFrame(int newCurrentFrame); //For special cases
     void PlayAnimation(AnimationType animationType, Direction direction, bool ForceReset); //Plays animation immediately
     void PlayReversed();
+    int GetVariant() const;
+
     [[nodiscard]] float GetFrameDuration() const;
     [[nodiscard]] int GetCurrentFrameCount() const;
 
@@ -108,7 +109,7 @@ public:
     [[nodiscard]] int GetCurrentFrame() const;
 
     [[nodiscard]] std::string BuildKey();
-    std::tuple<std::string,SDL_FRect*> GetFrame();
+    std::tuple<std::string,SDL_FRect> GetFrame();
 
     //Constructor and Destructor
     explicit SpriteRenderingContext(std::string  texture, float frameDuration, int spriteWidth, int spriteHeight, Direction dir = Direction::OMNI,AnimationType anim = AnimationType::IDLE, int variant = 1);
@@ -136,7 +137,7 @@ public:
     virtual void SetCurrentFrame(int newCurrentFrame) = 0; //For special cases
 
     //Getters
-    virtual std::tuple<std::string,SDL_FRect*> GetFrame() = 0;
+    virtual std::tuple<std::string,SDL_FRect> GetFrame() = 0;
     virtual RenderingContext GetRenderingContext() = 0;
     [[nodiscard]] virtual int GetWidth() const = 0;
     [[nodiscard]] virtual int GetHeight() const = 0;

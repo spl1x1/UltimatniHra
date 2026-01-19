@@ -5,7 +5,7 @@
 #include "../../include/Sprites/TreeSprite.hpp"
 
 
-std::tuple<std::string, SDL_FRect*> TreeSprite::GetFrame() {
+std::tuple<std::string, SDL_FRect> TreeSprite::GetFrame() {
     return {renderingContext.GetTexture(), renderingContext.GetFrameRect()};
 }
 

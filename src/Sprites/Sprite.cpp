@@ -119,7 +119,7 @@ std::string SpriteRenderingContext::BuildKey() {
     return key;
 }
 
-std::tuple<std::string,SDL_FRect*> SpriteRenderingContext::GetFrame() {
+std::tuple<std::string,SDL_FRect> SpriteRenderingContext::GetFrame() {
     return {GetTexture(), GetFrameRect()};
 }
 
@@ -136,6 +136,8 @@ void SpriteRenderingContext::PlayAnimation(const AnimationType animationType, co
 void SpriteRenderingContext::PlayReversed() {
     inReverse = true;
 }
+
+int SpriteRenderingContext::GetVariant() const { return activeVariant; }
 
 float SpriteRenderingContext::GetFrameDuration() const { return frameDuration; }
 
@@ -175,13 +177,18 @@ int SpriteRenderingContext::GetCurrentFrame() const {
 }
 
 
-SDL_FRect* SpriteRenderingContext::GetFrameRect() {
+SDL_FRect SpriteRenderingContext::GetFrameRect() {
     if (!currentAnimationNode) currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());
     auto frame{currentFrame};
     if (inReverse) frame = currentAnimationNode->frameCount - frame;
-    frameRect->x = currentAnimationNode->frames.at(frame-1).x;
-    frameRect->y = currentAnimationNode->frames.at(frame-1).y;
-    return frameRect.get();
+    SDL_FRect rect;
+
+    rect.w = static_cast<float>(spriteWidth);
+    rect.h = static_cast<float>(spriteHeight);
+    rect.x = currentAnimationNode->frames.at(frame-1).x;
+    rect.y = currentAnimationNode->frames.at(frame-1).y;
+
+    return rect;
 }
 
 SpriteRenderingContext::SpriteRenderingContext(std::string  texture,const float frameDuration ,const int spriteWidth, const int spriteHeight ,const Direction dir, const AnimationType anim, const int variant):
@@ -190,8 +197,6 @@ textureName(std::move(texture)),activeAnimation(anim), activeDirection(dir), def
     defaultDirection = dir;
     defaultAnimation = anim;
     currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());
-    frameRect->w = static_cast<float>(spriteWidth);
-    frameRect->h = static_cast<float>(spriteHeight);
 }
 
 

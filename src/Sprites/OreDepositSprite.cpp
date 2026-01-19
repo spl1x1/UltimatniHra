@@ -16,7 +16,7 @@ void OreDepositSprite::SetCurrentFrame(const int newCurrentFrame) {
     renderingContext.SetCurrentFrame(newCurrentFrame);
 }
 
-std::tuple<std::string, SDL_FRect*> OreDepositSprite::GetFrame() {
+std::tuple<std::string, SDL_FRect> OreDepositSprite::GetFrame() {
     return {renderingContext.GetTexture(), renderingContext.GetFrameRect()};
 }
 

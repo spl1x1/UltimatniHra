@@ -91,7 +91,7 @@ Coordinates toWorldCoordinates(const Coordinates &tileCoordinates) {
     };
 }
 
-Coordinates toWorldCoordinates(int tileX, int tileY) {
+Coordinates toWorldCoordinates(const int tileX, const int tileY) {
     return {
         static_cast<float>(tileX) * 32.0f,
         static_cast<float>(tileY) * 32.0f

@@ -16,7 +16,7 @@ void PlayerSprite::PlayAnimation(const AnimationType newAnimation, const Directi
     renderingContext.PlayAnimation(newAnimation, direction, ForceReset);
 }
 
-std::tuple<std::string, SDL_FRect*> PlayerSprite::GetFrame() {
+std::tuple<std::string, SDL_FRect> PlayerSprite::GetFrame() {
     std::string texture = renderingContext.GetTexture();
     return  {texture, renderingContext.GetFrameRect()};
 }

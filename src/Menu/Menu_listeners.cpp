@@ -15,6 +15,9 @@
 #include <algorithm>
 #include <functional>
 #include <cstdlib>
+#include <filesystem>
+
+#include "../../include/Window/WorldRender.h"
 
 inline UIComponent* getUI(Window* win) {
     return win->data.uiComponent.get();
@@ -691,7 +694,9 @@ void CreateWorldConfirmListener::ProcessEvent(Rml::Event& event) {
     }
 
     window->server->SetSeed(seed);
-    window->initGame();
+    window->server->GenerateWorld();
+
+    window->initGame(false);
 
     Player::Create(window->server.get(), activeSlot);
 }
@@ -742,7 +747,7 @@ void LoadGameListener::ProcessEvent(Rml::Event&) {
     }
 
     window->server->SetSeed(save->worldData.seed);
-    window->initGame();
+    window->initGame(true);
 
     Player::Load(window->server.get(), slotId);
 }
