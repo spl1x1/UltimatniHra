@@ -12,11 +12,15 @@ class Application {
     std::shared_ptr<Server> server = std::make_shared<Server>();
     std::shared_ptr<Window> gameWindow =  std::make_shared<Window>();
     std::string name;
+    static Application* instance;
 
     static void handleException();
 public:
-    void init() const;
+    static void SignalHandler(int sig);
+
+    void init();
     void run() const;
+    static Application* GetInstance();
 
     explicit Application(std::string appName = "Ultimatni hra");
 };

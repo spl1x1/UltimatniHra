@@ -57,6 +57,7 @@ void Window::loadConfig() {
     }
 }
 
+
 void Window::handleMouseInputs() {
     auto sendLeftClickInput = [&] {
         if (data.mouseData.currentLeftHoldTime > 0.5f) {
@@ -627,6 +628,7 @@ void Window::initGame(bool loadingSave) {
     data.cameraWaterRect->y = 64;
     server->InvalidateStructureCache();
 }
+
 
 void Window::init(const std::string& title, const int width, const int height) {
     data.initialized = true;

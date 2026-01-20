@@ -118,6 +118,8 @@ public:
     void tick();
 
     void initGame(bool loadingSave = false);
+
+
     void init(const std::string& title, int width = GAMERESW, int height = GAMERESH);
     void Destroy();
     ~Window();

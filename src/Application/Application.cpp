@@ -6,8 +6,11 @@
 
 #include <iostream>
 
+#include "../../include/Application/SaveGame.h"
 #include "../../include/Hardware/Hardware.h"
 
+// Define the static member declared in the header
+Application* Application::instance = nullptr;
 
 void Application::handleException() {
     std::cerr << "-----------------------------------------------"<< std::endl;
@@ -20,9 +23,24 @@ void Application::handleException() {
     std::cerr << "Multi GPU setup recommended!" << std::endl;
 }
 
-void Application::init() const{
+void Application::SignalHandler(const int sig) {
+    SDL_Log("Signal %d received, shutting down...", sig);
+    instance->server->SaveServerState();
+    auto &saveManager{SaveManager::getInstance()};
+    saveManager.saveGame(saveManager.getCurrentSlot(), instance->server.get());
+    Rml::Shutdown();
+    exit(0);
+}
+
+void Application::init() {
+    if (instance) return;
+    instance = this;
     gameWindow->server = server;
     gameWindow->init(name);
+
+    signal(SIGINT, SignalHandler);
+    signal(SIGTERM, SignalHandler);
+    signal(SIGTSTP, SignalHandler);
 }
 
 void Application::run() const {
@@ -35,6 +53,10 @@ void Application::run() const {
         std::cerr << "Exception caught: " << e.what() << std::endl;
         handleException();
     }
+}
+
+Application* Application::GetInstance() {
+    return instance;
 }
 
 Application::Application(std::string appName) : name(std::move(appName)) {

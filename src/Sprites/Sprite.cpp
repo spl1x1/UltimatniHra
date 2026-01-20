@@ -85,8 +85,6 @@ void SpriteRenderingContext::ResetAnimation(SpriteAnimationBinding::AnimationInf
 
 
 void SpriteRenderingContext::Tick(const float deltaTime) {
-    if (!currentAnimationNode) currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());
-    if (!currentAnimationNode) return; // nothing to tick
     if (currentAnimationNode->frameCount == 0) return;
     frameTime += deltaTime;
     if (frameTime >= frameDuration) {
@@ -181,41 +179,15 @@ int SpriteRenderingContext::GetCurrentFrame() const {
 
 SDL_FRect SpriteRenderingContext::GetFrameRect() {
     if (!currentAnimationNode) currentAnimationNode = SpriteAnimationBinding::GetAnimationNode(BuildKey());
-    if (!currentAnimationNode) {
-        // Return an empty rect if no animation data is available
-        return SDL_FRect{0,0,0,0};
-    }
-
-    // clamp currentFrame into valid range [1, frameCount]
-    const int frameCount = currentAnimationNode->frameCount;
-    int frame = currentFrame;
-    if (frame < 1) frame = 1;
-    if (frame > frameCount) frame = frameCount;
-
-    // compute zero-based index into frames vector
-    int index = 0;
-    if (inReverse) {
-        // correct reverse mapping: 1 -> last (N-1), 2 -> N-2, ... , N -> 0
-        index = frameCount - frame;
-    } else {
-        // normal mapping: 1 -> 0, 2 -> 1, ...
-        index = frame - 1;
-    }
-
-    // Safety: ensure index is within bounds of frames vector
-    if (index < 0) index = 0;
-    if (index >= static_cast<int>(currentAnimationNode->frames.size())) {
-        index = static_cast<int>(currentAnimationNode->frames.size()) - 1;
-        if (index < 0) index = 0;
-    }
-
+    auto frame{currentFrame};
+    if (inReverse) frame = currentAnimationNode->frameCount - frame;
     SDL_FRect rect;
 
     rect.w = static_cast<float>(spriteWidth);
     rect.h = static_cast<float>(spriteHeight);
 
-    rect.x = currentAnimationNode->frames.at(index).x;
-    rect.y = currentAnimationNode->frames.at(index).y;
+    rect.x = currentAnimationNode->frames.at(frame-1).x;
+    rect.y = currentAnimationNode->frames.at(frame-1).y;
 
     return rect;
 }
