@@ -533,7 +533,7 @@ void Server::InvalidateStructureCache() {
     cacheValidityData.isCacheValid = false;
 }
 
-void Server::SendClickEvent(const MouseButtonEvent event) {
+void Server::SendClickEvent(const MouseButtonEvent event) const {
 
     auto checkForStructure= [](const IEntity* player, const MouseButtonEvent eventData) {
         const auto [x, y]{toTileCoordinates(static_cast<int>(eventData.x), static_cast<int>(eventData.y))};
