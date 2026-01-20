@@ -261,6 +261,22 @@ void Window::renderHud() {
                           nullptr, &rect);
     }
     data.lastHealth = playerHealth;
+
+    if (dynamic_cast<Player*>(server->GetPlayer())->IsGhostMode()) {
+        const std::string deathText = "You have Died! Try to find Respawn Anchor.";
+        const auto surface = TTF_RenderText_Solid(data.font, deathText.c_str(), deathText.length(), SDL_Color{255,0,0,255});
+        const auto texture = SDL_CreateTextureFromSurface(data.Renderer, surface);
+
+        SDL_FRect rectangle;
+        rectangle.w = static_cast<float>(surface->w);
+        rectangle.h = static_cast<float>(surface->h);
+        rectangle.x = std::floor((GAMERESW - rectangle.w) / 2.0f);
+        rectangle.y = std::floor((GAMERESH - rectangle.h) / 4.0f);
+
+        SDL_RenderTexture(data.Renderer, texture, nullptr, &rectangle);
+        SDL_DestroySurface(surface);
+        SDL_DestroyTexture(texture);
+    }
 }
 
 
