@@ -254,6 +254,7 @@ public:
     [[nodiscard]] virtual float GetDetectionRange() const = 0;
     [[nodiscard]] virtual float GetAttackRange() const = 0;
     [[nodiscard]] virtual EntityType GetType() const = 0;
+    virtual  void DropItemsOnDeath() = 0;
 
 
     //Entity component getters

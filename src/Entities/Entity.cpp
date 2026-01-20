@@ -610,8 +610,9 @@ void EventBindings::InitializeBindings() {
             logicComponent->QueueUpEvent(Event_Death::Create());
             return;
         }
-        if (entity->GetType()!=EntityType::PLAYER)
-            entity->GetServer()->RemoveEntity_unprotected(entity->GetId());
+        if (entity->GetType()==EntityType::PLAYER) return;
+        entity->DropItemsOnDeath();
+        entity->GetServer()->RemoveEntity_unprotected(entity->GetId());
     });
 
 }

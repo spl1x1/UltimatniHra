@@ -113,6 +113,9 @@ EntityType Slime::GetType() const {
     return EntityType::SLIME;
 }
 
+void Slime::DropItemsOnDeath() {
+}
+
 EntityCollisionComponent * Slime::GetCollisionComponent() {
     return &entityCollisionComponent;
 }

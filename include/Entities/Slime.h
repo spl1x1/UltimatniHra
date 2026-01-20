@@ -63,6 +63,7 @@ public:
     [[nodiscard]] float GetDetectionRange() const override;
     [[nodiscard]] float GetAttackRange() const override;
     [[nodiscard]] EntityType GetType() const override;
+    void DropItemsOnDeath() override;
 
     EntityCollisionComponent* GetCollisionComponent() override;
     //Get EntityLogicComponent
