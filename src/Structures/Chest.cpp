@@ -13,6 +13,8 @@
 
 Chest* Chest::openChest = nullptr;
 
+Chest * Chest::GetOpenChest() { return openChest; }
+
 structureType Chest::getType() const {
     return structureType::CHEST; // Example type, change as needed
 }
@@ -26,17 +28,8 @@ bool Chest::wasProperlyInitialized() {
 }
 
 void Chest::Tick(const float deltaTime) {
-    if (renderingComponent.isLocked()) return;
     renderingComponent.Tick(deltaTime, this);
     if (renderingComponent.isLocked()) return;
-    /*if (openChest == this && open) {
-        const auto player{hitboxComponent.GetServer()->GetPlayer()};
-        const auto reachDistance{player->GetReach()};
-        const auto coordinateDistance{CoordinatesDistance(player->GetEntityCenter(), GetCoordinates())};
-        if (std::abs(coordinateDistance) > reachDistance) {
-            CloseChest();
-        }
-    } */
     open ? renderingComponent.GetSprite()->PlayAnimation(AnimationType::IDLE, Direction::UP, true)
     :renderingComponent.GetSprite()->PlayAnimation(AnimationType::IDLE, Direction::DOWN, true);
 }

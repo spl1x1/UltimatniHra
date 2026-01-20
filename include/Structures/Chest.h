@@ -18,6 +18,7 @@ class Chest final : public IStructure {
     static Chest* openChest;
 
 public:
+    static Chest* GetOpenChest();
 
     //Interface implementation
     [[nodiscard]] structureType getType() const override;

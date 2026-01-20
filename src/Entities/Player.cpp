@@ -6,10 +6,21 @@
 #include "../../include/Application/SaveGame.h"
 #include <memory>
 
+#include "../../include/Structures/Chest.h"
+
 
 //PlayerNew
 
 void Player::Tick() {
+    auto checkChestDistance = [&]() {
+        const auto openChest = Chest::GetOpenChest();
+        if (!openChest) return;
+        const Coordinates chestCoordinates = openChest->GetCoordinates() + Coordinates{16.0f,16.0f};
+        const auto distance = CoordinatesDistance(GetEntityCenter() , chestCoordinates);
+        if (distance > 100.0f) {
+            openChest->CloseChest();
+        }
+    };
 
     if (entityHealthComponent.IsDead() && !IsGhostMode() )  {
         SetGhostMode(true);
@@ -17,11 +28,14 @@ void Player::Tick() {
 
     const auto deltaTime = server->GetDeltaTime_unprotected();
     const auto oldCoordinates = entityLogicComponent.GetCoordinates();
+
     if (beingRevived) ReviveFromGhostMode();
     if (isGhostMode) entityRenderingComponent2.Tick(deltaTime);
     else entityRenderingComponent.Tick(deltaTime);
     entityLogicComponent.Tick(server, *this);
     entityHealthComponent.Tick(deltaTime);
+    checkChestDistance();
+
     const auto newCoordinates = entityLogicComponent.GetCoordinates();
     if (entityLogicComponent.IsInterrupted()) return;
 
