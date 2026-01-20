@@ -19,6 +19,7 @@
 #include "../../include/Structures/Structure.h"
 #include "../../include/Menu/UIComponent.h"
 #include "../../include/Window/WorldRender.h"
+#include "../../include/Items/inventory.h"
 
 
 void Window::saveConfig() const {
@@ -649,6 +650,17 @@ void Window::init(const std::string& title, const int width, const int height) {
 #endif
     data.uiComponent->Init();
     data.inMenu = true;
+
+    // Set up callback for item drops from server to UI inventory
+    if (server) {
+        server->SetItemDropCallback([this](std::unique_ptr<Item> item) {
+            auto* inventoryController = data.uiComponent->getInventoryController();
+            if (inventoryController) {
+                return inventoryController->addItem(std::move(item));
+            }
+            return false;
+        });
+    }
 
     if (data.uiComponent->getDocuments()->contains("main_menu")) {
         data.uiComponent->getDocuments()->at("main_menu")->Show();

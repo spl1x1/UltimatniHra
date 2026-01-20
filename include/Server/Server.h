@@ -9,10 +9,13 @@
 #include <shared_mutex>
 #include <mutex>
 #include <set>
+#include <functional>
 
 #include "AiManager.h"
 #include "../Application/dataStructures.h"
 #include "../Window/WorldStructs.h"
+
+class Item;
 
 class Player;
 enum class structureType;
@@ -65,6 +68,9 @@ class Server : public std::enable_shared_from_this<Server> {
 
     AiManager aiManager; //Ai automat handler
     void setupSlimeAi(IEntity* entity);
+
+    // Callback for adding items to UI inventory
+    std::function<bool(std::unique_ptr<Item>)> onItemDropped;
 
 public:
 
@@ -130,6 +136,11 @@ public:
     void SaveServerState();
     void LoadServerState();
     void Reset();
+
+    // Set callback for item drops (used by UI to receive items)
+    void SetItemDropCallback(std::function<bool(std::unique_ptr<Item>)> callback);
+    // Add item through callback (returns false if no callback set)
+    bool AddItemToInventory(std::unique_ptr<Item> item);
 };
 
 #endif //SERVERSTRUCS_H

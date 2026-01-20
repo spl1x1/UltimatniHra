@@ -15,6 +15,7 @@
 #include <simdjson/fallback/ondemand.h>
 
 #include "../../include/Application/MACROS.h"
+#include "../../include/Items/Item.h"
 #include "../../include/Application/SaveGame.h"
 #include "../../include/Server/generace_mapy.h"
 #include "../../include/Entities/Entity.h"
@@ -803,4 +804,15 @@ void Server::GenerateWorld(){
             else worldData.UpdateMapValue(x,y,WorldData::COLLISION_MAP,0);
         }
     }
+}
+
+void Server::SetItemDropCallback(std::function<bool(std::unique_ptr<Item>)> callback) {
+    onItemDropped = std::move(callback);
+}
+
+bool Server::AddItemToInventory(std::unique_ptr<Item> item) {
+    if (onItemDropped && item) {
+        return onItemDropped(std::move(item));
+    }
+    return false;
 }

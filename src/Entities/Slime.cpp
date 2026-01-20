@@ -119,15 +119,13 @@ EntityType Slime::GetType() const {
 
 void Slime::DropItemsOnDeath() {
     SDL_Log("Slime gone");
-    auto* player = server->GetPlayer_unprotected();
-    if (player) {
-        auto* playerInventory = player->GetInventoryComponent();
-        if (playerInventory) {
-            auto leatherItem = ItemFactory::createMaterial(MaterialType::LEATHER);
-            playerInventory->addItem(std::move(leatherItem));
-        }
-    }
+    auto leatherItem = ItemFactory::createMaterial(MaterialType::LEATHER);
+    bool added = server->AddItemToInventory(std::move(leatherItem));
+    SDL_Log("Item added to UI inventory: %s", added ? "true" : "false");
 }
+//regular slime: leather
+//medium slime: leather + iron + gold(5%)
+//large slime: leather + gold + steel(10%) + dragonscale(3%)
 
 EntityCollisionComponent * Slime::GetCollisionComponent() {
     return &entityCollisionComponent;
