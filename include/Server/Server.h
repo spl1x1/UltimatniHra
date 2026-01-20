@@ -116,7 +116,7 @@ public:
     static int CalculateAngle(Coordinates center, Coordinates point); //Vypocita uhel mezi dvema objekty, nemusi byt thread safe
     std::vector<std::string> GetTileInfo(float x, float y);
     void InvalidateStructureCache(); //Invaliduje cache pro struktury
-    void SendClickEvent(MouseButtonEvent event);
+    void SendClickEvent(MouseButtonEvent event) const;
 
     IEntity* AddEntity(Coordinates coordinates, EntityType type, int variant = 1); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
     IEntity* AddEntity_unprotected(const std::shared_ptr<IEntity>& entity); //Prida na server entitu

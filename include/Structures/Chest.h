@@ -15,6 +15,8 @@ class Chest final : public IStructure {
     bool initialized{false};
     bool open{false};
 
+    static Chest* openChest;
+
 public:
 
     //Interface implementation
@@ -32,6 +34,10 @@ public:
     [[nodiscard]] StructureRenderingComponent* GetRenderingComponent() override;
     [[nodiscard]] StructureHitboxComponent* GetHitboxComponent() override;
     [[nodiscard]] StructureInventoryComponent* GetInventoryComponent() override;
+
+    void OpenChest();
+    void CloseChest();
+
 
     void DropInventoryItems() override;;
     void Interact() override;

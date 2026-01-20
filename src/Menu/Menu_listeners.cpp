@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <filesystem>
 
+#include "../../include/Structures/Structure.h"
 #include "../../include/Window/WorldRender.h"
 
 inline UIComponent* getUI(Window* win) {
@@ -1137,21 +1138,21 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
             return;
         }
         auto tokens = splitArgs(args);
-        const auto entityType{EntityRenderingComponent::StringToType(tokens[0])};
         if (tokens.size() != 3) {
-            printf("Usage: /spawn <entityType> <x> <y>\n");
+            printf("Usage: /spawn <Type> <x> <y>\n");
             return;
         }
 
-        Coordinates position{};
+        Coordinates fetchedPos{};
         try {
-            position.x = stof(tokens[1]);
-            position.y = stof(tokens[2]);
+            fetchedPos.x = stof(tokens[1]);
+            fetchedPos.y = stof(tokens[2]);
         }
         catch (const std::exception& e) {
             printf("Error parsing coordinates: %s\n", e.what());
             return;
         }
+        Coordinates position{toWorldCoordinates(toTileCoordinates(fetchedPos))};
         if (position.x < 0 || position.y < 0 || position.x >= MAPSIZE*32 || position.y >= MAPSIZE*32) {
             printf("Error: Invalid coordinates (%f, %f)\n", position.x, position.y);
             return;
@@ -1166,9 +1167,16 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
                 return;
             }
         }
+        const auto entityType{EntityRenderingComponent::StringToType(tokens[0])};
 
-        window->server->AddEntity(position, entityType, variant);
-        printf("Spawned entity of type '%s'\n", args.c_str());
+        if (entityType == EntityType::UNKNOWN) {
+            const auto structureType{StructureRenderingComponent::StringToType(tokens[0])};
+            window->server->AddStructure(position, structureType, variant);
+        }
+        else {
+            window->server->AddEntity(position, entityType, variant);
+        }
+        printf("Spawned '%s'\n", args.c_str());
 
 
     }

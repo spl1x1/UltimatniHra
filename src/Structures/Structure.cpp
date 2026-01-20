@@ -53,6 +53,22 @@ std::string StructureRenderingComponent::TypeToString(const structureType type) 
     }
 }
 
+structureType StructureRenderingComponent::StringToType(const std::string& type) {
+    if (type == "TREE") {
+        return structureType::TREE;
+    }
+    if (type == "ORE_NODE") {
+        return structureType::ORE_NODE;
+    }
+    if (type == "ORE_DEPOSIT") {
+        return structureType::ORE_DEPOSIT;
+    }
+    if (type == "CHEST") {
+        return structureType::CHEST;
+    }
+    return structureType::UNKNOWN;
+}
+
 void StructureRenderingComponent::PlayAnimation(const AnimationType animation, const Direction direction) const {
     if (!sprite) return;
     sprite->PlayAnimation(animation, direction, true);
@@ -181,4 +197,8 @@ bool StructureHitboxComponent::finalize(int id) const {
 
 void StructureHitboxComponent::destroy(int id) const {
     updateCollisionMap(0, id); //Reset collision map points to 0
+}
+
+Server * StructureHitboxComponent::GetServer() const {
+    return server.get();
 }

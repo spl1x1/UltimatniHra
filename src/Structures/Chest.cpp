@@ -9,6 +9,9 @@
 
 #include <random>
 
+#include "../../include/Entities/Entity.h"
+
+Chest* Chest::openChest = nullptr;
 
 structureType Chest::getType() const {
     return structureType::CHEST; // Example type, change as needed
@@ -26,8 +29,16 @@ void Chest::Tick(const float deltaTime) {
     if (renderingComponent.isLocked()) return;
     renderingComponent.Tick(deltaTime, this);
     if (renderingComponent.isLocked()) return;
-    open ?renderingComponent.GetSprite()->PlayAnimation(AnimationType::IDLE, Direction::DOWN, true)
-    :renderingComponent.GetSprite()->PlayAnimation(AnimationType::IDLE, Direction::UP, true);
+    /*if (openChest == this && open) {
+        const auto player{hitboxComponent.GetServer()->GetPlayer()};
+        const auto reachDistance{player->GetReach()};
+        const auto coordinateDistance{CoordinatesDistance(player->GetEntityCenter(), GetCoordinates())};
+        if (std::abs(coordinateDistance) > reachDistance) {
+            CloseChest();
+        }
+    } */
+    open ? renderingComponent.GetSprite()->PlayAnimation(AnimationType::IDLE, Direction::UP, true)
+    :renderingComponent.GetSprite()->PlayAnimation(AnimationType::IDLE, Direction::DOWN, true);
 }
 
 int Chest::GetInventoryId() const {
@@ -38,7 +49,6 @@ int Chest::GetInventoryId() const {
 RenderingContext Chest::GetRenderingContext() const {
     auto context = renderingComponent.getRenderingContext();
     context.coordinates = hitboxComponent.getTopLeftCorner();
-    context.coordinates -= {16.0f, 16.0f};
     return context;
 }
 
@@ -68,21 +78,34 @@ StructureInventoryComponent * Chest::GetInventoryComponent() {
 
 void Chest::DropInventoryItems() {}
 
+void Chest::OpenChest() {
+    SDL_Log("Opening Chest");
+    renderingComponent.PlayAnimation(AnimationType::INTERACT, Direction::DOWN);
+    open = true;
+    openChest = this;
+}
+
+void Chest::CloseChest() {
+    SDL_Log("Closing Chest");
+    renderingComponent.PlayAnimation(AnimationType::INTERACT, Direction::UP);
+    open = false;
+    if (openChest == this) openChest = nullptr;
+}
+
 void Chest::Interact() {
-    if (!open) {
-        renderingComponent.PlayAnimation(AnimationType::INTERACT, Direction::UP);
-        open = true;
-    }
-    else {
-        renderingComponent.PlayAnimation(AnimationType::INTERACT, Direction::DOWN);
-        open = false;
-    }
     renderingComponent.SetLock(true);
+    if (open) {
+        CloseChest();
+        return;
+    }
+    if (openChest && openChest != this)openChest->CloseChest();
+    OpenChest();
 }
 
 
 Chest::Chest(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server)
 : id(id),renderingComponent(std::make_unique<ChestSprite>()), hitboxComponent(server) {
+    topLeftCorner = toWorldCoordinates(toTileCoordinates(topLeftCorner));
     topLeftCorner.y -= 32.0f;
     hitboxComponent.SetTopLeftCorner(topLeftCorner);
     hitboxComponent.addPoint(0, 1);
@@ -92,4 +115,5 @@ Chest::Chest(const int id, Coordinates topLeftCorner, const std::shared_ptr<Serv
 Chest::~Chest() {
     if (!initialized) return;
     hitboxComponent.destroy(id);
+    if (openChest && openChest == this) openChest = nullptr;
 };

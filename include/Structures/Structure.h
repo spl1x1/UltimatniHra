@@ -20,7 +20,8 @@ enum class structureType{
     TREE,
     ORE_NODE,
     ORE_DEPOSIT,
-    CHEST
+    CHEST,
+    UNKNOWN
 };
 
 class StructureRenderingComponent {
@@ -35,6 +36,7 @@ public:
     [[nodiscard]] int GetVariant() const;
     [[nodiscard]] ISprite* GetSprite() const;
     static std::string TypeToString(structureType type);
+    static structureType StringToType(const std::string& type);
     void PlayAnimation(AnimationType animation, Direction direction) const;
     void  PlayAnimation_reversed(AnimationType animation, Direction direction) const;
     void SetLock(bool value);
@@ -91,6 +93,7 @@ public:
 
     [[nodiscard]] bool finalize(int id) const;
     void destroy(int id) const;
+    Server* GetServer() const;
 
     //Constructor and Destructor
     StructureHitboxComponent(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);

@@ -47,7 +47,7 @@ struct WindowData {
     bool wasLoaded{false};
     bool mainScreen{true};
     bool inMenu{true}; // True if in any menu or inventory
-    bool drawMousePreview{false};
+    bool drawMousePreview{true};
 
     std::string WINDOW_TITLE;
     int WINDOW_WIDTH;
