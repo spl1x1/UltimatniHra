@@ -43,7 +43,7 @@ class Server : public std::enable_shared_from_this<Server> {
 
     //ID counters, k limitu se nikdy nedostaneme reclaim neni nutny
     int nextEntityId = 1; //0 je vyhrazeno pro lokalniho hrace
-    int nextStructureId = 0; // 0 zatim neni vyhrazeno
+    int nextStructureId = 1; // 0 neni platne ID
 
     std::vector<int> reclaimedStructureIds{}; //Pro pripad ze budeme chtit reclaimovat
     std::vector<int> reclaimedEntityIds{};
@@ -98,6 +98,7 @@ public:
     [[nodiscard]] std::vector<DamageArea> GetDamagePoints();
     [[nodiscard]] AiManager& GetAiManager();
     [[nodiscard]] AiManager& GetAiManager_unprotected();
+    [[]] WorldData& GetWorldData();
 
     //Methods
     void GenerateStructures(); //Generuje stromy na mape sveta pro jistotu lockuje mutex serveru, volat při prvním vytvoreni jinak load

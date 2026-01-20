@@ -36,7 +36,7 @@ struct WindowData {
     SDL_Event event;
     TTF_Font* font;
 
-    std::unique_ptr<UIComponent> uiComponent = nullptr;
+    std::unique_ptr<UIComponent> uiComponent;
     MouseData mouseData;
     int lastHealth{100};
     float healthFrameTime{0.0f};

@@ -26,8 +26,10 @@ void Application::init() const{
 }
 
 void Application::run() const {
+    while (gameWindow->data.Running) gameWindow->tick();
+
     try {
-        while (gameWindow->data.Running) gameWindow->tick();
+        //while (gameWindow->data.Running) gameWindow->tick();
     }
     catch (const std::exception& e) {
         std::cerr << "Exception caught: " << e.what() << std::endl;
@@ -36,5 +38,4 @@ void Application::run() const {
 }
 
 Application::Application(std::string appName) : name(std::move(appName)) {
-    Rml::Shutdown();
-};
+}

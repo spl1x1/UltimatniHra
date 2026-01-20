@@ -1,0 +1,66 @@
+{
+    "chest_IDLE$DOWN": {
+        "frames": [
+            {
+                "x": 0,
+                "y": 0
+            }
+        ],
+        "frameCount": 1,
+        "variant": 1
+    },
+    "chest_IDLE$UP": {
+        "frames": [
+            {
+                "x": 96,
+                "y": 0
+            }
+        ],
+        "frameCount": 1,
+        "variant": 1
+    },
+    "chest_INTERACT$UP": {
+        "frames": [
+            {
+                "x": 0,
+                "y": 0
+            },
+            {
+                "x": 32,
+                "y": 0
+            },
+            {
+                "x": 64,
+                "y": 0
+            },
+            {
+                "x": 96,
+                "y": 0
+            }
+        ],
+        "frameCount": 4,
+        "variant": 1
+    },
+    "chest_INTERACT$DOWN": {
+        "frames": [
+            {
+                "x": 96,
+                "y": 0
+            },
+            {
+                "x": 64,
+                "y": 0
+            },
+            {
+                "x": 32,
+                "y": 0
+            },
+            {
+                "x": 0,
+                "y": 0
+            }
+        ],
+        "frameCount": 4,
+        "variant": 1
+    }
+}

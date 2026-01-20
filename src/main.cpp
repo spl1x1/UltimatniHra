@@ -8,5 +8,5 @@ int main(int argc, char *argv[]) {
     app.init();
     app.run();
 #endif
-    exit(0);
+    return 0;
 }

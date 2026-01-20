@@ -12,8 +12,16 @@
 
 StructureRenderingComponent::StructureRenderingComponent(std::unique_ptr<ISprite> sprite) : sprite(std::move(sprite)){}
 
-void StructureRenderingComponent::Tick(float deltaTime) const {
-    if (!sprite) return;
+void StructureRenderingComponent::Tick(const float deltaTime,IStructure* structure) {
+    auto updateLock = [&] {
+        const auto spriteRenderingContext{structure->GetRenderingComponent()->GetSprite()->GetSpriteRenderingContext()};
+        if (const auto frameInfo{spriteRenderingContext->GetCurrentFrame()}; frameInfo == spriteRenderingContext->GetCurrentFrameCount() -1)
+            lock = false;
+    };
+
+    if (!structure ||!sprite) return;
+
+    updateLock();
     sprite->Tick(deltaTime);
 }
 
@@ -38,10 +46,27 @@ std::string StructureRenderingComponent::TypeToString(const structureType type) 
             return "Ore Node";
         case structureType::ORE_DEPOSIT:
             return "Ore Deposit";
+        case structureType::CHEST:
+            return "Chest";
         default:
             return "Unknown";
     }
 }
+
+void StructureRenderingComponent::PlayAnimation(const AnimationType animation, const Direction direction) const {
+    if (!sprite) return;
+    sprite->PlayAnimation(animation, direction, true);
+}
+
+void StructureRenderingComponent::PlayAnimation_reversed(AnimationType animation, Direction direction) const {
+    if (!sprite) return;
+    sprite->GetSpriteRenderingContext()->PlayReversed();
+    sprite->PlayAnimation(animation, direction, true);
+}
+
+void StructureRenderingComponent::SetLock(const bool value) {lock = value;}
+
+bool StructureRenderingComponent::isLocked() const {return lock;}
 
 RenderingContext StructureRenderingComponent::getRenderingContext() const {
     if (!sprite) return RenderingContext{};
@@ -58,7 +83,7 @@ StructureHitboxComponent::StructureHitboxComponent(const std::shared_ptr<Server>
 
 StructureHitboxComponent::StructureHitboxComponent(const std::shared_ptr<Server>& server) : server(server) {}
 
-int InventoryComponent::GetInventoryId() const {
+int StructureInventoryComponent::GetInventoryId() const {
     return inventoryId;
 }
 

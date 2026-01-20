@@ -61,6 +61,8 @@ UIComponent::~UIComponent() {
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 #endif
+    Rml::Shutdown();
+    exit(0);
 }
 
 Rml::Context* UIComponent::getRmlContext() const {

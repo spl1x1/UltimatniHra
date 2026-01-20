@@ -27,7 +27,13 @@ public:
     [[nodiscard]] Coordinates GetCoordinates() const override;
     [[nodiscard]] int GetVariant() const override;
     [[nodiscard]] int GetInnerType() const override;
+
+    [[nodiscard]] StructureRenderingComponent* GetRenderingComponent() override;
+    [[nodiscard]] StructureHitboxComponent* GetHitboxComponent() override;
+    [[nodiscard]] StructureInventoryComponent* GetInventoryComponent() override;
+
     void DropInventoryItems() override;
+    void Interact() override{};
 
 
     //Structure specific methods
