@@ -1138,8 +1138,8 @@ void ConsoleEventListener::ProcessCommand(const Rml::String& command) {
             return;
         }
         auto tokens = splitArgs(args);
-        if (tokens.size() != 3) {
-            printf("Usage: /spawn <Type> <x> <y>\n");
+        if (tokens.size() < 3) {
+            printf("Usage: /spawn <Type> <x> <y> <variant>\n");
             return;
         }
 

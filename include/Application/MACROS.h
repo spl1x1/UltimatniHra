@@ -19,6 +19,8 @@
 
 #define TREEDENSITY 5
 
+#define MAXENTITYCOUNT 10
+
 
 #define PLAYER_WIDTH 96
 #define PLAYER_HEIGHT 96

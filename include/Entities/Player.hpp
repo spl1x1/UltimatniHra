@@ -81,6 +81,8 @@ public:
     [[nodiscard]] EntityType GetType() const override;
     [[nodiscard]] int GetPlayerUUID() const;
     [[nodiscard]] int GetInventoryId() const;
+    [[nodiscard]] int GetVariant() const override;;
+
     void DropItemsOnDeath() override{};
 
     EntityCollisionComponent* GetCollisionComponent() override;

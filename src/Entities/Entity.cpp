@@ -103,6 +103,7 @@ void EntityRenderingComponent::PlayReversedAnimation(const AnimationType animati
 
 
 EntityRenderingComponent::EntityRenderingComponent(std::unique_ptr<ISprite> sprite) :sprite(std::move(sprite)) {
+    if (!this->sprite) return;
     rect = std::make_unique<SDL_FRect>();
 }
 

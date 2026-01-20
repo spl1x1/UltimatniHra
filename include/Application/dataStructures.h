@@ -116,9 +116,10 @@ struct StructureData {
 };
 
 struct EntityData {
+    float x = 0.0f, y = 0.0f;
     int type;
     int health;
-    float x = 0.0f, y = 0.0f;
+    int variant{1};
 };
 
 struct PlayerData {

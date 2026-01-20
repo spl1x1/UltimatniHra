@@ -10,9 +10,12 @@
 #include <mutex>
 #include <set>
 #include <functional>
+#include <random>
+#include <SDL3/SDL_timer.h>
 
 #include "AiManager.h"
 #include "../Application/dataStructures.h"
+#include "../Application/MACROS.h"
 #include "../Window/WorldStructs.h"
 
 class Item;
@@ -24,6 +27,7 @@ class WorldData;
 enum class EntityType;
 class IStructure;
 class EntityEvent;
+
 
 
 class Server : public std::enable_shared_from_this<Server> {
@@ -72,6 +76,12 @@ class Server : public std::enable_shared_from_this<Server> {
     // Callback for adding items to UI inventory
     std::function<bool(std::unique_ptr<Item>)> onItemDropped;
 
+    struct spawnGenerator {
+        std::mt19937 generator = std::mt19937(SDL_GetTicks());
+        std::uniform_int_distribution<int> dist =  std::uniform_int_distribution(0,  1000);
+        std::uniform_int_distribution<int> distVariant = std::uniform_int_distribution(1, 3);
+    } spawnGen;
+
 public:
 
     //Setters
@@ -119,6 +129,7 @@ public:
     void SendClickEvent(MouseButtonEvent event) const;
 
     IEntity* AddEntity(Coordinates coordinates, EntityType type, int variant = 1); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
+    IEntity* AddEntity_unprotected(Coordinates coordinates, EntityType type, int variant = 1); //Prida na server entitu
     IEntity* AddEntity_unprotected(const std::shared_ptr<IEntity>& entity); //Prida na server entitu
     void AddEntity(const std::shared_ptr<IEntity>& entity); //Prida na server entitu, thread safe verze
     void AddLocalPlayer(const std::shared_ptr<Player>& player); //Prida na server lokalni instanci hrace
@@ -142,7 +153,7 @@ public:
     // Set callback for item drops (used by UI to receive items)
     void SetItemDropCallback(std::function<bool(std::unique_ptr<Item>)> callback);
     // Add item through callback (returns false if no callback set)
-    bool AddItemToInventory(std::unique_ptr<Item> item);
+    bool AddItemToInventory(std::unique_ptr<Item> item) const;
 };
 
 #endif //SERVERSTRUCS_H

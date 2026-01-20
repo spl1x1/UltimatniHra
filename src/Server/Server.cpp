@@ -66,58 +66,58 @@ void Server::setupSlimeAi(IEntity* entity) {
 
     // Registrace handlerů pro stavy
     sm->registerState(AiState::Idle,
-        [](IEntity* entity, float dt) {
-            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
-            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
+        [](IEntity* entityInstance, float dt) {
+            entityInstance->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
+            entityInstance->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
-        [](IEntity* entity, float dt) {
-            if (entity->GetServer()->aiManager.getTimeInState(entity) >= 5.0f) { // Po 5 sekundách přepni do Patrol
-                entity->GetServer()->aiManager.sendEvent(entity, AiEvent::ReachedDestination);
+        [](IEntity* entityInstance, float dt) {
+            if (entityInstance->GetServer()->aiManager.getTimeInState(entityInstance) >= 5.0f) { // Po 5 sekundách přepni do Patrol
+                entityInstance->GetServer()->aiManager.sendEvent(entityInstance, AiEvent::ReachedDestination);
             }
         }
     );
 
     sm->registerState(AiState::Patrol,
-    [](IEntity* entity, float dt) {
-        std::mt19937 rng(static_cast<unsigned int>(SDL_GetTicks()) + entity->GetId());
+    [](IEntity* entityInstance, float dt) {
+        std::mt19937 rng(static_cast<unsigned int>(SDL_GetTicks()) + entityInstance->GetId());
         std::uniform_int_distribution<int> dist(-100, 100);
 
-        const auto coords {entity->GetCoordinates()};
-        entity->GetLogicComponent()->AddEvent(Event_MoveTo::Create(coords.x+static_cast<float>(dist(rng)),coords.y+static_cast<float>(dist(rng))));
+        const auto coords {entityInstance->GetCoordinates()};
+        entityInstance->GetLogicComponent()->AddEvent(Event_MoveTo::Create(coords.x+static_cast<float>(dist(rng)),coords.y+static_cast<float>(dist(rng))));
 
-        entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
-        entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
+        entityInstance->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
+        entityInstance->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
     },
-    [](IEntity* entity, float dt) {
-        if (entity->GetServer()->aiManager.getTimeInState(entity) >= 5.0f) {
-            entity->GetServer()->aiManager.sendEvent(entity, AiEvent::ReachedDestination);
+    [](IEntity* entityInstance, float dt) {
+        if (entityInstance->GetServer()->aiManager.getTimeInState(entityInstance) >= 5.0f) {
+            entityInstance->GetServer()->aiManager.sendEvent(entityInstance, AiEvent::ReachedDestination);
         }
     });
 
     sm->registerState(AiState::Chase,
-        [](IEntity* entity, float dt) {
-            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
-            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
+        [](IEntity* entityInstance, float dt) {
+            entityInstance->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
+            entityInstance->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
-        [](IEntity* entity, float dt) {
-            if (const auto localPlayer{entity->GetServer()->localPlayer}) {
-            const auto dx{localPlayer->GetEntityCenter().x - entity->GetEntityCenter().x};
-            const auto dy {localPlayer->GetEntityCenter().y - entity->GetEntityCenter().y};
-            entity->GetLogicComponent()->AddEvent(Event_Move::Create(dx,dy));
+        [](IEntity* entityInstance, float dt) {
+            if (const auto localPlayer{entityInstance->GetServer()->localPlayer}) {
+            const auto dx{localPlayer->GetEntityCenter().x - entityInstance->GetEntityCenter().x};
+            const auto dy {localPlayer->GetEntityCenter().y - entityInstance->GetEntityCenter().y};
+            entityInstance->GetLogicComponent()->AddEvent(Event_Move::Create(dx,dy));
             }
         }
     );
 
 
     sm->registerState(AiState::Attack,
-        [](IEntity* entity, float dt) {
-            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
-            entity->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
+        [](IEntity* entityInstance, float dt) {
+            entityInstance->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE) );
+            entityInstance->GetLogicComponent()->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO) );
         },
-        [](IEntity* entity, float dt) {
-            const auto logicComp{entity->GetLogicComponent()};
-            logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(entity->GetEntityCenter(), entity->GetServer()->GetPlayer_unprotected()->GetEntityCenter())));
-            logicComp->PerformAttack(entity,1,5);
+        [](IEntity* entityInstance, float dt) {
+            const auto logicComp{entityInstance->GetLogicComponent()};
+            logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(entityInstance->GetEntityCenter(), entityInstance->GetServer()->GetPlayer_unprotected()->GetEntityCenter())));
+            logicComp->PerformAttack(entityInstance,1,2+ entityInstance->GetVariant()*3);
             //logicComp->AddEvent(Event_Attack::Create(1,5));
         }
     );
@@ -301,6 +301,7 @@ EntityData Server::GetEntityData(IEntity *entity) {
     const auto coords{entity->GetCoordinates()};
     data.x = coords.x;
     data.y = coords.y;
+    data.variant = entity->GetVariant();
     return data;
 }
 
@@ -380,6 +381,8 @@ void Server::SaveServerState() {
         sb.append_comma();
         sb.append_key_value("health", entitiesData.at(i).health);
         sb.append_comma();
+        sb.append_key_value("variant", entitiesData.at(i).variant);
+        sb.append_comma();
         sb.append_key_value("x", entitiesData.at(i).x);
         sb.append_comma();
         sb.append_key_value("y", entitiesData.at(i).y);
@@ -430,8 +433,9 @@ void Server::LoadServerState() {
         auto obj = entityData.get_object();
         Coordinates coords{static_cast<float>(obj["x"].get_double()), static_cast<float>(obj["y"].get_double())};
         const auto entityType{static_cast<EntityType>(static_cast<int>(obj["type"].get_int64()))};
-        const int Health {static_cast<int>(obj["health"].get_int64())};
-        AddEntity(coords, entityType)->GetHealthComponent()->SetHealth(Health);
+        const int health {static_cast<int>(obj["health"].get_int64())};
+        const int variant {static_cast<int>(obj["variant"].get_int64())};
+        AddEntity(coords, entityType,variant)->GetHealthComponent()->SetHealth(health);
     }
 
 }
@@ -570,18 +574,23 @@ void Server::SendClickEvent(const MouseButtonEvent event) const {
     }
     else if (event.button == MouseButtonEvent::Button::RIGHT) {
         if (event.action == MouseButtonEvent::Action::PRESS) interact(localPlayer.get(), event);
-        if (event.action == MouseButtonEvent::Action::RELEASE) sendMine(localPlayer.get(), event);
+        if (event.action == MouseButtonEvent::Action::RELEASE) sendMoveTo(localPlayer.get(), event);
     }
 
 }
 
-IEntity* Server::AddEntity(Coordinates coordinates, const EntityType type, const int variant)
+IEntity* Server::AddEntity(const Coordinates coordinates, const EntityType type, const int variant)
 {
     std::unique_lock lock(serverMutex);
+    return AddEntity_unprotected(coordinates, type, variant);
+}
+
+IEntity* Server::AddEntity_unprotected(Coordinates coordinates, const EntityType type, const int variant)
+{
     IEntity* entity{nullptr};
     switch (type) {
         case EntityType::SLIME: {
-            const auto slime{std::make_shared<Slime>(GetSharedPtr().get(), coordinates)};
+            const auto slime{std::make_shared<Slime>(GetSharedPtr().get(), coordinates, variant)};
             entity = AddEntity_unprotected(slime);
             if (slime) setupSlimeAi(slime.get());
             break;
@@ -597,7 +606,48 @@ IEntity* Server::AddEntity(Coordinates coordinates, const EntityType type, const
     return entity;
 }
 
+
 void Server::Tick() {
+    auto check3by3Area = [this](const int x, const int y) -> bool {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (GetMapValue_unprotected(x + dx, y + dy) != 0) return false;
+            }
+        }
+        return true;
+    };
+
+    auto tryToSpawnSlime = [&]() {
+        constexpr auto maxAttempts{10};
+        if (spawnGen.dist(spawnGen.generator) >5) return;
+
+        Coordinates spawnCoordinates{};
+        Coordinates playerCoordinates{localPlayer->GetCoordinates()};
+        auto attempts{0};
+
+        for (int i = 0; i < maxAttempts; i++) {
+            attempts++;
+            const auto x = playerCoordinates.x + static_cast<float>(spawnGen.dist(spawnGen.generator));
+            const auto y = playerCoordinates.y + static_cast<float>(spawnGen.dist(spawnGen.generator));
+
+            if (check3by3Area(std::floor(x/32),std::floor(x/32))) continue;
+            spawnCoordinates = {x, y};
+            attempts--;
+            break;
+        }
+        if (attempts >=maxAttempts) return;
+        AddEntity_unprotected(spawnCoordinates, EntityType::SLIME,  spawnGen.distVariant(spawnGen.generator));
+        SDL_Log("Spawned slime at (%f, %f)", spawnCoordinates.x, spawnCoordinates.y);
+    };
+
+    auto removeFarEntity = [this](IEntity* entity)->bool {
+        if (CoordinatesDistance(localPlayer->GetEntityCenter(), entity->GetEntityCenter()) < 2000.0f)
+            return false;
+        RemoveEntity_unprotected(entity->GetId());
+        SDL_Log("Removed entity ID %d for being too far", entity->GetId());
+        return true;
+    };
+
     auto playerDetection = [this](IEntity* player, IEntity* entity) {
         if (entity->GetType() == EntityType::PLAYER)  return;
         if (const auto distanceToPlayer {CoordinatesDistance(entity->GetEntityCenter(), player->GetEntityCenter())}; distanceToPlayer < entity->GetDetectionRange()
@@ -643,6 +693,7 @@ void Server::Tick() {
     aiManager.update(deltaTime);
     for (const auto &entity: entities | std::views::values) {
         if (!entity) continue;
+        if (removeFarEntity(entity.get())) continue;
         entity->Tick();
         playerDetection(localPlayer.get(), entity.get()); //Detekce hrace pro AI, zatim pouze lokalni hrac
         if (const auto damage{checkDamage(entity)};checkDamage(entity) > 0)
@@ -650,6 +701,7 @@ void Server::Tick() {
     }
     lastDamagePoints = damagePoints;
     damagePoints.clear();
+    if (entities.size() < MAXENTITYCOUNT) tryToSpawnSlime();
 }
 
 
@@ -837,7 +889,7 @@ void Server::SetItemDropCallback(std::function<bool(std::unique_ptr<Item>)> call
     onItemDropped = std::move(callback);
 }
 
-bool Server::AddItemToInventory(std::unique_ptr<Item> item) {
+bool Server::AddItemToInventory(std::unique_ptr<Item> item) const {
     if (onItemDropped && item) {
         return onItemDropped(std::move(item));
     }

@@ -9,8 +9,7 @@
 #include "../Sprites/SlimeSprite.h"
 
 class Slime final: public IEntity {
-    EntityRenderingComponent entityRenderingComponent = EntityRenderingComponent(std::make_unique<SlimeSprite>());
-
+    std::unique_ptr<EntityRenderingComponent> entityRenderingComponent{nullptr};
     EntityCollisionComponent entityCollisionComponent =
         EntityCollisionComponent(EntityCollisionComponent::HitboxData
         {
@@ -19,7 +18,7 @@ class Slime final: public IEntity {
             Coordinates{41, 41}, // BOTTOM_RIGHT
             Coordinates{22, 41} // BOTTOM_LEFT
         });
-    EntityHealthComponent entityHealthComponent = EntityHealthComponent(20, 20);
+    std::unique_ptr<EntityHealthComponent> entityHealthComponent{nullptr};
 
     EntityLogicComponent entityLogicComponent = EntityLogicComponent();
     EntityInventoryComponent entityInventoryComponent = EntityInventoryComponent();
@@ -29,7 +28,8 @@ class Slime final: public IEntity {
     int reach{40}; //Entity reach in pixels
     float detectionRange{300.0f}; //Detection range in pixels
     float attackRange{40.0f}; //Attack range in pixels
-    bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes)
+    bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes
+    int variant{1}; //Slime variant (1 = regular, 2 = ghost)
 
 public:
     //Interface methods implementation
@@ -63,6 +63,8 @@ public:
     [[nodiscard]] float GetDetectionRange() const override;
     [[nodiscard]] float GetAttackRange() const override;
     [[nodiscard]] EntityType GetType() const override;
+    [[nodiscard]] int GetVariant() const override;
+
     void DropItemsOnDeath() override;
 
     EntityCollisionComponent* GetCollisionComponent() override;
@@ -78,7 +80,7 @@ public:
     //Get server pointer
     [[nodiscard]] Server* GetServer() const override;
 
-    Slime(Server* server, const Coordinates& coordinates);
+    Slime(Server* server, const Coordinates& coordinates, int variant = 1);
 };
 
 #endif //ULTIMATNIHRA_SLIME_H

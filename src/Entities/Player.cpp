@@ -187,6 +187,8 @@ int Player::GetInventoryId() const {
     return inventoryId;
 }
 
+int Player::GetVariant() const { return 0; }
+
 EntityCollisionComponent * Player::GetCollisionComponent() {
     return &entityCollisionComponent;
 }

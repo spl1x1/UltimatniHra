@@ -40,6 +40,8 @@ void Application::init() {
 
     signal(SIGINT, SignalHandler);
     signal(SIGTERM, SignalHandler);
+    signal(SIGABRT, SignalHandler);
+    signal(SIGSEGV, SignalHandler);
 }
 
 void Application::run() const {
