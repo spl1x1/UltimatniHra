@@ -6,8 +6,12 @@
 //
 
 #include "../../include/Entities/Slime.h"
+#include "../../include/Items/inventory.h"
+#include "../../include/Items/Item.h"
+#include "../../include/Server/Server.h"
 #include <memory>
 #include <random>
+#include <SDL3/SDL_log.h>
 
 
 void Slime::Tick() {
@@ -114,6 +118,15 @@ EntityType Slime::GetType() const {
 }
 
 void Slime::DropItemsOnDeath() {
+    SDL_Log("Slime gone");
+    auto* player = server->GetPlayer_unprotected();
+    if (player) {
+        auto* playerInventory = player->GetInventoryComponent();
+        if (playerInventory) {
+            auto leatherItem = ItemFactory::createMaterial(MaterialType::LEATHER);
+            playerInventory->addItem(std::move(leatherItem));
+        }
+    }
 }
 
 EntityCollisionComponent * Slime::GetCollisionComponent() {
