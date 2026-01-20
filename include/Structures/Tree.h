@@ -15,8 +15,8 @@ class Tree final : public IStructure {
 public:
     enum class TreeVariant {
         PLAINS,
-        SNOW,
         FOREST,
+        SNOW,
         NONE
     };
 
@@ -34,6 +34,7 @@ public:
     [[nodiscard]] Coordinates GetCoordinates() const override;
     [[nodiscard]] int GetVariant() const override;
     [[nodiscard]] int GetInnerType() const override;
+    void DropInventoryItems() override;;
 
     //Constructor
     Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int innerType);

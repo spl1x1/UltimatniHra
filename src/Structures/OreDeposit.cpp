@@ -44,6 +44,9 @@ int OreDeposit::GetInnerType() const {
     return InnerVariant;
 }
 
+void OreDeposit::DropInventoryItems() {
+}
+
 OreDeposit::OreDeposit(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int type, const int variant)
 : id(id),hitboxComponent(server), type(type) {
 

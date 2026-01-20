@@ -42,6 +42,8 @@ int OreNode::GetInnerType() const {
     return InnerVariant;
 }
 
+void OreNode::DropInventoryItems() {}
+
 OreNode::OreNode(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int type, const int variant)
 : id(id),hitboxComponent(server), type(type) {
 

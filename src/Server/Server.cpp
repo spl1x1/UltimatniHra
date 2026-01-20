@@ -180,24 +180,24 @@ int Server::GetMapValue(int x, int y, WorldData::MapType mapType) {
         return -1; // Out of bounds
     }
     std::shared_lock lock(serverMutex);
-    return worldData.getMapValue(x,y, mapType);
+    return worldData.GetMapValue(x,y, mapType);
 }
 
 int Server::GetMapValue_unprotected(int x, int y, WorldData::MapType mapType) const {
     if (x < 0 || y < 0 || x >= MAPSIZE || y >= MAPSIZE) {
         return -1; // Out of bounds
     }
-    return worldData.getMapValue(x,y, mapType);
+    return worldData.GetMapValue(x,y, mapType);
 }
 
 
 void Server::SetMapValue(int x, int y, WorldData::MapType mapType, int value) {
     std::lock_guard lock(serverMutex);
-    worldData.updateMapValue(x,y, mapType, value);
+    worldData.UpdateMapValue(x,y, mapType, value);
 }
 
 void Server::SetMapValue_unprotected(int x, int y, WorldData::MapType mapType, int value) {
-    worldData.updateMapValue(x,y, mapType, value);
+    worldData.UpdateMapValue(x,y, mapType, value);
 }
 
 void Server::AddLocalPlayer(const std::shared_ptr<Player>& player) {
@@ -325,14 +325,18 @@ EntityData Server::GetEntityData(IEntity *entity) {
 
 
 void Server::SaveServerState() {
-    vector<StructureData> structuresData;
+    std::vector<StructureData> structuresData;
+    structuresData.reserve(structures.size());
     {
         std::shared_lock lock(serverMutex);
         for (const auto &structure: structures | std::views::values) {
             structuresData.emplace_back(GetStructureData(structure.get()));
         }
     }
-    vector<EntityData> entitiesData;
+    structuresData.shrink_to_fit();
+
+    std::vector<EntityData> entitiesData;
+    entitiesData.reserve(entities.size());
     {
         std::shared_lock lock(serverMutex);
         for (const auto &entity: entities | std::views::values) {
@@ -340,9 +344,28 @@ void Server::SaveServerState() {
             entitiesData.emplace_back(GetEntityData(entity.get()));
         }
     }
+    entitiesData.shrink_to_fit();
+
+    std::vector<Coordinates> waterTiles = worldData.GetWaterTiles();
+    waterTiles.shrink_to_fit();
 
     simdjson::builder::string_builder sb;
+
     sb.start_object();
+    sb.append("waterTiles");
+    sb.append_colon();
+    sb.start_array();
+    for (size_t i = 0; i < waterTiles.size(); ++i) {
+        sb.start_object();
+        sb.append_key_value("x", static_cast<int>(waterTiles.at(i).x));
+        sb.append_comma();
+        sb.append_key_value("y", static_cast<int>(waterTiles.at(i).y));
+        sb.end_object();
+        if (i + 1 < waterTiles.size()) sb.append_comma();
+    }
+    sb.end_array();
+    sb.append_comma();
+
     sb.append("structures");
     sb.append_colon();
     sb.start_array();
@@ -365,7 +388,6 @@ void Server::SaveServerState() {
     }
     sb.end_array();
     sb.append_comma();
-
 
     sb.append("entities");
     sb.append_colon();
@@ -400,6 +422,13 @@ void Server::LoadServerState() {
     simdjson::ondemand::parser parser;
     auto doc{parser.iterate(jsonContent)};
 
+    for (auto waterTileData : doc["waterTiles"].get_array()) {
+        auto obj = waterTileData.get_object();
+        const int x{static_cast<int>(obj["x"].get_int64())};
+        const int y{static_cast<int>(obj["y"].get_int64())};
+        worldData.UpdateMapValue(x, y, WorldData::COLLISION_MAP, -1);
+    }
+
     for (auto structureData : doc["structures"].get_array()) {
         auto obj = structureData.get_object();
 
@@ -419,7 +448,7 @@ void Server::LoadServerState() {
         auto obj = entityData.get_object();
         Coordinates coords{static_cast<float>(obj["x"].get_double()), static_cast<float>(obj["y"].get_double())};
         const auto entityType{static_cast<EntityType>(static_cast<int>(obj["type"].get_int64()))};
-        const float Health {static_cast<float>(obj["health"].get_double())};
+        const int Health {static_cast<int>(obj["health"].get_int64())};
         AddEntity(coords, entityType)->GetHealthComponent()->SetHealth(Health);
     }
 
@@ -440,6 +469,7 @@ void Server::Reset() {
     lastDamagePoints.clear();
     cacheValidityData.isCacheValid = false;
     StructureIdCache.clear();
+    worldData.ResetMaps();
 }
 
 void Server::PlayerUpdate(std::unique_ptr<EntityEvent> e, int playerId) {
@@ -498,7 +528,7 @@ std::vector<std::string> Server::GetTileInfo(const float x, const float y) {
     std::shared_lock lock(serverMutex);
     const int tileX{static_cast<int>(std::floor(x / 32.0f))};
     const int tileY{static_cast<int>(std::floor(y / 32.0f))};
-    const auto mapValue{worldData.getMapValue(tileX, tileY, WorldData::COLLISION_MAP)};
+    const auto mapValue{worldData.GetMapValue(tileX, tileY, WorldData::COLLISION_MAP)};
 
      std::vector<std::string> text;
 
@@ -763,14 +793,14 @@ void Server::GenerateWorld(){
         for (int y = 0; y < generaceMapy.biomMapa.at(x).size(); y++) {
             int biomeValue = generaceMapy.biomMapa.at(x).at(y);
             //přesun dat do matice
-            worldData.updateMapValue(x,y,WorldData::BIOME_MAP,biomeValue);
+            worldData.UpdateMapValue(x,y,WorldData::BIOME_MAP,biomeValue);
 
             //Random block variation level
             int variation = static_cast<int>(dist(mt));
-            worldData.updateMapValue(x,y,WorldData::BLOCK_VARIATION_MAP,variation);
+            worldData.UpdateMapValue(x,y,WorldData::BLOCK_VARIATION_MAP,variation);
 
-            if (biomeValue == 0) worldData.updateMapValue(x,y,WorldData::COLLISION_MAP, -1); // Water
-            else worldData.updateMapValue(x,y,WorldData::COLLISION_MAP,0);
+            if (biomeValue == 0) worldData.UpdateMapValue(x,y,WorldData::COLLISION_MAP, -1); // Water
+            else worldData.UpdateMapValue(x,y,WorldData::COLLISION_MAP,0);
         }
     }
 }

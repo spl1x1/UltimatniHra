@@ -274,7 +274,7 @@ void Window::advanceFrame() {
     textures.at("FinalTexture");
     SDL_SetRenderTarget(data.Renderer, textures.at("FinalTexture"));
     SDL_RenderClear(data.Renderer);
-    Coordinates coords = server->GetPlayer()->GetCoordinates();
+    const Coordinates coords = server->GetPlayer()->GetCoordinates();
 
     data.cameraWaterRect->x += static_cast<float>(std::lround(coords.x - (data.cameraRect->x + cameraOffsetX)));
     data.cameraWaterRect->y += static_cast<float>(std::lround(coords.y - (data.cameraRect->y + cameraOffsetY)));
@@ -574,6 +574,7 @@ void Window::initGame(bool loadingSave) {
     data.mainScreen = false;
     data.inMenu = false;
     data.last = SDL_GetPerformanceCounter();
+
     if (!data.wasLoaded) {
         WaterSprite::Init();
         EventBindings::InitializeBindings();
@@ -588,6 +589,7 @@ void Window::initGame(bool loadingSave) {
         SDL_SetTextureScaleMode(textures.at("FinalTexture"), SDL_SCALEMODE_PIXELART);
         data.wasLoaded = true;
     }
+
     server->Reset();
     if (!loadingSave) {
         server->GenerateWorld();

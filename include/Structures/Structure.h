@@ -111,6 +111,7 @@ public:
     [[nodiscard]] virtual Coordinates GetCoordinates() const = 0;
     [[nodiscard]] virtual int GetVariant() const = 0;
     [[nodiscard]] virtual int GetInnerType() const = 0;
+     virtual  void DropInventoryItems() = 0;
 };
 
 #endif //ULTIMATNIHRA_STRUCTURE_H

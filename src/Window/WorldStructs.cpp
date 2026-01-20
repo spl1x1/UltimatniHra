@@ -3,9 +3,30 @@
 //
 #include "../../include/Window/WorldStructs.h"
 #include "../../include/Application/MACROS.h"
+#include "../../include/Application/dataStructures.h"
 
 
-void WorldData::updateMapValue(int x, int y, MapType mapType, int newValue) {
+std::vector<Coordinates> WorldData::GetWaterTiles() const {
+    std::vector<Coordinates> waterTiles;
+    waterTiles.reserve(MAPSIZE * MAPSIZE / 10);
+    for (int x = 0; x < MAPSIZE; ++x) {
+        for (int y = 0; y < MAPSIZE; ++y) {
+            if (GetMapValue(x,y, COLLISION_MAP) == -1) { // Assuming 1 represents water
+                waterTiles.emplace_back(Coordinates{static_cast<float>(x), static_cast<float>(y)});
+            }
+        }
+    }
+    waterTiles.shrink_to_fit();
+    return waterTiles;
+}
+
+void WorldData::ResetMaps() {
+    std::fill(biomeMap.begin(), biomeMap.end(), 0);
+    std::fill(blockVariantionMap.begin(), blockVariantionMap.end(), 0);
+    std::fill(collisionMap.begin(), collisionMap.end(), 0);
+}
+
+void WorldData::UpdateMapValue(const int x, const int y, const MapType mapType, const int newValue) {
     int step = x*MAPSIZE;
     switch (mapType) {
         case BIOME_MAP:
@@ -20,7 +41,7 @@ void WorldData::updateMapValue(int x, int y, MapType mapType, int newValue) {
     }
 }
 
-int WorldData::getMapValue(int x, int y, const MapType mapType) const {
+int WorldData::GetMapValue(int x, int y, const MapType mapType) const {
     int step = x*MAPSIZE;
     switch (mapType) {
         case BIOME_MAP:

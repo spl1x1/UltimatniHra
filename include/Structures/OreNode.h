@@ -27,6 +27,7 @@ public:
     [[nodiscard]] Coordinates GetCoordinates() const override;
     [[nodiscard]] int GetVariant() const override;
     [[nodiscard]] int GetInnerType() const override;
+    void DropInventoryItems() override;
 
     //Structure specific methods
 

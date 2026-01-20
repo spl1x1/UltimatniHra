@@ -102,7 +102,7 @@ struct StructureData {
 
 struct EntityData {
     int type;
-    float health;
+    int health;
     float x = 0.0f, y = 0.0f;
 };
 

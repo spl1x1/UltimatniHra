@@ -53,6 +53,7 @@ int Tree::GetInnerType() const {
     return variant;
 }
 
+void Tree::DropInventoryItems() {}
 
 
 Tree::Tree(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int innerType)

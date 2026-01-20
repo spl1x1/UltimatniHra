@@ -7,6 +7,8 @@
 #include <vector>
 
 
+struct Coordinates;
+
 class WorldData {
     //Zmena na 1D pole, step zname je to MAPSIZE tak usetrime pamet
     std::vector<int> biomeMap;
@@ -20,9 +22,10 @@ public:
         COLLISION_MAP
     };
 
-
-    void updateMapValue(int x, int y, MapType mapType, int newValue);
-    [[nodiscard]] int getMapValue(int x, int y, MapType mapType) const;
+    void ResetMaps();
+    void UpdateMapValue(int x, int y, MapType mapType, int newValue);
+    [[nodiscard]] int GetMapValue(int x, int y, MapType mapType) const;
+    [[nodiscard]] std::vector<Coordinates> GetWaterTiles() const;
 
     WorldData();
 };
