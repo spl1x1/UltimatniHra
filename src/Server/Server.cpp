@@ -552,11 +552,6 @@ void Server::SendClickEvent(const MouseButtonEvent event) const {
         logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{event.x, event.y})));
     };
 
-    auto sendCreateChest = [](const IEntity* player, const MouseButtonEvent eventData) {
-        const auto server{player->GetServer()};
-        server->AddStructure_unprotected({eventData.x,eventData.y}, structureType::CHEST, 0, 0);
-    };
-
     auto sendMoveTo = [](IEntity* player, const MouseButtonEvent event) {
         const auto logicComp{player->GetLogicComponent()};
         logicComp->AddEvent(Event_MoveTo::Create(event.x, event.y));
@@ -575,7 +570,7 @@ void Server::SendClickEvent(const MouseButtonEvent event) const {
     }
     else if (event.button == MouseButtonEvent::Button::RIGHT) {
         if (event.action == MouseButtonEvent::Action::PRESS) interact(localPlayer.get(), event);
-        if (event.action == MouseButtonEvent::Action::RELEASE) sendCreateChest(localPlayer.get(), event);
+        if (event.action == MouseButtonEvent::Action::RELEASE) sendMine(localPlayer.get(), event);
     }
 
 }
