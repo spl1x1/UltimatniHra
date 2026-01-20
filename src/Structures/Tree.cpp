@@ -6,7 +6,6 @@
 
 #include <random>
 
-#include "../../include/Application/MACROS.h"
 #include "../../include/Sprites/Sprite.hpp"
 #include "../../include/Sprites/TreeSprite.hpp"
 
@@ -22,8 +21,8 @@ bool Tree::wasProperlyInitialized() {
     return initialized;
 }
 
-void Tree::Tick(float deltaTime) {
-    renderingComponent.Tick(deltaTime);
+void Tree::Tick(const float deltaTime) {
+    renderingComponent.Tick(deltaTime, this);
 }
 
 int Tree::GetInventoryId() const {
@@ -51,6 +50,18 @@ int Tree::GetVariant() const {
 
 int Tree::GetInnerType() const {
     return variant;
+}
+
+StructureRenderingComponent * Tree::GetRenderingComponent() {
+    return  &renderingComponent;
+}
+
+StructureHitboxComponent * Tree::GetHitboxComponent() {
+    return &hitboxComponent;
+}
+
+StructureInventoryComponent * Tree::GetInventoryComponent() {
+    return nullptr;
 }
 
 void Tree::DropInventoryItems() {}

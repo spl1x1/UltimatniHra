@@ -42,6 +42,18 @@ int OreNode::GetInnerType() const {
     return InnerVariant;
 }
 
+StructureRenderingComponent * OreNode::GetRenderingComponent() {
+    return &renderingComponent;
+}
+
+StructureHitboxComponent * OreNode::GetHitboxComponent() {
+    return &hitboxComponent;
+}
+
+StructureInventoryComponent * OreNode::GetInventoryComponent() {
+    return nullptr;
+}
+
 void OreNode::DropInventoryItems() {}
 
 OreNode::OreNode(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int type, const int variant)

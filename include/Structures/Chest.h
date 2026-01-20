@@ -2,26 +2,20 @@
 // Created by USER on 09.12.2025.
 //
 
-#ifndef TREE_H
-#define TREE_H
+#ifndef CHEST_H
+#define CHEST_H
 
 #include "Structure.h"
 
-class Tree final : public IStructure {
+class Chest final : public IStructure {
     int id;
     StructureRenderingComponent renderingComponent;
     StructureHitboxComponent hitboxComponent;
+    StructureInventoryComponent inventoryComponent;
     bool initialized{false};
-public:
-    enum class TreeVariant {
-        PLAINS,
-        FOREST,
-        SNOW,
-        NONE
-    };
+    bool open{false};
 
-    int variant{0};
-    int InnerVariant{0};
+public:
 
     //Interface implementation
     [[nodiscard]] structureType getType() const override;
@@ -32,20 +26,20 @@ public:
     [[nodiscard]] RenderingContext GetRenderingContext() const override;
     [[nodiscard]] HitboxContext GetHitboxContext() override;
     [[nodiscard]] Coordinates GetCoordinates() const override;
-    [[nodiscard]] int GetVariant() const override;
-    [[nodiscard]] int GetInnerType() const override;
+    [[nodiscard]] int GetVariant() const override;;
+    [[nodiscard]] int GetInnerType() const override;;
 
     [[nodiscard]] StructureRenderingComponent* GetRenderingComponent() override;
     [[nodiscard]] StructureHitboxComponent* GetHitboxComponent() override;
     [[nodiscard]] StructureInventoryComponent* GetInventoryComponent() override;
 
-    void DropInventoryItems() override;
-    void Interact() override{};
+    void DropInventoryItems() override;;
+    void Interact() override;
 
     //Constructor
-    Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int innerType);
-    ~Tree() override;
+    Chest(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server);
+    ~Chest() override;
 };
 
 
-#endif //TREE_H
+#endif //CHEST_H

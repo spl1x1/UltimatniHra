@@ -58,23 +58,40 @@ void Window::loadConfig() {
 }
 
 void Window::handleMouseInputs() {
-    auto sendLeftClickInput = [&]() {
-        const Coordinates point{data.mouseData.x+16,data.mouseData.y+16}; //Center of the tile
-        server->PlayerUpdate(Event_SetAngle::Create(Server::CalculateAngle(server->GetPlayer()->GetEntityCenter(), point)));
-
+    auto sendLeftClickInput = [&] {
         if (data.mouseData.currentLeftHoldTime > 0.5f) {
-            server->PlayerUpdate(Event_ClickAttack::Create(2,10,point));
+            server->SendClickEvent(MouseButtonEvent{
+                .button = MouseButtonEvent::Button::LEFT,
+                .action = MouseButtonEvent::Action::RELEASE,
+                .x = data.mouseData.x + 16,
+                .y = data.mouseData.y + 16
+            });
             return;
         }
-        server->PlayerUpdate(Event_ClickAttack::Create(1,10,point));
+        server->SendClickEvent(MouseButtonEvent{
+            .button = MouseButtonEvent::Button::LEFT,
+            .action = MouseButtonEvent::Action::PRESS,
+            .x = data.mouseData.x + 16,
+            .y = data.mouseData.y + 16
+        });
     };
 
-    auto sendRightClickInput = [&]() {
+    auto sendRightClickInput = [&] {
         if (data.mouseData.currentRightHoldTime > 0.5f) {
-            SDL_Log("Right Click Hold Input");
+            server->SendClickEvent(MouseButtonEvent{
+                .button = MouseButtonEvent::Button::RIGHT,
+                .action = MouseButtonEvent::Action::RELEASE,
+                .x = data.mouseData.x + 16,
+                .y = data.mouseData.y + 16
+            });
             return;
         }
-        server->PlayerUpdate(Event_ClickMove::Create(data.mouseData.x +16, data.mouseData.y +16));
+        server->SendClickEvent(MouseButtonEvent{
+            .button = MouseButtonEvent::Button::RIGHT,
+            .action = MouseButtonEvent::Action::PRESS,
+            .x = data.mouseData.x + 16,
+            .y = data.mouseData.y + 16
+        });
     };
 
 

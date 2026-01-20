@@ -99,7 +99,7 @@ public:
     void SetCurrentFrame(int newCurrentFrame); //For special cases
     void PlayAnimation(AnimationType animationType, Direction direction, bool ForceReset); //Plays animation immediately
     void PlayReversed();
-    int GetVariant() const;
+    [[nodiscard]] int GetVariant() const;
 
     [[nodiscard]] float GetFrameDuration() const;
     [[nodiscard]] int GetCurrentFrameCount() const;

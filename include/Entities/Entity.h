@@ -50,7 +50,7 @@ public:
     static Direction GetDirectionBaseOnAngle(int angle) ;
     [[nodiscard]] RenderingContext GetRenderingContext() const;
     [[nodiscard]] std::tuple<float,int> GetFrameTimeAndCount() const;
-    ISprite* GetSprite() const;
+    [[nodiscard]] ISprite* GetSprite() const;
 
     //Constructor
     explicit EntityRenderingComponent(std::unique_ptr<ISprite> sprite);

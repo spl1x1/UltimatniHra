@@ -11,6 +11,7 @@
 #include "../Application/dataStructures.h"
 #include "../Menu/RmlUi_Renderer_SDL.h"
 #include "../Server/Server.h"
+#include "../Sprites/Sprite.hpp"
 
 
 class ISprite;
@@ -18,20 +19,27 @@ class ISprite;
 enum class structureType{
     TREE,
     ORE_NODE,
-    ORE_DEPOSIT
+    ORE_DEPOSIT,
+    CHEST
 };
 
 class StructureRenderingComponent {
     std::unique_ptr<ISprite> sprite;
-    public:
+    bool lock{false};
+public:
 
     //Methods
     [[nodiscard]] RenderingContext getRenderingContext() const;
-    void Tick(float deltaTime) const;
+    void Tick(float deltaTime, IStructure* structure);
     void SetVariant(int variant) const;
-    int GetVariant() const;
+    [[nodiscard]] int GetVariant() const;
     [[nodiscard]] ISprite* GetSprite() const;
     static std::string TypeToString(structureType type);
+    void PlayAnimation(AnimationType animation, Direction direction) const;
+    void  PlayAnimation_reversed(AnimationType animation, Direction direction) const;
+    void SetLock(bool value);
+
+    [[nodiscard]] bool isLocked() const;
 
     explicit StructureRenderingComponent(std::unique_ptr<ISprite> sprite);
 };
@@ -86,15 +94,15 @@ public:
 
     //Constructor and Destructor
     StructureHitboxComponent(const std::shared_ptr<Server>& server, Coordinates topLeftCorner);
-    StructureHitboxComponent(const std::shared_ptr<Server>& server ); //Empty constructor for default initialization
+    explicit StructureHitboxComponent(const std::shared_ptr<Server>& server ); //Empty constructor for default initialization
 };
 
-class InventoryComponent {
+class StructureInventoryComponent {
     //To be implemented
     int inventoryId{-1};
 public:
-    int GetInventoryId() const;
-    InventoryComponent() = default;
+    [[nodiscard]] int GetInventoryId() const;
+    StructureInventoryComponent() = default;
 };
 
 class IStructure {
@@ -111,7 +119,13 @@ public:
     [[nodiscard]] virtual Coordinates GetCoordinates() const = 0;
     [[nodiscard]] virtual int GetVariant() const = 0;
     [[nodiscard]] virtual int GetInnerType() const = 0;
-     virtual  void DropInventoryItems() = 0;
+
+    [[nodiscard]] virtual StructureRenderingComponent* GetRenderingComponent() = 0;
+    [[nodiscard]] virtual StructureHitboxComponent* GetHitboxComponent() = 0;
+    [[nodiscard]] virtual StructureInventoryComponent* GetInventoryComponent() = 0;
+
+    virtual void DropInventoryItems() = 0;
+    virtual void Interact() = 0;
 };
 
 #endif //ULTIMATNIHRA_STRUCTURE_H

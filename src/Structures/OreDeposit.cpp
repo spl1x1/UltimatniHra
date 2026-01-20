@@ -44,6 +44,18 @@ int OreDeposit::GetInnerType() const {
     return InnerVariant;
 }
 
+StructureRenderingComponent * OreDeposit::GetRenderingComponent() {
+    return &renderingComponent;
+}
+
+StructureHitboxComponent * OreDeposit::GetHitboxComponent() {
+    return &hitboxComponent;
+}
+
+StructureInventoryComponent * OreDeposit::GetInventoryComponent() {
+    return nullptr;
+}
+
 void OreDeposit::DropInventoryItems() {
 }
 

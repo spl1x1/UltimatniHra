@@ -9,10 +9,8 @@
 #include <mutex>
 #include <ranges>
 #include <shared_mutex>
-#include <simdjson/builder.h>
-#include <simdjson/builtin/ondemand.h>
-#include <simdjson/dom/document_stream-inl.h>
-#include <simdjson/fallback/ondemand.h>
+#include <simdjson.h>
+
 
 #include "../../include/Application/MACROS.h"
 #include "../../include/Items/Item.h"
@@ -21,6 +19,7 @@
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Entities/Slime.h"
+#include "../../include/Structures/Chest.h"
 #include "../../include/Structures/OreNode.h"
 #include "../../include/Structures/Structure.h"
 #include "../../include/Structures/Tree.h"
@@ -225,35 +224,12 @@ void Server::AddEntity(const std::shared_ptr<IEntity>& entity) {
 
 void Server::AddStructure(Coordinates coordinates, structureType type, int innerType, int variant) {
     std::lock_guard lock(serverMutex);
-    int newId = getNextStructureId();
-
-    std::shared_ptr<IStructure> newStructure;
-    switch (type) {
-        case structureType::TREE: {
-            newStructure = std::make_shared<Tree>(newId, coordinates, GetSharedPtr(), innerType);
-            break;
-        }
-        case structureType::ORE_NODE: {
-            newStructure = std::make_shared<OreNode>(newId, coordinates, GetSharedPtr(), innerType, variant);
-            break;
-        }
-            case structureType::ORE_DEPOSIT: {
-            newStructure = std::make_shared<OreDeposit>(newId, coordinates, GetSharedPtr(), innerType, variant);
-        }
-        default:
-            break;
-    }
-
-    if (!newStructure->wasProperlyInitialized()) {
-        SDL_Log("Failed to create Tree structure at (%f, %f)", coordinates.x, coordinates.y);
-        nextStructureId--; //Rollback ID pokud se nepovede vytvorit struktura
-        return;
-    }
-    structures[newId] =newStructure;
+    AddStructure_unprotected(coordinates, type, innerType, variant);
 }
 
 bool Server::AddStructure_unprotected(Coordinates coordinates, const structureType type, int innerType, int variant) {
     int newId = getNextStructureId();
+    cacheValidityData.isCacheValid = false; //Invalidae cache
 
     std::shared_ptr<IStructure> newStructure;
     switch (type) {
@@ -267,12 +243,17 @@ bool Server::AddStructure_unprotected(Coordinates coordinates, const structureTy
         }
         case structureType::ORE_DEPOSIT: {
             newStructure = std::make_shared<OreDeposit>(newId, coordinates, GetSharedPtr(), innerType, variant);
+            break;
+        }
+        case structureType::CHEST: {
+            newStructure = std::make_shared<Chest>(newId, coordinates, GetSharedPtr());
+            break;
         }
         default:
             break;
     }
 
-    if (!newStructure->wasProperlyInitialized()) {
+    if (!newStructure || !newStructure->wasProperlyInitialized()) {
         SDL_Log("Failed to create Tree structure at (%f, %f)", coordinates.x, coordinates.y);
         nextStructureId--; //Rollback ID pokud se nepovede vytvorit struktura
         return false;
@@ -552,6 +533,53 @@ void Server::InvalidateStructureCache() {
     cacheValidityData.isCacheValid = false;
 }
 
+void Server::SendClickEvent(const MouseButtonEvent event) {
+
+    auto checkForStructure= [](const IEntity* player, const MouseButtonEvent eventData) {
+        const auto [x, y]{toTileCoordinates(static_cast<int>(eventData.x), static_cast<int>(eventData.y))};
+        return player->GetServer()->GetMapValue_unprotected(static_cast<int>(x),static_cast<int>(y),WorldData::COLLISION_MAP);
+    };
+
+    auto sendAttack = [](IEntity* player, const MouseButtonEvent event) {
+        const auto logicComp{player->GetLogicComponent()};
+        logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{event.x, event.y})));
+        logicComp->AddEvent(Event_ClickAttack::Create(2,10,{event.x, event.y}));
+
+        };
+
+    auto sendMine = [](IEntity* player, const MouseButtonEvent event) {
+        const auto logicComp{player->GetLogicComponent()};
+        logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{event.x, event.y})));
+    };
+
+    auto sendCreateChest = [](const IEntity* player, const MouseButtonEvent eventData) {
+        const auto server{player->GetServer()};
+        server->AddStructure_unprotected({eventData.x,eventData.y}, structureType::CHEST, 0, 0);
+    };
+
+    auto sendMoveTo = [](IEntity* player, const MouseButtonEvent event) {
+        const auto logicComp{player->GetLogicComponent()};
+        logicComp->AddEvent(Event_MoveTo::Create(event.x, event.y));
+    };
+
+    auto interact = [&](const IEntity* player, const MouseButtonEvent eventData) -> bool {
+        const auto structure{player->GetServer()->GetStructure(checkForStructure(player, eventData))};
+        if (!structure) return false;
+        structure->Interact();
+        return true;
+    };
+
+    if (event.button == MouseButtonEvent::Button::LEFT) {
+        if (event.action == MouseButtonEvent::Action::PRESS) sendAttack(localPlayer.get(), event);
+        if (event.action == MouseButtonEvent::Action::RELEASE) sendMine(localPlayer.get(), event);
+    }
+    else if (event.button == MouseButtonEvent::Button::RIGHT) {
+        if (event.action == MouseButtonEvent::Action::PRESS) interact(localPlayer.get(), event);
+        if (event.action == MouseButtonEvent::Action::RELEASE) sendCreateChest(localPlayer.get(), event);
+    }
+
+}
+
 IEntity* Server::AddEntity(Coordinates coordinates, const EntityType type, const int variant)
 {
     std::unique_lock lock(serverMutex);
@@ -657,6 +685,10 @@ AiManager & Server::GetAiManager() {
 
 AiManager& Server::GetAiManager_unprotected() {
     return aiManager;
+}
+
+WorldData & Server::GetWorldData() {
+    return worldData;
 }
 
 std::map<int,std::shared_ptr<IEntity>> Server::GetEntities() {
