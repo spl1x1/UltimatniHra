@@ -71,6 +71,21 @@ struct MouseData {
     bool rightButtonPressed{false};
 };
 
+struct MouseButtonEvent {
+    enum class Button {
+        LEFT,
+        RIGHT
+    } button;
+
+    enum class Action {
+        PRESS,
+        RELEASE
+    } action;
+
+    float x;
+    float y;
+};
+
 enum class OreType {
     IRON,
     COPPER,

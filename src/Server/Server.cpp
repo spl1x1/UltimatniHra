@@ -551,6 +551,48 @@ void Server::InvalidateStructureCache() {
     cacheValidityData.isCacheValid = false;
 }
 
+void Server::SendClickEvent(MouseButtonEvent event) {
+
+    auto sendAttack = [this](IEntity* player, const MouseButtonEvent event) {
+        const auto logicComp{player->GetLogicComponent()};
+        logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{event.x, event.y})));
+        switch (player->GetInventoryComponent()->getItems()) {
+            case :
+                logicComp->PerformAttack(player, 1, 5);
+                break;
+            case :
+                logicComp->PerformAttack(player, 1, 10);
+                break;
+            case :
+                logicComp->PerformAttack(player, 1, 8);
+                break;
+            default:
+                break;
+        }
+    };
+
+    auto sendMine = [this](IEntity* player, const MouseButtonEvent event) {
+        const auto logicComp{player->GetLogicComponent()};
+        logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{event.x, event.y})));
+    };
+
+    auto sendMoveTo = [this](IEntity* player, const MouseButtonEvent event) {
+        const auto logicComp{player->GetLogicComponent()};
+        logicComp->AddEvent(Event_MoveTo::Create(event.x, event.y));
+    };
+
+    std::lock_guard lock(serverMutex);
+    if (event.button == MouseButtonEvent::Button::LEFT) {
+        if (event.action == MouseButtonEvent::Action::PRESS) sendAttack(localPlayer.get(), event);
+        if (event.action == MouseButtonEvent::Action::RELEASE) sendMine(localPlayer.get(), event);
+    }
+    else if (event.button == MouseButtonEvent::Button::RIGHT) {
+        if (event.action == MouseButtonEvent::Action::PRESS) sendMine(localPlayer.get(), event);
+        // Right button release currently has no action
+    }
+
+}
+
 IEntity* Server::AddEntity(Coordinates coordinates, const EntityType type, const int variant)
 {
     std::unique_lock lock(serverMutex);
