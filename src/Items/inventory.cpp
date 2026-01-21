@@ -1185,6 +1185,11 @@ std::string InventoryController::getRecipeOutputIconPath(const std::string& reci
     // For materials, use the material icon
     if (recipeId == "steel") return "../textures/items/metal_steel.svg";
 
+    // Amulets use SVG format
+    if (recipeId == "bronze_necklace" || recipeId == "copper_crown" || recipeId == "gold_ring") {
+        return "../textures/items/" + recipeId + ".svg";
+    }
+
     // For crafted items, use the actual item icon (PNG format)
     // Recipe IDs match file names: iron_sword -> iron_sword.png
     size_t underscorePos = recipeId.find('_');
