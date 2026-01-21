@@ -257,7 +257,11 @@ namespace ItemFactory {
     }
 
     std::string getAmuletIconPath(const std::string& amuletType) {
-        return ITEMS_ICON_BASE + amuletType + "_amulet.png";
+        // Map amulet types to their specific SVG icon files
+        if (amuletType == "speed") return ITEMS_ICON_BASE + "bronze_necklace.svg";
+        if (amuletType == "damage") return ITEMS_ICON_BASE + "gold_ring.svg";
+        if (amuletType == "armour") return ITEMS_ICON_BASE + "copper_crown.svg";
+        return ITEMS_ICON_BASE + amuletType + "_amulet.svg";
     }
 
     std::unique_ptr<Weapon> createAxe(MaterialType material) {
