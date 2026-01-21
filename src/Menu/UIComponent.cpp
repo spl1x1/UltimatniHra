@@ -551,14 +551,14 @@ void UIComponent::saveInventory(const std::string& filePath) {
         auto structures = windowClass->server->GetStructures();
         bool firstChest = true;
         for (const auto& [id, structure] : structures) {
-            if (structure->getType() == structureType::CHEST) {
+            if (structure->GetType() == structureType::CHEST) {
                 auto* chest = dynamic_cast<Chest*>(structure.get());
                 if (chest && chest->getChestStorage()) {
                     if (!firstChest) sb.append_comma();
                     firstChest = false;
 
                     sb.start_object();
-                    sb.append_key_value("chestId", chest->getId());
+                    sb.append_key_value("chestId", chest->GetId());
                     sb.append_comma();
                     sb.append("items");
                     sb.append_colon();
@@ -653,7 +653,7 @@ void UIComponent::loadInventory(const std::string& filePath) {
                 int chestId = static_cast<int>(obj["chestId"].get_int64());
 
                 auto* structure = windowClass->server->GetStructure(chestId);
-                if (structure && structure->getType() == structureType::CHEST) {
+                if (structure && structure->GetType() == structureType::CHEST) {
                     auto* chest = dynamic_cast<Chest*>(structure);
                     if (chest && chest->getChestStorage()) {
                         chest->getChestStorage()->clear();
