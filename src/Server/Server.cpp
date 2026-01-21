@@ -414,6 +414,12 @@ void Server::SaveServerState() {
     std::fstream file("saves/slot_" + std::to_string(SaveManager::getInstance().getCurrentSlot()) + "_server_state.json", std::ios::out);
     file << sb.c_str();
     file.close();
+
+    // Save inventory through callback
+    if (onSaveInventory) {
+        std::string inventoryPath = "saves/slot_" + std::to_string(SaveManager::getInstance().getCurrentSlot()) + "_inventory.json";
+        onSaveInventory(inventoryPath);
+    }
 }
 
 void Server::LoadServerState() {
@@ -458,6 +464,13 @@ void Server::LoadServerState() {
         AddEntity(coords, entityType,variant)->GetHealthComponent()->SetHealth(health);
     }
 
+    // Load inventory through callback
+    if (onLoadInventory) {
+        std::string inventoryPath = "saves/slot_" + std::to_string(SaveManager::getInstance().getCurrentSlot()) + "_inventory.json";
+        if (std::filesystem::exists(inventoryPath)) {
+            onLoadInventory(inventoryPath);
+        }
+    }
 }
 
 void Server::Reset() {
@@ -974,5 +987,13 @@ bool Server::AddItemToInventory(std::unique_ptr<Item> item) const {
         return onItemDropped(std::move(item));
     }
     return false;
+}
+
+void Server::SetInventorySaveCallback(std::function<void(const std::string&)> callback) {
+    onSaveInventory = std::move(callback);
+}
+
+void Server::SetInventoryLoadCallback(std::function<void(const std::string&)> callback) {
+    onLoadInventory = std::move(callback);
 }
 

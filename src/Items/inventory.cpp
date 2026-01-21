@@ -11,6 +11,8 @@
 #include "../../include/Menu/UIComponent.h"
 #include <SDL3/SDL.h>
 
+#include "../../include/Entities/Player.hpp"
+
 class InventoryCloseListener : public Rml::EventListener {
 public:
     InventoryCloseListener(InventoryController* controller) : controller(controller) {}
@@ -1077,6 +1079,28 @@ std::string InventoryController::printActiveSlotInfo() const {
         info = it->second->getDisplayInfo();
         printf("=== Active Hotbar Slot %d ===\n", selectedQuickbarSlot + 1);
         printf("%s\n", info.c_str());
+        //
+        // const auto name{it->second->getName()};
+        // const auto separator = name.find('_');
+        // auto typeString = name.substr(separator+1);
+        //
+        // auto type = HandData::NONE;
+        //
+        // if (typeString == "pickaxe") type = HandData::PICKAXE;
+        // else if (typeString == "axe") type = HandData::AXE;
+        // else if (typeString == "sword") type = HandData::SWORD;
+        // //else if (typeString == "placeable") HandData::PLACEABLE
+        //
+        // //auto damage = it->second->;
+        //
+        // const auto player = dynamic_cast<Player*>(window->server->GetPlayer());
+        // player->SetHandData(
+        // HandData{
+        //     .toolType = type
+        //     //.damage = damage
+        //     }
+        // );
+
     } else {
         info = "Empty slot";
         printf("=== Active Hotbar Slot %d ===\n", selectedQuickbarSlot + 1);
@@ -1570,5 +1594,62 @@ void InventoryController::showHotbar() {
 void InventoryController::hideHotbar() {
     if (hotbarDocument) {
         hotbarDocument->Hide();
+    }
+}
+
+std::vector<std::pair<int, ItemData>> InventoryController::serializeInventory() const {
+    std::vector<std::pair<int, ItemData>> result;
+    for (const auto& [slot, item] : items) {
+        if (item) {
+            result.emplace_back(slot, ItemFactory::serializeItem(item.get()));
+        }
+    }
+    return result;
+}
+
+std::vector<std::pair<std::string, ItemData>> InventoryController::serializeEquipment() const {
+    std::vector<std::pair<std::string, ItemData>> result;
+    for (const auto& [slotId, item] : equipmentItems) {
+        if (item) {
+            result.emplace_back(slotId, ItemFactory::serializeItem(item.get()));
+        }
+    }
+    return result;
+}
+
+void InventoryController::deserializeInventory(const std::vector<std::pair<int, ItemData>>& data) {
+    for (const auto& [slot, itemData] : data) {
+        auto item = ItemFactory::deserializeItem(itemData);
+        if (item && slot >= 0 && slot < totalSlots) {
+            items[slot] = std::move(item);
+            updateItemDisplay(slot);
+            if (slot < QUICKBAR_SIZE) {
+                updateQuickbarSlot(slot);
+            }
+        }
+    }
+}
+
+void InventoryController::deserializeEquipment(const std::vector<std::pair<std::string, ItemData>>& data) {
+    for (const auto& [slotId, itemData] : data) {
+        auto item = ItemFactory::deserializeItem(itemData);
+        if (item && equipmentSlotTypes.contains(slotId)) {
+            equipmentItems[slotId] = std::move(item);
+            updateEquipmentDisplay(slotId);
+        }
+    }
+}
+
+void InventoryController::clearInventory() {
+    items.clear();
+    equipmentItems.clear();
+    for (int i = 0; i < totalSlots; i++) {
+        clearSlot(i);
+    }
+    for (const auto& [slotId, _] : equipmentSlotTypes) {
+        clearEquipmentSlot(slotId);
+    }
+    for (int i = 0; i < QUICKBAR_SIZE; i++) {
+        updateQuickbarSlot(i);
     }
 }

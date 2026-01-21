@@ -190,6 +190,13 @@ public:
     void showHotbar();
     void hideHotbar();
     bool isHotbarVisible() const { return hotbarDocument && hotbarDocument->IsVisible(); }
+
+    // Save/Load inventory
+    std::vector<std::pair<int, ItemData>> serializeInventory() const;
+    std::vector<std::pair<std::string, ItemData>> serializeEquipment() const;
+    void deserializeInventory(const std::vector<std::pair<int, ItemData>>& data);
+    void deserializeEquipment(const std::vector<std::pair<std::string, ItemData>>& data);
+    void clearInventory();
 };
 
 

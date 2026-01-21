@@ -111,6 +111,14 @@ HandData Player::GetHandData() const {
     return handData;
 }
 
+void Player::SetArmourData(const ArmourData &newArmourData) {
+    armourData = newArmourData;
+}
+
+ArmourData Player::GetArmourData() const {
+    return armourData;
+}
+
 void Player::SetId(const int newId) {
     id = newId;
 }

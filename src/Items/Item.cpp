@@ -478,4 +478,141 @@ namespace ItemFactory {
         return placeable;
     }
 
+    ItemData serializeItem(const Item* item) {
+        ItemData data{};
+        if (!item) return data;
+
+        data.type = static_cast<int>(item->getType());
+        data.stackSize = item->getStackSize();
+
+        switch (item->getType()) {
+            case ItemType::WEAPON: {
+                const auto* weapon = dynamic_cast<const Weapon*>(item);
+                if (weapon) {
+                    data.subType = static_cast<int>(weapon->getWeaponType());
+                    data.material = static_cast<int>(weapon->getMaterial());
+                    data.durability = weapon->getDurability();
+                }
+                break;
+            }
+            case ItemType::ARMOUR: {
+                const auto* armour = dynamic_cast<const Armour*>(item);
+                if (armour) {
+                    data.subType = static_cast<int>(armour->getArmourType());
+                    data.material = static_cast<int>(armour->getMaterial());
+                    data.durability = armour->getDurability();
+                }
+                break;
+            }
+            case ItemType::MATERIAL: {
+                const auto* material = dynamic_cast<const Material*>(item);
+                if (material) {
+                    data.material = static_cast<int>(material->getMaterialType());
+                }
+                break;
+            }
+            case ItemType::CONSUMABLE: {
+                const auto* consumable = dynamic_cast<const Consumable*>(item);
+                if (consumable) {
+                    data.subType = static_cast<int>(consumable->getConsumableType());
+                    data.effectValue = consumable->getEffectValue();
+                    data.effectDuration = consumable->getEffectDuration();
+                }
+                break;
+            }
+            case ItemType::AMULET: {
+                const auto* amulet = dynamic_cast<const Amulet*>(item);
+                if (amulet) {
+                    data.subType = static_cast<int>(amulet->getAmuletType());
+                    data.effectValue = amulet->getEffectValue();
+                }
+                break;
+            }
+            case ItemType::PLACEABLE: {
+                const auto* placeable = dynamic_cast<const Placeable*>(item);
+                if (placeable) {
+                    data.subType = static_cast<int>(placeable->getPlaceableType());
+                }
+                break;
+            }
+        }
+        return data;
+    }
+
+    std::unique_ptr<Item> deserializeItem(const ItemData& data) {
+        std::unique_ptr<Item> item;
+
+        switch (static_cast<ItemType>(data.type)) {
+            case ItemType::WEAPON: {
+                const auto weaponType = static_cast<WeaponType>(data.subType);
+                const auto material = static_cast<MaterialType>(data.material);
+                switch (weaponType) {
+                    case WeaponType::SWORD: item = createSword(material); break;
+                    case WeaponType::AXE: item = createAxe(material); break;
+                    case WeaponType::PICKAXE: item = createPickaxe(material); break;
+                    case WeaponType::BOW: item = createBow(material); break;
+                }
+                break;
+            }
+            case ItemType::ARMOUR: {
+                const auto armourType = static_cast<ArmourType>(data.subType);
+                const auto material = static_cast<MaterialType>(data.material);
+                switch (armourType) {
+                    case ArmourType::HELMET: item = createHelmet(material); break;
+                    case ArmourType::CHESTPLATE: item = createChestplate(material); break;
+                    case ArmourType::LEGGINGS: item = createLeggings(material); break;
+                    case ArmourType::BOOTS: item = createBoots(material); break;
+                }
+                break;
+            }
+            case ItemType::MATERIAL: {
+                const auto materialType = static_cast<MaterialType>(data.material);
+                item = createMaterial(materialType);
+                if (item && data.stackSize > 1) {
+                    item->addToStack(data.stackSize - 1);
+                }
+                break;
+            }
+            case ItemType::CONSUMABLE: {
+                const auto consumableType = static_cast<ConsumableType>(data.subType);
+                switch (consumableType) {
+                    case ConsumableType::HEALTH_POTION:
+                        item = createHealthPotion(data.effectValue);
+                        break;
+                    case ConsumableType::DAMAGE_BOOST:
+                        item = createDamageBoost(data.effectValue, data.effectDuration);
+                        break;
+                    case ConsumableType::SPEED_BOOST:
+                        item = createSpeedBoost(data.effectValue, data.effectDuration);
+                        break;
+                }
+                if (item && data.stackSize > 1) {
+                    item->addToStack(data.stackSize - 1);
+                }
+                break;
+            }
+            case ItemType::AMULET: {
+                const auto amuletType = static_cast<AmuletType>(data.subType);
+                switch (amuletType) {
+                    case AmuletType::SPEED: item = createSpeedAmulet(data.effectValue); break;
+                    case AmuletType::DAMAGE: item = createDamageAmulet(data.effectValue); break;
+                    case AmuletType::ARMOUR: item = createArmourAmulet(data.effectValue); break;
+                }
+                break;
+            }
+            case ItemType::PLACEABLE: {
+                const auto placeableType = static_cast<PlaceableType>(data.subType);
+                switch (placeableType) {
+                    case PlaceableType::CHEST: item = createChest(); break;
+                    case PlaceableType::CRAFTING_TABLE: item = createCraftingTable(); break;
+                }
+                if (item && data.stackSize > 1) {
+                    item->addToStack(data.stackSize - 1);
+                }
+                break;
+            }
+        }
+        return item;
+    }
+
 }

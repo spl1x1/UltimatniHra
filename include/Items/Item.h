@@ -177,6 +177,17 @@ public:
     void use(Player* player) override;
     [[nodiscard]] std::string getDisplayInfo() const override;
 };
+// Item serialization data structure
+struct ItemData {
+    int type;           // ItemType
+    int subType;        // WeaponType, ArmourType, etc.
+    int material;       // MaterialType
+    int stackSize;
+    int durability;
+    int effectValue;
+    float effectDuration;
+};
+
 namespace ItemFactory {
     // Weapons
     std::unique_ptr<Weapon> createAxe(MaterialType material);
@@ -209,6 +220,10 @@ namespace ItemFactory {
 
     // Helper to get material name
     std::string getMaterialName(MaterialType tier);
+
+    // Serialization helpers
+    ItemData serializeItem(const Item* item);
+    std::unique_ptr<Item> deserializeItem(const ItemData& data);
 }
 
 #endif //ULTIMATNIHRA_ITEM_H

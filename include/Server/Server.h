@@ -19,6 +19,7 @@
 #include "../Window/WorldStructs.h"
 
 class Item;
+struct ItemData;
 
 class Player;
 enum class structureType;
@@ -79,6 +80,10 @@ class Server : public std::enable_shared_from_this<Server> {
 
     // Callback for adding items to UI inventory
     std::function<bool(std::unique_ptr<Item>)> onItemDropped;
+
+    // Callbacks for inventory save/load
+    std::function<void(const std::string&)> onSaveInventory;
+    std::function<void(const std::string&)> onLoadInventory;
 
     struct spawnGenerator {
         std::mt19937 generator = std::mt19937(SDL_GetTicks());
@@ -175,6 +180,10 @@ public:
     void SetItemDropCallback(std::function<bool(std::unique_ptr<Item>)> callback);
     // Add item through callback (returns false if no callback set)
     bool AddItemToInventory(std::unique_ptr<Item> item) const;
+
+    // Set callbacks for inventory save/load
+    void SetInventorySaveCallback(std::function<void(const std::string&)> callback);
+    void SetInventoryLoadCallback(std::function<void(const std::string&)> callback);
 };
 
 #endif //SERVERSTRUCS_H

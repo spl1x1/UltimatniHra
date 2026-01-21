@@ -8,15 +8,18 @@
 #include "../Entities/Entity.h"
 #include "../Sprites/GhostSprite.h"
 #include "../Sprites/PlayerSprite.hpp"
+#include "../Structures/Structure.h"
 
-
+struct ArmourData {
+    float protection = 0.0f;
+};
 struct HandData {
     enum {
         NONE,
         AXE,
         PICKAXE,
-        CHEST,
-        CRAFTING_TABLE
+        SWORD,
+        PLACEABLE,
     } toolType = HandData::NONE;
     float damage = 0.0f;
 };
@@ -49,6 +52,7 @@ class Player final : public IEntity {
     int inventoryId{0};
 
     HandData handData;
+    ArmourData armourData;
 
 public:
     //Interface methods implementation
@@ -65,6 +69,8 @@ public:
     [[nodiscard]] bool IsGhostMode() const;
     void SetHandData(const HandData& newHandData);
     [[nodiscard]] HandData GetHandData() const;
+    void SetArmourData(const ArmourData& newArmourData);
+    [[nodiscard]] ArmourData GetArmourData() const;
 
     //Setters
     void SetId(int newId) override;

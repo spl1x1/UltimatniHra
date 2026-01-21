@@ -17,6 +17,8 @@ class Window;
 class Chest;
 class InventoryController;
 
+struct ItemData;
+
 // Data storage for a chest's items (no UI)
 class ChestStorage {
 public:
@@ -29,6 +31,11 @@ public:
     Item* getItem(int slotIndex);
     std::unordered_map<int, std::unique_ptr<Item>>& getItems() { return items; }
     int getChestId() const { return chestId; }
+
+    // Serialization
+    std::vector<std::pair<int, ItemData>> serialize() const;
+    void deserialize(const std::vector<std::pair<int, ItemData>>& data);
+    void clear();
 
 private:
     int chestId;

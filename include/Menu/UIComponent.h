@@ -103,6 +103,10 @@ public:
     //Inventory
     [[nodiscard]] InventoryController* getInventoryController() const;
     [[nodiscard]] ChestInventoryUI* getChestInventoryUI() const;
+
+    // Save/Load inventory
+    void saveInventory(const std::string& filePath);
+    void loadInventory(const std::string& filePath);
 };
 
 #endif //UICOMPONENT_H

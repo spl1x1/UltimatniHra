@@ -82,6 +82,29 @@ int ChestStorage::findStackableSlot(Item* item) {
     return -1;
 }
 
+std::vector<std::pair<int, ItemData>> ChestStorage::serialize() const {
+    std::vector<std::pair<int, ItemData>> result;
+    for (const auto& [slot, item] : items) {
+        if (item) {
+            result.emplace_back(slot, ItemFactory::serializeItem(item.get()));
+        }
+    }
+    return result;
+}
+
+void ChestStorage::deserialize(const std::vector<std::pair<int, ItemData>>& data) {
+    for (const auto& [slot, itemData] : data) {
+        auto item = ItemFactory::deserializeItem(itemData);
+        if (item && slot >= 0 && slot < CHEST_SLOTS) {
+            items[slot] = std::move(item);
+        }
+    }
+}
+
+void ChestStorage::clear() {
+    items.clear();
+}
+
 // ChestSlotListener implementation
 void ChestSlotListener::ProcessEvent(Rml::Event& event) {
     auto element = event.GetCurrentElement();

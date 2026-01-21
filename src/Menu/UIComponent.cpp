@@ -14,11 +14,15 @@
 #include "../../include/Items/inventory.h"
 #include "../../include/Items/Crafting.h"
 #include "../../include/Items/ChestInventory.h"
+#include "../../include/Items/Item.h"
 #include "../../include/Structures/Chest.h"
+#include "../../include/Server/Server.h"
 
 #include <RmlUi/Core/Core.h>
 #include <RmlUi/Core/ElementDocument.h>
 #include <RmlUi/Debugger/Debugger.h>
+#include <simdjson.h>
+#include <fstream>
 
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
@@ -195,6 +199,16 @@ void UIComponent::Init() {
     // Connect inventory controller and chest inventory UI for cross-transfers
     inventoryController->setChestInventoryUI(chestInventoryUI.get());
     chestInventoryUI->setInventoryController(inventoryController.get());
+
+    // Register inventory save/load callbacks with the server
+    if (windowClass && windowClass->server) {
+        windowClass->server->SetInventorySaveCallback([this](const std::string& path) {
+            saveInventory(path);
+        });
+        windowClass->server->SetInventoryLoadCallback([this](const std::string& path) {
+            loadInventory(path);
+        });
+    }
 }
 
 void UIComponent::HandleEvent(const SDL_Event *e) {
@@ -463,4 +477,209 @@ void UIComponent::RegisterButtonBindings(Window* Window) {
     if (Rml::Element* quitGameButton = documents.at("pause_menu")->GetElementById("quit_game_button"))
         quitGameButton->AddEventListener(Rml::EventId::Click, new QuitGameButtonListener(Window,this));
 
+}
+
+void UIComponent::saveInventory(const std::string& filePath) {
+    if (!inventoryController) return;
+
+    simdjson::builder::string_builder sb;
+    sb.start_object();
+
+    // Save player inventory
+    sb.append("playerInventory");
+    sb.append_colon();
+    sb.start_array();
+    auto invData = inventoryController->serializeInventory();
+    for (size_t i = 0; i < invData.size(); ++i) {
+        const auto& [slot, itemData] = invData[i];
+        sb.start_object();
+        sb.append_key_value("slot", slot);
+        sb.append_comma();
+        sb.append_key_value("type", itemData.type);
+        sb.append_comma();
+        sb.append_key_value("subType", itemData.subType);
+        sb.append_comma();
+        sb.append_key_value("material", itemData.material);
+        sb.append_comma();
+        sb.append_key_value("stackSize", itemData.stackSize);
+        sb.append_comma();
+        sb.append_key_value("durability", itemData.durability);
+        sb.append_comma();
+        sb.append_key_value("effectValue", itemData.effectValue);
+        sb.append_comma();
+        sb.append_key_value("effectDuration", static_cast<double>(itemData.effectDuration));
+        sb.end_object();
+        if (i + 1 < invData.size()) sb.append_comma();
+    }
+    sb.end_array();
+    sb.append_comma();
+
+    // Save player equipment
+    sb.append("playerEquipment");
+    sb.append_colon();
+    sb.start_array();
+    auto equipData = inventoryController->serializeEquipment();
+    for (size_t i = 0; i < equipData.size(); ++i) {
+        const auto& [slotId, itemData] = equipData[i];
+        sb.start_object();
+        sb.append_key_value("slotId", slotId.c_str());
+        sb.append_comma();
+        sb.append_key_value("type", itemData.type);
+        sb.append_comma();
+        sb.append_key_value("subType", itemData.subType);
+        sb.append_comma();
+        sb.append_key_value("material", itemData.material);
+        sb.append_comma();
+        sb.append_key_value("stackSize", itemData.stackSize);
+        sb.append_comma();
+        sb.append_key_value("durability", itemData.durability);
+        sb.append_comma();
+        sb.append_key_value("effectValue", itemData.effectValue);
+        sb.append_comma();
+        sb.append_key_value("effectDuration", static_cast<double>(itemData.effectDuration));
+        sb.end_object();
+        if (i + 1 < equipData.size()) sb.append_comma();
+    }
+    sb.end_array();
+    sb.append_comma();
+
+    // Save chest inventories
+    sb.append("chestInventories");
+    sb.append_colon();
+    sb.start_array();
+    if (windowClass && windowClass->server) {
+        auto structures = windowClass->server->GetStructures();
+        bool firstChest = true;
+        for (const auto& [id, structure] : structures) {
+            if (structure->getType() == structureType::CHEST) {
+                auto* chest = dynamic_cast<Chest*>(structure.get());
+                if (chest && chest->getChestStorage()) {
+                    if (!firstChest) sb.append_comma();
+                    firstChest = false;
+
+                    sb.start_object();
+                    sb.append_key_value("chestId", chest->getId());
+                    sb.append_comma();
+                    sb.append("items");
+                    sb.append_colon();
+                    sb.start_array();
+
+                    auto chestData = chest->getChestStorage()->serialize();
+                    for (size_t j = 0; j < chestData.size(); ++j) {
+                        const auto& [slot, itemData] = chestData[j];
+                        sb.start_object();
+                        sb.append_key_value("slot", slot);
+                        sb.append_comma();
+                        sb.append_key_value("type", itemData.type);
+                        sb.append_comma();
+                        sb.append_key_value("subType", itemData.subType);
+                        sb.append_comma();
+                        sb.append_key_value("material", itemData.material);
+                        sb.append_comma();
+                        sb.append_key_value("stackSize", itemData.stackSize);
+                        sb.append_comma();
+                        sb.append_key_value("durability", itemData.durability);
+                        sb.append_comma();
+                        sb.append_key_value("effectValue", itemData.effectValue);
+                        sb.append_comma();
+                        sb.append_key_value("effectDuration", static_cast<double>(itemData.effectDuration));
+                        sb.end_object();
+                        if (j + 1 < chestData.size()) sb.append_comma();
+                    }
+                    sb.end_array();
+                    sb.end_object();
+                }
+            }
+        }
+    }
+    sb.end_array();
+    sb.end_object();
+
+    std::ofstream file(filePath);
+    file << sb.c_str();
+    file.close();
+    SDL_Log("UIComponent: Saved inventory to %s", filePath.c_str());
+}
+
+void UIComponent::loadInventory(const std::string& filePath) {
+    if (!inventoryController) return;
+
+    try {
+        simdjson::ondemand::parser parser;
+        const auto jsonContent = simdjson::padded_string::load(filePath);
+        auto doc = parser.iterate(jsonContent);
+
+        // Clear existing inventory
+        inventoryController->clearInventory();
+
+        // Load player inventory
+        std::vector<std::pair<int, ItemData>> invData;
+        for (auto itemObj : doc["playerInventory"].get_array()) {
+            auto obj = itemObj.get_object();
+            ItemData data{};
+            data.type = static_cast<int>(obj["type"].get_int64());
+            data.subType = static_cast<int>(obj["subType"].get_int64());
+            data.material = static_cast<int>(obj["material"].get_int64());
+            data.stackSize = static_cast<int>(obj["stackSize"].get_int64());
+            data.durability = static_cast<int>(obj["durability"].get_int64());
+            data.effectValue = static_cast<int>(obj["effectValue"].get_int64());
+            data.effectDuration = static_cast<float>(obj["effectDuration"].get_double());
+            int slot = static_cast<int>(obj["slot"].get_int64());
+            invData.emplace_back(slot, data);
+        }
+        inventoryController->deserializeInventory(invData);
+
+        // Load player equipment
+        std::vector<std::pair<std::string, ItemData>> equipData;
+        for (auto itemObj : doc["playerEquipment"].get_array()) {
+            auto obj = itemObj.get_object();
+            ItemData data{};
+            data.type = static_cast<int>(obj["type"].get_int64());
+            data.subType = static_cast<int>(obj["subType"].get_int64());
+            data.material = static_cast<int>(obj["material"].get_int64());
+            data.stackSize = static_cast<int>(obj["stackSize"].get_int64());
+            data.durability = static_cast<int>(obj["durability"].get_int64());
+            data.effectValue = static_cast<int>(obj["effectValue"].get_int64());
+            data.effectDuration = static_cast<float>(obj["effectDuration"].get_double());
+            std::string slotId(obj["slotId"].get_string().value());
+            equipData.emplace_back(slotId, data);
+        }
+        inventoryController->deserializeEquipment(equipData);
+
+        // Load chest inventories
+        if (windowClass && windowClass->server) {
+            for (auto chestObj : doc["chestInventories"].get_array()) {
+                auto obj = chestObj.get_object();
+                int chestId = static_cast<int>(obj["chestId"].get_int64());
+
+                auto* structure = windowClass->server->GetStructure(chestId);
+                if (structure && structure->getType() == structureType::CHEST) {
+                    auto* chest = dynamic_cast<Chest*>(structure);
+                    if (chest && chest->getChestStorage()) {
+                        chest->getChestStorage()->clear();
+
+                        std::vector<std::pair<int, ItemData>> chestData;
+                        for (auto itemObj2 : obj["items"].get_array()) {
+                            auto itemObjInner = itemObj2.get_object();
+                            ItemData data{};
+                            data.type = static_cast<int>(itemObjInner["type"].get_int64());
+                            data.subType = static_cast<int>(itemObjInner["subType"].get_int64());
+                            data.material = static_cast<int>(itemObjInner["material"].get_int64());
+                            data.stackSize = static_cast<int>(itemObjInner["stackSize"].get_int64());
+                            data.durability = static_cast<int>(itemObjInner["durability"].get_int64());
+                            data.effectValue = static_cast<int>(itemObjInner["effectValue"].get_int64());
+                            data.effectDuration = static_cast<float>(itemObjInner["effectDuration"].get_double());
+                            int slot = static_cast<int>(itemObjInner["slot"].get_int64());
+                            chestData.emplace_back(slot, data);
+                        }
+                        chest->getChestStorage()->deserialize(chestData);
+                    }
+                }
+            }
+        }
+
+        SDL_Log("UIComponent: Loaded inventory from %s", filePath.c_str());
+    } catch (const simdjson::simdjson_error& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "UIComponent: Failed to load inventory: %s", e.what());
+    }
 }
