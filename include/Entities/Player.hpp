@@ -43,7 +43,7 @@ class Player final : public IEntity {
 
     Server* server;
     int id{};
-    int reach{32}; //Player reach in pixels
+    int reach{50}; //Player reach in pixels
     bool blocked{false}; //If true, player cannot perform actions (e.g., during cutscenes)
     bool isGhostMode{false}; //If true, player is in ghost mode
     bool beingRevived{false};

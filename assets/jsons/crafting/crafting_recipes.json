@@ -299,6 +299,14 @@
         { "item": "copper", "amount": 3 }
           ],
         "output": { "item": "copper_crown", "amount": 1 }
+    },
+    {
+      "id": "chest",
+      "category": "material",
+      "ingredients": [
+        { "item": "wood", "amount": 9 }
+      ],
+      "output": { "item": "chest", "amount": 1 }
     }
 
   ]

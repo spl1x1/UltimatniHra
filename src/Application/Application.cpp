@@ -38,10 +38,10 @@ void Application::init() {
     gameWindow->server = server;
     gameWindow->init(name);
 
-    //signal(SIGINT, SignalHandler);
-    //signal(SIGTERM, SignalHandler);
-    //signal(SIGABRT, SignalHandler);
-    //signal(SIGSEGV, SignalHandler);
+    signal(SIGINT, SignalHandler);
+    signal(SIGTERM, SignalHandler);
+    signal(SIGABRT, SignalHandler);
+    signal(SIGSEGV, SignalHandler);
 }
 
 void Application::run() const {
