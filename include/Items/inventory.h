@@ -126,6 +126,9 @@ public:
     // Get total defense from all equipped armor
     int getTotalArmorDefense() const;
 
+    // Update player's armour data with total defense
+    void updatePlayerArmourData() const;
+
 private:
     Window* window;
     UIComponent* uiComponent;

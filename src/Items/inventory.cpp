@@ -6,6 +6,7 @@
 #include "../../include/Items/Crafting.h"
 #include "../../include/Items/ChestInventory.h"
 #include "../../include/Structures/Chest.h"
+#include "../../include/Entities/Player.hpp"
 
 #include "../../include/Window/Window.h"
 #include "../../include/Menu/UIComponent.h"
@@ -458,6 +459,8 @@ void InventoryController::onSlotClicked(int slotIndex) {
                 if (slotIndex < QUICKBAR_SIZE) {
                     updateQuickbarSlot(slotIndex);
                 }
+                // Update player armour data if armour was unequipped
+                updatePlayerArmourData();
                 SDL_Log("Moved item from equipment %s to inventory slot %d", oldEquipSlot.c_str(), slotIndex);
             } else {
                 // Inventory slot has item - try to swap if valid
@@ -469,6 +472,8 @@ void InventoryController::onSlotClicked(int slotIndex) {
                     if (slotIndex < QUICKBAR_SIZE) {
                         updateQuickbarSlot(slotIndex);
                     }
+                    // Update player armour data if armour was swapped
+                    updatePlayerArmourData();
                     SDL_Log("Swapped items between equipment %s and inventory slot %d", oldEquipSlot.c_str(), slotIndex);
                 } else {
                     SDL_Log("Cannot swap - item type doesn't match equipment slot");
@@ -756,6 +761,8 @@ void InventoryController::onEquipmentSlotClicked(const std::string& slotId) {
                     if (oldInvSlot < QUICKBAR_SIZE) {
                         updateQuickbarSlot(oldInvSlot);
                     }
+                    // Update player armour data if armour was equipped
+                    updatePlayerArmourData();
                     SDL_Log("Equipped item from slot %d to %s", oldInvSlot, slotId.c_str());
                 } else {
                     // Equipment slot has item - swap
@@ -766,6 +773,8 @@ void InventoryController::onEquipmentSlotClicked(const std::string& slotId) {
                     if (oldInvSlot < QUICKBAR_SIZE) {
                         updateQuickbarSlot(oldInvSlot);
                     }
+                    // Update player armour data if armour was swapped
+                    updatePlayerArmourData();
                     SDL_Log("Swapped items between inventory slot %d and equipment %s", oldInvSlot, slotId.c_str());
                 }
             } else {
@@ -807,6 +816,8 @@ void InventoryController::onEquipmentSlotClicked(const std::string& slotId) {
                         equipmentItems.erase(fromIt);
                         clearEquipmentSlot(oldEquipSlot);
                         updateEquipmentDisplay(slotId);
+                        // Update player armour data (armour moved between equipment slots)
+                        updatePlayerArmourData();
                         SDL_Log("Moved item from equipment %s to %s", oldEquipSlot.c_str(), slotId.c_str());
                     } else {
                         SDL_Log("Cannot move - item type doesn't match target equipment slot");
@@ -818,6 +829,8 @@ void InventoryController::onEquipmentSlotClicked(const std::string& slotId) {
                         std::swap(fromIt->second, toIt->second);
                         updateEquipmentDisplay(oldEquipSlot);
                         updateEquipmentDisplay(slotId);
+                        // Update player armour data (armour swapped between equipment slots)
+                        updatePlayerArmourData();
                         SDL_Log("Swapped items between equipment %s and %s", oldEquipSlot.c_str(), slotId.c_str());
                     } else {
                         SDL_Log("Cannot swap - item types don't match equipment slots");
@@ -1075,37 +1088,59 @@ Item* InventoryController::getActiveQuickbarItem() {
 std::string InventoryController::printActiveSlotInfo() const {
     std::string info;
     auto it = items.find(selectedQuickbarSlot);
+
+    HandData handData;
+    handData.toolType = HandData::NONE;
+    handData.damage = 0.0f;
+
     if (it != items.end() && it->second) {
         info = it->second->getDisplayInfo();
         printf("=== Active Hotbar Slot %d ===\n", selectedQuickbarSlot + 1);
         printf("%s\n", info.c_str());
-        //
-        // const auto name{it->second->getName()};
-        // const auto separator = name.find('_');
-        // auto typeString = name.substr(separator+1);
-        //
-        // auto type = HandData::NONE;
-        //
-        // if (typeString == "pickaxe") type = HandData::PICKAXE;
-        // else if (typeString == "axe") type = HandData::AXE;
-        // else if (typeString == "sword") type = HandData::SWORD;
-        // //else if (typeString == "placeable") HandData::PLACEABLE
-        //
-        // //auto damage = it->second->;
-        //
-        // const auto player = dynamic_cast<Player*>(window->server->GetPlayer());
-        // player->SetHandData(
-        // HandData{
-        //     .toolType = type
-        //     //.damage = damage
-        //     }
-        // );
+
+        Item* item = it->second.get();
+
+        // Check if it's a weapon
+        if (item->getType() == ItemType::WEAPON) {
+            const auto* weapon = dynamic_cast<const Weapon*>(item);
+            if (weapon) {
+                handData.damage = static_cast<float>(weapon->getDamage());
+
+                switch (weapon->getWeaponType()) {
+                    case WeaponType::PICKAXE:
+                        handData.toolType = HandData::PICKAXE;
+                        break;
+                    case WeaponType::AXE:
+                        handData.toolType = HandData::AXE;
+                        break;
+                    case WeaponType::SWORD:
+                        handData.toolType = HandData::SWORD;
+                        break;
+                    case WeaponType::BOW:
+                        handData.toolType = HandData::NONE;
+                        break;
+                }
+            }
+        }
+        // Check if it's a placeable
+        else if (item->getType() == ItemType::PLACEABLE) {
+            handData.toolType = HandData::PLACEABLE;
+        }
 
     } else {
         info = "Empty slot";
         printf("=== Active Hotbar Slot %d ===\n", selectedQuickbarSlot + 1);
         printf("%s\n", info.c_str());
     }
+
+    // Update player's hand data
+    if (window && window->server) {
+        auto* player = dynamic_cast<Player*>(window->server->GetPlayer());
+        if (player) {
+            player->SetHandData(handData);
+        }
+    }
+
     return info;
 }
 
@@ -1153,12 +1188,24 @@ int InventoryController::getTotalArmorDefense() const {
         }
     };
 
-    addDefense("helmet_slot");
-    addDefense("chestplate_slot");
-    addDefense("leggings_slot");
-    addDefense("boots_slot");
+    addDefense("slot_helmet");
+    addDefense("slot_chestplate");
+    addDefense("slot_leggings");
+    addDefense("slot_boots");
 
     return totalDefense;
+}
+
+void InventoryController::updatePlayerArmourData() const {
+    if (window && window->server) {
+        auto* player = dynamic_cast<Player*>(window->server->GetPlayer());
+        if (player) {
+            ArmourData armourData;
+            armourData.protection = static_cast<float>(getTotalArmorDefense());
+            player->SetArmourData(armourData);
+            SDL_Log("Updated player armour protection to: %.0f", armourData.protection);
+        }
+    }
 }
 
 // Crafting functionality implementation
@@ -1638,6 +1685,8 @@ void InventoryController::deserializeEquipment(const std::vector<std::pair<std::
             updateEquipmentDisplay(slotId);
         }
     }
+    // Update player armour data after loading equipment
+    updatePlayerArmourData();
 }
 
 void InventoryController::clearInventory() {
