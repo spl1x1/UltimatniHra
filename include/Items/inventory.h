@@ -169,7 +169,7 @@ private:
     // Crafting
     CraftingSystem* craftingSystem = nullptr;
     Rml::ElementDocument* craftingDocument = nullptr;
-    bool nearCraftingTable = false;
+    bool nearCraftingTable = true;  // Enabled by default
     bool craftingVisible = false;
     std::string selectedRecipeId;  // Currently selected recipe
     std::string currentCategory = "all";  // Current category filter

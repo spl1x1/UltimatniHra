@@ -1259,6 +1259,11 @@ std::string InventoryController::getRecipeOutputIconPath(const std::string& reci
         return "../textures/items/" + recipeId + ".svg";
     }
 
+    // Placeables use PNG format
+    if (recipeId == "chest") {
+        return "../textures/items/chest.png";
+    }
+
     // For crafted items, use the actual item icon (PNG format)
     // Recipe IDs match file names: iron_sword -> iron_sword.png
     size_t underscorePos = recipeId.find('_');

@@ -171,6 +171,15 @@ std::unique_ptr<Item> CraftingSystem::createItemFromRecipe(const CraftingOutput&
         return item;
     }
 
+    // Check for placeables (no underscore in name)
+    if (itemId == "chest") {
+        auto item = ItemFactory::createChest();
+        if (output.amount > 1) {
+            item->addToStack(output.amount - 1);
+        }
+        return item;
+    }
+
     // Parse the item id to determine type
     // Format: material_type (e.g., "iron_sword", "leather_helmet")
     size_t underscorePos = itemId.find('_');
