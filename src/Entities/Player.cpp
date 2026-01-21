@@ -84,6 +84,7 @@ void Player::Save(Server* server) {
 void Player::SetGhostMode(const bool enable) { isGhostMode = enable; }
 
 void Player::ReviveFromGhostMode() {
+    if (!isGhostMode) return;
     if (entityLogicComponent.IsLocked()) return;
     if (!beingRevived) {
         entityRenderingComponent2.PlayAnimation(AnimationType::DEATH, Direction::OMNI, 1, true);

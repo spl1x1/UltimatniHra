@@ -48,7 +48,7 @@ public:
     [[nodiscard]] ChestStorage* getChestStorage() const;
 
     void DropInventoryItems() override;;
-    void Interact() override;
+    void Interact(IEntity *entity) override;
 
     //Constructor
     Chest(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server);

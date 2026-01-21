@@ -107,6 +107,7 @@ bool SaveManager::saveGame(int slotId, Server* server) {
     // TODO: implementovat play time
     // save.playTime += sessionTime; //pripravene az to budu potrebovat
     server->SaveServerState();
+    server->SetServerState(ServerState::STOPPED);
 
     std::string filepath = getSaveFilePath(slotId);
     return serializeSave(save, filepath);

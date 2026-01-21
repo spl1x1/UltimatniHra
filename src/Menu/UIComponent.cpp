@@ -23,6 +23,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
+#include "../../include/Entities/Entity.h"
 
 UIComponent::UIComponent(SDL_Renderer* renderer, SDL_Window* window, Window* windowClass) : windowClass(windowClass) {
     RmlRenderer = std::make_unique<RenderInterface_SDL>(renderer);
@@ -286,9 +287,6 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                     SDL_Log("Toggling ImGui visibility to %s", menuData.showImgui ? "true" : "false");
                     break;
                 }
-                case SDL_SCANCODE_X: {
-                    windowClass->server->SaveServerState();
-                }
                 case SDL_SCANCODE_F1: {
                     if (blockInput) break;
                     auto& consoleHandler = ConsoleHandler::GetInstance();
@@ -408,8 +406,13 @@ void UIComponent::Render() {
                 document.second->UpdateDocument();
             }
         }
+        if (ImGui::Button("Kill all entities", ImVec2(150, 0))) {
+            windowClass->server->KillAllEntities();
+        }
         ImGui::Checkbox("Player collision", &windowClass->data.collisionState);
         ImGui::Checkbox("Mouse preview", &windowClass->data.drawMousePreview);
+        ImGui::Checkbox("Spawn Slimes",  &windowClass->server->SpawnSlimes);
+        ImGui::Checkbox("God mode",  &windowClass->server->GetPlayer()->GetHealthComponent()->GodMode);
         ImGui::Text("Mouse Position: (%f, %f)", windowClass->data.mouseData.x, windowClass->data.mouseData.y);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();

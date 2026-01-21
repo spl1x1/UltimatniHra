@@ -48,6 +48,8 @@ std::string StructureRenderingComponent::TypeToString(const structureType type) 
             return "Ore Deposit";
         case structureType::CHEST:
             return "Chest";
+        case structureType::RESPAWN_ANCHOR:
+            return "Respawn Anchor";
         default:
             return "Unknown";
     }
@@ -65,6 +67,9 @@ structureType StructureRenderingComponent::StringToType(const std::string& type)
     }
     if (type == "CHEST") {
         return structureType::CHEST;
+    }
+    if (type == "RESPAWN_ANCHOR") {
+        return structureType::RESPAWN_ANCHOR;
     }
     return structureType::UNKNOWN;
 }

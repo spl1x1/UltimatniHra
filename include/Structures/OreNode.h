@@ -34,7 +34,7 @@ public:
 
 
     void DropInventoryItems() override;
-    void Interact() override{};
+    void Interact(IEntity *entity) override{};
 
     //Structure specific methods
 

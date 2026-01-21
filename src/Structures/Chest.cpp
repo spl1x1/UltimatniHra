@@ -17,7 +17,7 @@ Chest* Chest::openChest = nullptr;
 Chest * Chest::GetOpenChest() { return openChest; }
 
 structureType Chest::getType() const {
-    return structureType::CHEST; // Example type, change as needed
+    return structureType::CHEST;
 }
 
 int Chest::getId() const {
@@ -90,7 +90,7 @@ ChestStorage* Chest::getChestStorage() const {
     return chestStorage.get();
 }
 
-void Chest::Interact() {
+void Chest::Interact(IEntity *entity) {
     renderingComponent.SetLock(true);
     if (open) {
         CloseChest();

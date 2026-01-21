@@ -21,6 +21,7 @@ enum class structureType{
     ORE_NODE,
     ORE_DEPOSIT,
     CHEST,
+    RESPAWN_ANCHOR,
     UNKNOWN
 };
 
@@ -128,7 +129,7 @@ public:
     [[nodiscard]] virtual StructureInventoryComponent* GetInventoryComponent() = 0;
 
     virtual void DropInventoryItems() = 0;
-    virtual void Interact() = 0;
+    virtual void Interact(IEntity *entity) = 0;
 };
 
 #endif //ULTIMATNIHRA_STRUCTURE_H

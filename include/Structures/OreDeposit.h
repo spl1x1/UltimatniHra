@@ -33,7 +33,7 @@ public:
     [[nodiscard]] StructureInventoryComponent* GetInventoryComponent() override;
 
     void DropInventoryItems() override;
-    void Interact() override{};
+    void Interact(IEntity *entity) override{};
 
 
     //Structure specific methods

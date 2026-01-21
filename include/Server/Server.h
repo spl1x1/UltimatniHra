@@ -28,7 +28,11 @@ enum class EntityType;
 class IStructure;
 class EntityEvent;
 
-
+enum class ServerState {
+    NOT_RUNNING,
+    RUNNING,
+    STOPPED
+};
 
 class Server : public std::enable_shared_from_this<Server> {
     std::shared_mutex serverMutex;
@@ -82,7 +86,19 @@ class Server : public std::enable_shared_from_this<Server> {
         std::uniform_int_distribution<int> distVariant = std::uniform_int_distribution(1, 3);
     } spawnGen;
 
+    ServerState serverState{ServerState::NOT_RUNNING};
+
+    /*
+    Kontroluje zda je 3x3 oblast volna
+    x = tile x
+    y = tile y
+    */
+    [[nodiscard]] bool check3by3AreaFree(int x, int y) const;
+
 public:
+
+    bool SpawnSlimes{true};
+    std::vector<Coordinates> respawnPoints{};
 
     //Setters
     void SetSeed(const int newSeed) {seed = newSeed;} //Teoreticky nemusi byt thread safe callujeme jen pri inicializaci)
@@ -114,7 +130,8 @@ public:
     [[nodiscard]] std::vector<DamageArea> GetDamagePoints();
     [[nodiscard]] AiManager& GetAiManager();
     [[nodiscard]] AiManager& GetAiManager_unprotected();
-    [[]] WorldData& GetWorldData();
+    [[nodiscard]] WorldData& GetWorldData();
+    [[nodiscard]] std::vector<Coordinates> GetRespawnPoints();
 
     //Methods
     void GenerateStructures(); //Generuje stromy na mape sveta pro jistotu lockuje mutex serveru, volat při prvním vytvoreni jinak load
@@ -127,6 +144,8 @@ public:
     std::vector<std::string> GetTileInfo(float x, float y);
     void InvalidateStructureCache(); //Invaliduje cache pro struktury
     void SendClickEvent(MouseButtonEvent event) const;
+    void KillAllEntities(); //Zabije vsechny entity na serveru, nezapomenout na thread safety
+    void SpawnRespawnAnchors();
 
     IEntity* AddEntity(Coordinates coordinates, EntityType type, int variant = 1); //Prida na server entitu TODO: implementovat, nezapomenout na thread safety
     IEntity* AddEntity_unprotected(Coordinates coordinates, EntityType type, int variant = 1); //Prida na server entitu
@@ -149,6 +168,7 @@ public:
     void SaveServerState();
     void LoadServerState();
     void Reset();
+    void SetServerState(ServerState newState);
 
     // Set callback for item drops (used by UI to receive items)
     void SetItemDropCallback(std::function<bool(std::unique_ptr<Item>)> callback);
