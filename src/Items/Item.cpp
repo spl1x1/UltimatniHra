@@ -179,6 +179,21 @@ std::string Amulet::getDisplayInfo() const {
     return oss.str();
 }
 
+Placeable::Placeable(const std::string& name, PlaceableType pType)
+    : Item(name, "A placeable structure", ItemType::PLACEABLE, 10, true, 99),
+      placeableType(pType) {
+}
+
+void Placeable::use(Player* player) {
+    // Placement logic will be handled elsewhere
+}
+
+std::string Placeable::getDisplayInfo() const {
+    std::ostringstream oss;
+    oss << name << " x" << stackSize;
+    return oss.str();
+}
+
 namespace ItemFactory {
 
     std::string getMaterialName(const MaterialType tier) {
@@ -444,6 +459,19 @@ namespace ItemFactory {
         auto amulet = std::make_unique<Amulet>("Armour Amulet", AmuletType::ARMOUR, armourBonus);
         amulet->setIconPath(getAmuletIconPath("armour"));
         return amulet;
+    }
+
+    // Placeables
+    std::unique_ptr<Placeable> createChest() {
+        auto placeable = std::make_unique<Placeable>("Chest", PlaceableType::CHEST);
+        placeable->setIconPath(ITEMS_ICON_BASE + "chest.png");
+        return placeable;
+    }
+
+    std::unique_ptr<Placeable> createCraftingTable() {
+        auto placeable = std::make_unique<Placeable>("Crafting Table", PlaceableType::CRAFTING_TABLE);
+        placeable->setIconPath(ITEMS_ICON_BASE + "crafting_table.png");
+        return placeable;
     }
 
 }

@@ -1,8 +1,9 @@
-﻿//
+//
 // Created by USER on 09.12.2025.
 //
 
 #include "../../include/Structures/Chest.h"
+#include "../../include/Items/ChestInventory.h"
 
 #include "../../include/Sprites/ChestSprite.h"
 #include "../../include/Sprites/Sprite.hpp"
@@ -72,17 +73,21 @@ StructureInventoryComponent * Chest::GetInventoryComponent() {
 void Chest::DropInventoryItems() {}
 
 void Chest::OpenChest() {
-    SDL_Log("Opening Chest");
+    SDL_Log("Opening Chest %d", id);
     renderingComponent.PlayAnimation(AnimationType::INTERACT, Direction::DOWN);
     open = true;
     openChest = this;
 }
 
 void Chest::CloseChest() {
-    SDL_Log("Closing Chest");
+    SDL_Log("Closing Chest %d", id);
     renderingComponent.PlayAnimation(AnimationType::INTERACT, Direction::UP);
     open = false;
     if (openChest == this) openChest = nullptr;
+}
+
+ChestStorage* Chest::getChestStorage() const {
+    return chestStorage.get();
 }
 
 void Chest::Interact() {
@@ -97,7 +102,8 @@ void Chest::Interact() {
 
 
 Chest::Chest(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server)
-: id(id),renderingComponent(std::make_unique<ChestSprite>()), hitboxComponent(server) {
+: id(id),renderingComponent(std::make_unique<ChestSprite>()), hitboxComponent(server),
+  chestStorage(std::make_unique<ChestStorage>(id)) {
     topLeftCorner = toWorldCoordinates(toTileCoordinates(topLeftCorner));
     topLeftCorner.y -= 32.0f;
     hitboxComponent.SetTopLeftCorner(topLeftCorner);

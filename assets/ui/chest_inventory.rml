@@ -1,0 +1,35 @@
+<rml>
+    <head>
+        <title>Chest Inventory</title>
+        <link type="text/rcss" href="chest_inventory.rcss"/>
+    </head>
+    <body>
+    <div id="chest-container">
+        <div class="chest-grid" id="chest_grid">
+            <div class="chest-slot" id="chest_slot_0"></div>
+            <div class="chest-slot" id="chest_slot_1"></div>
+            <div class="chest-slot" id="chest_slot_2"></div>
+            <div class="chest-slot" id="chest_slot_3"></div>
+            <div class="chest-slot" id="chest_slot_4"></div>
+
+            <div class="chest-slot" id="chest_slot_5"></div>
+            <div class="chest-slot" id="chest_slot_6"></div>
+            <div class="chest-slot" id="chest_slot_7"></div>
+            <div class="chest-slot" id="chest_slot_8"></div>
+            <div class="chest-slot" id="chest_slot_9"></div>
+
+            <div class="chest-slot" id="chest_slot_10"></div>
+            <div class="chest-slot" id="chest_slot_11"></div>
+            <div class="chest-slot" id="chest_slot_12"></div>
+            <div class="chest-slot" id="chest_slot_13"></div>
+            <div class="chest-slot" id="chest_slot_14"></div>
+
+            <div class="chest-slot" id="chest_slot_15"></div>
+            <div class="chest-slot" id="chest_slot_16"></div>
+            <div class="chest-slot" id="chest_slot_17"></div>
+            <div class="chest-slot" id="chest_slot_18"></div>
+            <div class="chest-slot" id="chest_slot_19"></div>
+        </div>
+    </div>
+    </body>
+</rml>

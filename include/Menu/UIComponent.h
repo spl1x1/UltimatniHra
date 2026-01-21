@@ -17,6 +17,7 @@
 class Window;
 class InventoryController;
 class CraftingSystem;
+class ChestInventoryUI;
 
 enum class DisplayMode {
     WINDOWED,
@@ -54,6 +55,7 @@ private:
 
     std::unique_ptr<InventoryController> inventoryController{};
     std::unique_ptr<CraftingSystem> craftingSystem{};
+    std::unique_ptr<ChestInventoryUI> chestInventoryUI{};
 
     void RegisterButtonBindings(Window *Window);
 
@@ -100,6 +102,7 @@ public:
 
     //Inventory
     [[nodiscard]] InventoryController* getInventoryController() const;
+    [[nodiscard]] ChestInventoryUI* getChestInventoryUI() const;
 };
 
 #endif //UICOMPONENT_H

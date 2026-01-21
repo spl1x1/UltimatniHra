@@ -183,6 +183,9 @@ bool InventoryController::addItem(std::unique_ptr<Item> item) {
                     // Update quickbar if slot is in quickbar range
                     if (existingSlot < QUICKBAR_SIZE) {
                         updateQuickbarSlot(existingSlot);
+                        if (existingSlot == selectedQuickbarSlot) {
+                            printActiveSlotInfo();
+                        }
                     }
                     SDL_Log("Added %d to existing stack in slot %d", toAdd, existingSlot);
                     return true;
@@ -213,6 +216,9 @@ bool InventoryController::addItem(std::unique_ptr<Item> item) {
     // Update quickbar if slot is in quickbar range
     if (emptySlot < QUICKBAR_SIZE) {
         updateQuickbarSlot(emptySlot);
+        if (emptySlot == selectedQuickbarSlot) {
+            printActiveSlotInfo();
+        }
     }
 
     return true;
@@ -950,12 +956,27 @@ void InventoryController::setSelectedQuickbarSlot(int slot) {
         // Update hotbar UI selection
         updateHotbarSelection();
 
-        SDL_Log("Selected hotbar slot %d", slot);
+        printActiveSlotInfo();
     }
 }
 
 Item* InventoryController::getActiveQuickbarItem() {
     return getItem(selectedQuickbarSlot);
+}
+
+std::string InventoryController::printActiveSlotInfo() const {
+    std::string info;
+    auto it = items.find(selectedQuickbarSlot);
+    if (it != items.end() && it->second) {
+        info = it->second->getDisplayInfo();
+        printf("=== Active Hotbar Slot %d ===\n", selectedQuickbarSlot + 1);
+        printf("%s\n", info.c_str());
+    } else {
+        info = "Empty slot";
+        printf("=== Active Hotbar Slot %d ===\n", selectedQuickbarSlot + 1);
+        printf("%s\n", info.c_str());
+    }
+    return info;
 }
 
 // Equipment access methods

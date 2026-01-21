@@ -95,6 +95,7 @@ public:
     int getSelectedQuickbarSlot() const { return selectedQuickbarSlot; }
     void setSelectedQuickbarSlot(int slot);  // Select quickbar slot (0-4)
     Item* getActiveQuickbarItem();  // Get item at currently selected quickbar slot
+    std::string printActiveSlotInfo() const;  // Output and return information about item in active hotbar slot
 
     // Crafting functionality
     void setCraftingSystem(CraftingSystem* system) { craftingSystem = system; }

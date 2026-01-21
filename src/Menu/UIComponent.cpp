@@ -13,6 +13,8 @@
 #include "../../include/Window/Window.h"
 #include "../../include/Items/inventory.h"
 #include "../../include/Items/Crafting.h"
+#include "../../include/Items/ChestInventory.h"
+#include "../../include/Structures/Chest.h"
 
 #include <RmlUi/Core/Core.h>
 #include <RmlUi/Core/ElementDocument.h>
@@ -109,6 +111,10 @@ InventoryController* UIComponent::getInventoryController() const {
     return inventoryController.get();
 }
 
+ChestInventoryUI* UIComponent::getChestInventoryUI() const {
+    return chestInventoryUI.get();
+}
+
 void UIComponent::LoadDocumentsFromDirectory(const std::string& DocDirectory) {
         if (DocDirectory.empty()) {
             SDL_Log("Document directory is empty.");
@@ -181,6 +187,9 @@ void UIComponent::Init() {
 
     // Connect crafting system to inventory controller
     inventoryController->setCraftingSystem(craftingSystem.get());
+
+    // Initialize chest inventory UI
+    chestInventoryUI = std::make_unique<ChestInventoryUI>(windowClass, this);
 }
 
 void UIComponent::HandleEvent(const SDL_Event *e) {
@@ -342,6 +351,24 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
 }
 
 void UIComponent::Render() {
+    // Sync chest inventory UI with current open chest (only when in game)
+    if (chestInventoryUI && documents.contains("main_menu") && documents.contains("pause_menu")) {
+        bool inGame = !documents.at("main_menu")->IsVisible() &&
+                      !documents.at("pause_menu")->IsVisible();
+        if (inGame) {
+            Chest* openChest = Chest::GetOpenChest();
+            Chest* currentUIChest = chestInventoryUI->getCurrentChest();
+
+            if (openChest != currentUIChest) {
+                if (openChest) {
+                    chestInventoryUI->openChest(openChest);
+                } else {
+                    chestInventoryUI->closeChest();
+                }
+            }
+        }
+    }
+
     RmlContext->Update();
     RmlContext->Render();
 #ifdef DEBUG

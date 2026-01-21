@@ -6,6 +6,9 @@
 #define CHEST_H
 
 #include "Structure.h"
+#include <memory>
+
+class ChestStorage;
 
 class Chest final : public IStructure {
     int id;
@@ -14,6 +17,8 @@ class Chest final : public IStructure {
     StructureInventoryComponent inventoryComponent;
     bool initialized{false};
     bool open{false};
+
+    std::unique_ptr<ChestStorage> chestStorage;
 
     static Chest* openChest;
 
@@ -39,6 +44,8 @@ public:
     void OpenChest();
     void CloseChest();
 
+    // Chest storage access
+    [[nodiscard]] ChestStorage* getChestStorage() const;
 
     void DropInventoryItems() override;;
     void Interact() override;

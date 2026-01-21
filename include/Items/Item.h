@@ -15,6 +15,7 @@ enum class ItemType {
     MATERIAL,
     CONSUMABLE,
     AMULET,
+    PLACEABLE,
 };
 enum class WeaponType {
     AXE,
@@ -49,6 +50,11 @@ enum class AmuletType {
     SPEED,
     DAMAGE,
     ARMOUR,
+};
+
+enum class PlaceableType {
+    CHEST,
+    CRAFTING_TABLE,
 };
 
 class Item {
@@ -161,6 +167,16 @@ public:
     void use(Player* player) override;
     [[nodiscard]] std::string getDisplayInfo() const override;
 };
+
+class Placeable : public Item {
+private:
+    PlaceableType placeableType;
+public:
+    Placeable(const std::string& name, PlaceableType pType);
+    [[nodiscard]] PlaceableType getPlaceableType() const { return placeableType; }
+    void use(Player* player) override;
+    [[nodiscard]] std::string getDisplayInfo() const override;
+};
 namespace ItemFactory {
     // Weapons
     std::unique_ptr<Weapon> createAxe(MaterialType material);
@@ -186,6 +202,10 @@ namespace ItemFactory {
     std::unique_ptr<Amulet> createSpeedAmulet(int speedBonus);
     std::unique_ptr<Amulet> createDamageAmulet(int damageBonus);
     std::unique_ptr<Amulet> createArmourAmulet(int armourBonus);
+
+    // Placeables
+    std::unique_ptr<Placeable> createChest();
+    std::unique_ptr<Placeable> createCraftingTable();
 
     // Helper to get material name
     std::string getMaterialName(MaterialType tier);
