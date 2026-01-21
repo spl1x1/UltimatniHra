@@ -2,27 +2,21 @@
 // Created by USER on 09.12.2025.
 //
 
-#ifndef TREE_H
-#define TREE_H
+#ifndef ANCHOR_H
+#define ANCHOR_H
 
 #include "Structure.h"
 
-class Tree final : public IStructure {
+class Anchor final : public IStructure {
     int id;
     StructureRenderingComponent renderingComponent;
     StructureHitboxComponent hitboxComponent;
+    StructureInventoryComponent inventoryComponent;
     bool initialized{false};
+    bool beingUsed{false};
+    IEntity* interactingEntity{nullptr};
+
 public:
-    enum class TreeVariant {
-        PLAINS,
-        FOREST,
-        SNOW,
-        NONE
-    };
-
-    int variant{0};
-    int InnerVariant{0};
-
     //Interface implementation
     [[nodiscard]] structureType getType() const override;
     [[nodiscard]] int getId() const override;
@@ -32,20 +26,21 @@ public:
     [[nodiscard]] RenderingContext GetRenderingContext() const override;
     [[nodiscard]] HitboxContext GetHitboxContext() override;
     [[nodiscard]] Coordinates GetCoordinates() const override;
-    [[nodiscard]] int GetVariant() const override;
-    [[nodiscard]] int GetInnerType() const override;
+    [[nodiscard]] int GetVariant() const override;;
+    [[nodiscard]] int GetInnerType() const override;;
 
     [[nodiscard]] StructureRenderingComponent* GetRenderingComponent() override;
     [[nodiscard]] StructureHitboxComponent* GetHitboxComponent() override;
     [[nodiscard]] StructureInventoryComponent* GetInventoryComponent() override;
 
-    void DropInventoryItems() override;
-    void Interact(IEntity *entity) override{};
+
+    void DropInventoryItems() override{};
+    void Interact(IEntity *entity) override;
 
     //Constructor
-    Tree(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int innerType);
-    ~Tree() override;
+    Anchor(int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server);
+    ~Anchor() override;
 };
 
 
-#endif //TREE_H
+#endif //ANCHOR_H

@@ -10,7 +10,7 @@
 #include "../../include/Sprites/TreeSprite.hpp"
 
 structureType Tree::getType() const {
-    return structureType::TREE; // Example type, change as needed
+    return structureType::TREE;
 }
 
 int Tree::getId() const {

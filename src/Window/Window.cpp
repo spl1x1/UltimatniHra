@@ -262,21 +262,57 @@ void Window::renderHud() {
     }
     data.lastHealth = playerHealth;
 
-    if (dynamic_cast<Player*>(server->GetPlayer())->IsGhostMode()) {
-        const std::string deathText = "You have Died! Try to find Respawn Anchor.";
-        const auto surface = TTF_RenderText_Solid(data.font, deathText.c_str(), deathText.length(), SDL_Color{255,0,0,255});
-        const auto texture = SDL_CreateTextureFromSurface(data.Renderer, surface);
+    if (!dynamic_cast<Player*>(server->GetPlayer())->IsGhostMode()) return;
 
-        SDL_FRect rectangle;
-        rectangle.w = static_cast<float>(surface->w);
-        rectangle.h = static_cast<float>(surface->h);
-        rectangle.x = std::floor((GAMERESW - rectangle.w) / 2.0f);
-        rectangle.y = std::floor((GAMERESH - rectangle.h) / 4.0f);
+    const std::string deathText = "You have Died! Try to find Respawn Anchor.";
+    const auto surface = TTF_RenderText_Solid(data.font, deathText.c_str(), deathText.length(), SDL_Color{255,0,0,255});
+    const auto texture = SDL_CreateTextureFromSurface(data.Renderer, surface);
 
-        SDL_RenderTexture(data.Renderer, texture, nullptr, &rectangle);
-        SDL_DestroySurface(surface);
-        SDL_DestroyTexture(texture);
-    }
+    SDL_FRect rectangle;
+    rectangle.w = static_cast<float>(surface->w);
+    rectangle.h = static_cast<float>(surface->h);
+    rectangle.x = std::floor((GAMERESW - rectangle.w) / 2.0f);
+    rectangle.y = std::floor((GAMERESH - rectangle.h) / 4.0f);
+
+    SDL_RenderTexture(data.Renderer, texture, nullptr, &rectangle);
+    SDL_DestroySurface(surface);
+    SDL_DestroyTexture(texture);
+
+    auto playerPos{server->GetPlayer()->GetEntityCenter()};
+    auto getClosestPoint = [](Server* serverInstance, Coordinates point) {
+        auto respawnPoints{serverInstance->GetRespawnPoints()};
+
+        auto closestPoint{respawnPoints.at(0)};
+        auto distance{CoordinatesDistance(point, closestPoint)};
+
+        for (const auto& respawnPoint : respawnPoints) {
+            const auto newDistance{CoordinatesDistance(point, respawnPoint)};
+            if (newDistance > distance) continue;
+            closestPoint = respawnPoint;
+            distance = newDistance;
+        }
+        return closestPoint;
+    };
+
+    auto closestPoint{getClosestPoint(server.get(), playerPos)};
+    const float directionAngle{static_cast<float>(Server::CalculateAngle(playerPos,closestPoint))};
+
+    if (CoordinatesDistance(playerPos, closestPoint) < 200.0f) return;
+    std::string arrowTextureName = "arrow_down";;
+    if (directionAngle >= 22.5f && directionAngle < 67.5f) arrowTextureName = "arrow_down_right";
+    else if (directionAngle >= 67.5f && directionAngle < 112.5f) arrowTextureName = "arrow_right";
+    else if (directionAngle >= 112.5f && directionAngle < 157.5f) arrowTextureName = "arrow_up_right";
+    else if (directionAngle >= 157.5f && directionAngle < 202.5f) arrowTextureName = "arrow_up";
+    else if (directionAngle >= 202.5f && directionAngle < 247.5f) arrowTextureName = "arrow_up_left";
+    else if (directionAngle >= 247.5f && directionAngle < 292.5f) arrowTextureName = "arrow_left";
+    else if (directionAngle >= 292.5f && directionAngle < 337.5f) arrowTextureName = "arrow_down_left";
+
+    if (!textures.contains(arrowTextureName)) return;
+    rect.w = 32.0f;
+    rect.h = 32.0f;
+    rect.x = std::floor((GAMERESW - rect.w) / 2.0f);
+    rect.y = std::floor((GAMERESH - rect.h) / 4.0f) - 50.0f;
+    SDL_RenderTexture(data.Renderer, textures.at(arrowTextureName), nullptr, &rect);
 }
 
 
@@ -630,6 +666,7 @@ void Window::initGame(bool loadingSave) {
         server->GenerateWorld();
         WorldRender(*this).GenerateWorldTexture();
         server->GenerateStructures();
+        server->SpawnRespawnAnchors();
     }
     else {
         server->LoadServerState();
@@ -643,6 +680,7 @@ void Window::initGame(bool loadingSave) {
     data.cameraWaterRect->x = 64;
     data.cameraWaterRect->y = 64;
     server->InvalidateStructureCache();
+    server->SetServerState(ServerState::RUNNING);
 }
 
 

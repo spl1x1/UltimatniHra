@@ -492,6 +492,7 @@ void EntityHealthComponent::Tick(const float deltaTime) {
 }
 
 void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
+    if (GodMode) return;
     if (IsDead() || damage <= 0) return;
     health -= damage;
 

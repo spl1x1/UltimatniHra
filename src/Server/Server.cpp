@@ -19,6 +19,7 @@
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Entities/Slime.h"
+#include "../../include/Structures/Anchor.h"
 #include "../../include/Structures/Chest.h"
 #include "../../include/Structures/OreNode.h"
 #include "../../include/Structures/Structure.h"
@@ -160,6 +161,15 @@ void Server::setupSlimeAi(IEntity* entity) {
 }
 
 
+bool Server::check3by3AreaFree(int x, int y) const {
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (GetMapValue_unprotected(x + dx, y + dy) != 0) return false;
+        }
+    }
+    return true;
+}
+
 void Server::SetSpawnPoint(Coordinates newSpawnPoint) {spawnPoint = newSpawnPoint;}
 
 void Server::SetDeltaTime(float dt) {
@@ -249,6 +259,10 @@ bool Server::AddStructure_unprotected(Coordinates coordinates, const structureTy
             newStructure = std::make_shared<Chest>(newId, coordinates, GetSharedPtr());
             break;
         }
+        case structureType::RESPAWN_ANCHOR: {
+            newStructure = std::make_shared<Anchor>(newId, coordinates, GetSharedPtr());
+            break;
+        }
         default:
             break;
     }
@@ -308,6 +322,10 @@ EntityData Server::GetEntityData(IEntity *entity) {
 
 
 void Server::SaveServerState() {
+    if (serverState != ServerState::RUNNING) {
+        SDL_Log("Server is not running, cannot save state.");
+        return;
+    }
     std::vector<StructureData> structuresData;
     structuresData.reserve(structures.size());
     {
@@ -398,6 +416,7 @@ void Server::SaveServerState() {
 }
 
 void Server::LoadServerState() {
+    serverState = ServerState::RUNNING;
     const auto fileName{"saves/slot_" + std::to_string(SaveManager::getInstance().getCurrentSlot()) + "_server_state.json"};
     if (!std::filesystem::exists(fileName)) {
         SDL_Log("Save file does not exist: %s", fileName.c_str());
@@ -456,6 +475,11 @@ void Server::Reset() {
     cacheValidityData.isCacheValid = false;
     StructureIdCache.clear();
     worldData.ResetMaps();
+}
+
+void Server::SetServerState(const ServerState newState) {
+    std::lock_guard lock(serverMutex);
+    serverState = newState;
 }
 
 void Server::PlayerUpdate(std::unique_ptr<EntityEvent> e, int playerId) {
@@ -561,10 +585,10 @@ void Server::SendClickEvent(const MouseButtonEvent event) const {
         logicComp->AddEvent(Event_MoveTo::Create(event.x, event.y));
     };
 
-    auto interact = [&](const IEntity* player, const MouseButtonEvent eventData) -> bool {
+    auto interact = [&](IEntity* player, const MouseButtonEvent eventData) -> bool {
         const auto structure{player->GetServer()->GetStructure(checkForStructure(player, eventData))};
         if (!structure) return false;
-        structure->Interact();
+        structure->Interact(player);
         return true;
     };
 
@@ -577,6 +601,31 @@ void Server::SendClickEvent(const MouseButtonEvent event) const {
         if (event.action == MouseButtonEvent::Action::RELEASE) sendMoveTo(localPlayer.get(), event);
     }
 
+}
+
+void Server::KillAllEntities() {
+    std::lock_guard lock(serverMutex);
+
+    auto killEntity = [this](const std::pair<const int, std::shared_ptr<IEntity>> &entityPair) {
+        if (std::get<1>(entityPair)->GetType() == EntityType::PLAYER) return;
+        const auto id{std::get<0>(entityPair)};
+        entitiesToRemove.emplace_back(id);
+        SDL_Log("Killed entity ID %d", id);
+    };
+    std::ranges::for_each(entities, killEntity);
+}
+
+
+void Server::SpawnRespawnAnchors() {
+    std::lock_guard lock(serverMutex);
+    const Coordinates spawnPoint{GetSpawnPoint()};
+    std::mt19937 rng(static_cast<unsigned int>(SDL_GetTicks()));
+    std::uniform_int_distribution<int> dist(-2000, 2000);
+    do{
+        Coordinates anchorPos{spawnPoint.x + static_cast<float>(dist(rng)), spawnPoint.y + static_cast<float>(dist(rng))};
+        if (AddStructure_unprotected(anchorPos, structureType::RESPAWN_ANCHOR, 0, 0))
+            SDL_Log("Spawn respawn anchor at (%f, %f)", anchorPos.x, anchorPos.y);
+    } while (respawnPoints.size() < 5);
 }
 
 IEntity* Server::AddEntity(const Coordinates coordinates, const EntityType type, const int variant)
@@ -608,14 +657,6 @@ IEntity* Server::AddEntity_unprotected(Coordinates coordinates, const EntityType
 
 
 void Server::Tick() {
-    auto check3by3Area = [this](const int x, const int y) -> bool {
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                if (GetMapValue_unprotected(x + dx, y + dy) != 0) return false;
-            }
-        }
-        return true;
-    };
 
     auto tryToSpawnSlime = [&]() {
         constexpr auto maxAttempts{10};
@@ -630,7 +671,7 @@ void Server::Tick() {
             const auto x = playerCoordinates.x + static_cast<float>(spawnGen.dist(spawnGen.generator));
             const auto y = playerCoordinates.y + static_cast<float>(spawnGen.dist(spawnGen.generator));
 
-            if (check3by3Area(std::floor(x/32),std::floor(x/32))) continue;
+            if (check3by3AreaFree(std::floor(x/32),std::floor(x/32))) continue;
             spawnCoordinates = {x, y};
             attempts--;
             break;
@@ -701,7 +742,7 @@ void Server::Tick() {
     }
     lastDamagePoints = damagePoints;
     damagePoints.clear();
-    if (entities.size() < MAXENTITYCOUNT) tryToSpawnSlime();
+    if (SpawnSlimes && entities.size() < MAXENTITYCOUNT) tryToSpawnSlime();
 }
 
 
@@ -736,6 +777,10 @@ AiManager& Server::GetAiManager_unprotected() {
 
 WorldData & Server::GetWorldData() {
     return worldData;
+}
+
+std::vector<Coordinates> Server::GetRespawnPoints() {
+    return respawnPoints;
 }
 
 std::map<int,std::shared_ptr<IEntity>> Server::GetEntities() {
@@ -895,3 +940,4 @@ bool Server::AddItemToInventory(std::unique_ptr<Item> item) const {
     }
     return false;
 }
+

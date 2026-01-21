@@ -156,6 +156,8 @@ class EntityHealthComponent {
     float timeToRegenerate{5.0f}; //Time in seconds to start health regeneration after taking damage
 
 public:
+    bool GodMode{false};
+
     //Methods
     void TakeDamage(int damage, IEntity& entity);
     void Heal(int amount);
