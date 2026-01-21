@@ -145,7 +145,7 @@ void ChestInventoryUI::openChest(Chest* chest) {
     refreshDisplay();
     document->Show();
     visible = true;
-    SDL_Log("ChestInventoryUI: Opened chest %d", chest->getId());
+    SDL_Log("ChestInventoryUI: Opened chest %d", chest->GetId());
 }
 
 void ChestInventoryUI::closeChest() {

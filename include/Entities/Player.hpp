@@ -9,6 +9,18 @@
 #include "../Sprites/GhostSprite.h"
 #include "../Sprites/PlayerSprite.hpp"
 
+
+struct HandData {
+    enum {
+        NONE,
+        AXE,
+        PICKAXE,
+        CHEST,
+        CRAFTING_TABLE
+    } toolType = HandData::NONE;
+    float damage = 0.0f;
+};
+
 class Player final : public IEntity {
     EntityRenderingComponent entityRenderingComponent = EntityRenderingComponent(std::make_unique<PlayerSprite>());
     EntityRenderingComponent entityRenderingComponent2 = EntityRenderingComponent(std::make_unique<GhostSprite>());
@@ -36,6 +48,8 @@ class Player final : public IEntity {
     int uuid{0};
     int inventoryId{0};
 
+    HandData handData;
+
 public:
     //Interface methods implementation
     void Tick() override;
@@ -49,6 +63,8 @@ public:
     void ReviveFromGhostMode();
     [[nodiscard]] bool IsBeingRevived() const;
     [[nodiscard]] bool IsGhostMode() const;
+    void SetHandData(const HandData& newHandData);
+    [[nodiscard]] HandData GetHandData() const;
 
     //Setters
     void SetId(int newId) override;

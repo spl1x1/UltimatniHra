@@ -48,6 +48,7 @@ struct WindowData {
     bool mainScreen{true};
     bool inMenu{true}; // True if in any menu or inventory
     bool drawMousePreview{true};
+    Coordinates lastTileCoordinates{};
 
     std::string WINDOW_TITLE;
     int WINDOW_WIDTH;

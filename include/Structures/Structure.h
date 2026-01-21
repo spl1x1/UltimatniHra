@@ -113,9 +113,9 @@ class IStructure {
 
 public:
     virtual ~IStructure() = default;
-    [[nodiscard]] virtual structureType getType() const = 0;
-    [[nodiscard]] virtual int getId() const = 0;
-    virtual bool wasProperlyInitialized() = 0;
+    [[nodiscard]] virtual structureType GetType() const = 0;
+    [[nodiscard]] virtual int GetId() const = 0;
+    virtual bool WasProperlyInitialized() = 0;
     virtual void Tick(float deltaTime) = 0;
     [[nodiscard]] virtual int GetInventoryId() const = 0;
     [[nodiscard]] virtual RenderingContext GetRenderingContext() const = 0;

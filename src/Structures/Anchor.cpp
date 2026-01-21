@@ -11,15 +11,15 @@
 #include "../../include/Entities/Player.hpp"
 
 
-structureType Anchor::getType() const {
+structureType Anchor::GetType() const {
     return structureType::RESPAWN_ANCHOR;
 }
 
-int Anchor::getId() const {
+int Anchor::GetId() const {
     return id;
 }
 
-bool Anchor::wasProperlyInitialized() {
+bool Anchor::WasProperlyInitialized() {
     return initialized;
 }
 

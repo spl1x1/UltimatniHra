@@ -9,15 +9,15 @@
 #include "../../include/Sprites/Sprite.hpp"
 #include "../../include/Sprites/TreeSprite.hpp"
 
-structureType Tree::getType() const {
+structureType Tree::GetType() const {
     return structureType::TREE;
 }
 
-int Tree::getId() const {
+int Tree::GetId() const {
     return id;
 }
 
-bool Tree::wasProperlyInitialized() {
+bool Tree::WasProperlyInitialized() {
     return initialized;
 }
 

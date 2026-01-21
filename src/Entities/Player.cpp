@@ -103,6 +103,14 @@ bool Player::IsBeingRevived() const {
 
 bool Player::IsGhostMode() const { return isGhostMode; }
 
+void Player::SetHandData(const HandData &newHandData) {
+    handData = newHandData;
+}
+
+HandData Player::GetHandData() const {
+    return handData;
+}
+
 void Player::SetId(const int newId) {
     id = newId;
 }

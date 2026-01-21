@@ -19,6 +19,7 @@
 #include "../../include/Entities/Entity.h"
 #include "../../include/Entities/Player.hpp"
 #include "../../include/Entities/Slime.h"
+#include "../../include/Items/inventory.h"
 #include "../../include/Structures/Anchor.h"
 #include "../../include/Structures/Chest.h"
 #include "../../include/Structures/OreNode.h"
@@ -267,7 +268,7 @@ bool Server::AddStructure_unprotected(Coordinates coordinates, const structureTy
             break;
     }
 
-    if (!newStructure || !newStructure->wasProperlyInitialized()) {
+    if (!newStructure || !newStructure->WasProperlyInitialized()) {
         SDL_Log("Failed to create Tree structure at (%f, %f)", coordinates.x, coordinates.y);
         nextStructureId--; //Rollback ID pokud se nepovede vytvorit struktura
         return false;
@@ -298,7 +299,7 @@ void Server::RemoveStructure(int structureId) {
 
 StructureData Server::GetStructureData(const IStructure *structure) {
     StructureData data;
-    data.type = static_cast<int>(structure->getType());
+    data.type = static_cast<int>(structure->GetType());
     data.innerType = structure->GetInnerType();
     data.variant = structure->GetVariant();
     data.inventoryId = structure->GetInventoryId();
@@ -551,7 +552,7 @@ std::vector<std::string> Server::GetTileInfo(const float x, const float y) {
         }
     }
 
-    if ( mapValue> 0) text.emplace_back(StructureRenderingComponent::TypeToString(GetStructure(mapValue)->getType()));
+    if ( mapValue> 0) text.emplace_back(StructureRenderingComponent::TypeToString(GetStructure(mapValue)->GetType()));
 
     return text;
 }
@@ -561,23 +562,46 @@ void Server::InvalidateStructureCache() {
     cacheValidityData.isCacheValid = false;
 }
 
-void Server::SendClickEvent(const MouseButtonEvent event) const {
+void Server::SendClickEvent(const MouseButtonEvent &event) const {
 
-    auto checkForStructure= [](const IEntity* player, const MouseButtonEvent eventData) {
+    auto checkForStructure= [](const IEntity* player, const MouseButtonEvent &eventData) {
         const auto [x, y]{toTileCoordinates(static_cast<int>(eventData.x), static_cast<int>(eventData.y))};
         return player->GetServer()->GetMapValue_unprotected(static_cast<int>(x),static_cast<int>(y),WorldData::COLLISION_MAP);
     };
 
-    auto sendAttack = [](IEntity* player, const MouseButtonEvent event) {
+    auto sendAttack = [](IEntity* player, const MouseButtonEvent &eventData) {
         const auto logicComp{player->GetLogicComponent()};
-        logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{event.x, event.y})));
-        logicComp->AddEvent(Event_ClickAttack::Create(2,10,{event.x, event.y}));
+        logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{eventData.x, eventData.y})));
+        logicComp->AddEvent(Event_ClickAttack::Create(2,10,{eventData.x, eventData.y}));
 
         };
 
-    auto sendMine = [](IEntity* player, const MouseButtonEvent event) {
+    auto sendMine = [](IEntity* player, const MouseButtonEvent &eventData) {
         const auto logicComp{player->GetLogicComponent()};
-        logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{event.x, event.y})));
+        const auto server{player->GetServer()};
+        if (!eventData.sameTile) server->mineProgress == 0.0f;
+        logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{eventData.x, eventData.y})));
+        const auto tile{toTileCoordinates(static_cast<int>(eventData.x), static_cast<int>(eventData.y))};
+        const auto id = server->GetMapValue_unprotected(
+            static_cast<int>(tile.x),
+            static_cast<int>(tile.y),
+            WorldData::COLLISION_MAP);
+        if (id <= 0) return;
+        const auto structure{server->GetStructure(id)};
+        if (!structure) return;
+
+        if (const auto type{structure->GetType()};
+            type != structureType::TREE
+            && type != structureType::ORE_DEPOSIT
+            && type != structureType::ORE_NODE
+            && type != structureType::CHEST) return;
+
+        server->mineProgress += 0.1f; //TODO: pridat rychlost podle nastroje
+        if (server->mineProgress >= 1.0f) {
+            server->mineProgress = 0.0f;
+            server->GetStructure(id)->DropInventoryItems();
+            server->RemoveStructure(id);
+        }
     };
 
     auto sendMoveTo = [](IEntity* player, const MouseButtonEvent event) {
@@ -585,22 +609,33 @@ void Server::SendClickEvent(const MouseButtonEvent event) const {
         logicComp->AddEvent(Event_MoveTo::Create(event.x, event.y));
     };
 
-    auto interact = [&](IEntity* player, const MouseButtonEvent eventData) -> bool {
+    auto placeChest = [](const IEntity* player, const MouseButtonEvent &eventData) {
+        const auto structure{player->GetServer()->AddStructure_unprotected(
+            toWorldCoordinates(toTileCoordinates(static_cast<int>(eventData.x), static_cast<int>(eventData.y))),
+            structureType::CHEST, 0, 0)};
+        if (!structure) return false;
+        return true;
+    };
+
+    auto interact = [&](IEntity* player, const MouseButtonEvent &eventData) -> bool {
         const auto structure{player->GetServer()->GetStructure(checkForStructure(player, eventData))};
         if (!structure) return false;
         structure->Interact(player);
         return true;
     };
+    const auto tile {toTileCoordinates(event.x, event.y)};
+    const auto tileID{GetMapValue_unprotected(static_cast<int>(tile.x),static_cast<int>(tile.y),WorldData::COLLISION_MAP)};
 
     if (event.button == MouseButtonEvent::Button::LEFT) {
         if (event.action == MouseButtonEvent::Action::PRESS) sendAttack(localPlayer.get(), event);
         if (event.action == MouseButtonEvent::Action::RELEASE) sendMine(localPlayer.get(), event);
     }
     else if (event.button == MouseButtonEvent::Button::RIGHT) {
-        if (event.action == MouseButtonEvent::Action::PRESS) interact(localPlayer.get(), event);
-        if (event.action == MouseButtonEvent::Action::RELEASE) sendMoveTo(localPlayer.get(), event);
+        if (event.action == MouseButtonEvent::Action::RELEASE) return;
+        if (tileID == 0) placeChest(localPlayer.get(), event);
+        else if (tileID > 0) interact(localPlayer.get(), event);
+        else sendMoveTo(localPlayer.get(), event);
     }
-
 }
 
 void Server::KillAllEntities() {
@@ -620,7 +655,7 @@ void Server::SpawnRespawnAnchors() {
     std::lock_guard lock(serverMutex);
     const Coordinates spawnPoint{GetSpawnPoint()};
     std::mt19937 rng(static_cast<unsigned int>(SDL_GetTicks()));
-    std::uniform_int_distribution<int> dist(-2000, 2000);
+    std::uniform_int_distribution<int> dist(-5000, 5000);
     do{
         Coordinates anchorPos{spawnPoint.x + static_cast<float>(dist(rng)), spawnPoint.y + static_cast<float>(dist(rng))};
         if (AddStructure_unprotected(anchorPos, structureType::RESPAWN_ANCHOR, 0, 0))

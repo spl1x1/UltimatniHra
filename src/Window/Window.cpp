@@ -59,13 +59,17 @@ void Window::loadConfig() {
 
 
 void Window::handleMouseInputs() {
+    bool isSameTile = (data.lastTileCoordinates == toTileCoordinates(data.mouseData.x + 16, data.mouseData.y + 16));
+
     auto sendLeftClickInput = [&] {
+        data.drawMousePreview = true;
         if (data.mouseData.currentLeftHoldTime > 0.5f) {
             server->SendClickEvent(MouseButtonEvent{
                 .button = MouseButtonEvent::Button::LEFT,
                 .action = MouseButtonEvent::Action::RELEASE,
                 .x = data.mouseData.x + 16,
-                .y = data.mouseData.y + 16
+                .y = data.mouseData.y + 16,
+                .sameTile = isSameTile
             });
             return;
         }
@@ -73,7 +77,8 @@ void Window::handleMouseInputs() {
             .button = MouseButtonEvent::Button::LEFT,
             .action = MouseButtonEvent::Action::PRESS,
             .x = data.mouseData.x + 16,
-            .y = data.mouseData.y + 16
+            .y = data.mouseData.y + 16,
+            .sameTile = isSameTile
         });
     };
 
@@ -83,7 +88,8 @@ void Window::handleMouseInputs() {
                 .button = MouseButtonEvent::Button::RIGHT,
                 .action = MouseButtonEvent::Action::RELEASE,
                 .x = data.mouseData.x + 16,
-                .y = data.mouseData.y + 16
+                .y = data.mouseData.y + 16,
+                .sameTile = isSameTile
             });
             return;
         }
@@ -91,7 +97,8 @@ void Window::handleMouseInputs() {
             .button = MouseButtonEvent::Button::RIGHT,
             .action = MouseButtonEvent::Action::PRESS,
             .x = data.mouseData.x + 16,
-            .y = data.mouseData.y + 16
+            .y = data.mouseData.y + 16,
+            .sameTile = isSameTile
         });
     };
 
@@ -119,6 +126,7 @@ void Window::handleMouseInputs() {
         data.mouseData.currentRightHoldTime = 0.0f;
         data.mouseData.rightButtonPressed = false;
     };
+    data.lastTileCoordinates = toTileCoordinates(data.mouseData.x + 16, data.mouseData.y + 16);
 }
 
 void Window::handlePlayerInput() const {
@@ -211,17 +219,16 @@ void Window::drawTextAt(const std::string &text, const Coordinates coordinates, 
 }
 
 void Window::renderHud() {
-    if (data.drawMousePreview) {
-        RenderingContext cursor;
-        cursor.coordinates = {data.mouseData.x,data.mouseData.y};
-        cursor.rect = SDL_FRect{0.0f,0.0f,32.0f,32.0f};
-        cursor.textureName = "cursor";
-        renderAt(cursor);
 
-        const auto tileInfo{server->GetTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
-        for (int i{0}; i < static_cast<int>(tileInfo.size()); ++i) {
-            drawTextAt(tileInfo.at(i), {data.mouseData.x, data.mouseData.y + 32.0f + static_cast<float>(i)*16.0f}, SDL_Color{255,255,255,255});
-        }
+    RenderingContext cursor;
+    cursor.coordinates = {data.mouseData.x,data.mouseData.y};
+    cursor.rect = SDL_FRect{0.0f,0.0f,32.0f,32.0f};
+    cursor.textureName = "cursor";
+    renderAt(cursor);
+
+    const auto tileInfo{server->GetTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
+    for (int i{0}; i < static_cast<int>(tileInfo.size()); ++i) {
+        drawTextAt(tileInfo.at(i), {data.mouseData.x, data.mouseData.y + 32.0f + static_cast<float>(i)*16.0f}, SDL_Color{255,255,255,255});
     }
 
     const auto playerHealth = server->GetPlayer()->GetHealthComponent()->GetHealth();

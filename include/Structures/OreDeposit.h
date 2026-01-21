@@ -17,9 +17,9 @@ class OreDeposit final : public IStructure {
 
 public:
     //Interface implementation
-    [[nodiscard]] structureType getType() const override;
-    [[nodiscard]] int getId() const override;
-    bool wasProperlyInitialized() override;
+    [[nodiscard]] structureType GetType() const override;
+    [[nodiscard]] int GetId() const override;
+    bool WasProperlyInitialized() override;
     void Tick(float deltaTime) override {};
     [[nodiscard]] int GetInventoryId() const override;
     [[nodiscard]] RenderingContext GetRenderingContext() const override;

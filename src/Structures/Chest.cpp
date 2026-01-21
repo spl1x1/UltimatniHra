@@ -16,15 +16,15 @@ Chest* Chest::openChest = nullptr;
 
 Chest * Chest::GetOpenChest() { return openChest; }
 
-structureType Chest::getType() const {
+structureType Chest::GetType() const {
     return structureType::CHEST;
 }
 
-int Chest::getId() const {
+int Chest::GetId() const {
     return id;
 }
 
-bool Chest::wasProperlyInitialized() {
+bool Chest::WasProperlyInitialized() {
     return initialized;
 }
 

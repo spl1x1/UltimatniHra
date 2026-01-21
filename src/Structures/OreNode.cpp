@@ -4,15 +4,15 @@
 
 #include "../../include/Structures/OreNode.h"
 
-structureType OreNode::getType() const {
+structureType OreNode::GetType() const {
     return  structureType::ORE_NODE;
 }
 
-int OreNode::getId() const {
+int OreNode::GetId() const {
     return  id;
 }
 
-bool OreNode::wasProperlyInitialized() {
+bool OreNode::WasProperlyInitialized() {
     return initialized;
 }
 

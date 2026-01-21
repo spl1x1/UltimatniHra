@@ -97,6 +97,7 @@ class Server : public std::enable_shared_from_this<Server> {
 
 public:
 
+    float mineProgress{0.0f}; //Pro simulaci tezby
     bool SpawnSlimes{true};
     std::vector<Coordinates> respawnPoints{};
 
@@ -143,7 +144,7 @@ public:
     static int CalculateAngle(Coordinates center, Coordinates point); //Vypocita uhel mezi dvema objekty, nemusi byt thread safe
     std::vector<std::string> GetTileInfo(float x, float y);
     void InvalidateStructureCache(); //Invaliduje cache pro struktury
-    void SendClickEvent(MouseButtonEvent event) const;
+    void SendClickEvent(const MouseButtonEvent &event) const;
     void KillAllEntities(); //Zabije vsechny entity na serveru, nezapomenout na thread safety
     void SpawnRespawnAnchors();
 

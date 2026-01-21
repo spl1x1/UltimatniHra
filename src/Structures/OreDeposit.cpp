@@ -6,15 +6,15 @@
 
 #include <variant>
 
-structureType OreDeposit::getType() const {
+structureType OreDeposit::GetType() const {
     return structureType::ORE_DEPOSIT;
 }
 
-int OreDeposit::getId() const {
+int OreDeposit::GetId() const {
     return  id;
 }
 
-bool OreDeposit::wasProperlyInitialized() {
+bool OreDeposit::WasProperlyInitialized() {
     return initialized;
 }
 
