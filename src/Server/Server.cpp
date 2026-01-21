@@ -632,6 +632,8 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
             toWorldCoordinates(toTileCoordinates(static_cast<int>(eventData.x), static_cast<int>(eventData.y))),
             structureType::CHEST, 0, 0)};
         if (!structure) return false;
+        // Remove one chest from inventory
+        player->GetServer()->NotifyPlaceableUsed(PlaceableType::CHEST);
         return true;
     };
 
@@ -1007,6 +1009,17 @@ void Server::SetItemDropCallback(std::function<bool(std::unique_ptr<Item>)> call
 bool Server::AddItemToInventory(std::unique_ptr<Item> item) const {
     if (onItemDropped && item) {
         return onItemDropped(std::move(item));
+    }
+    return false;
+}
+
+void Server::SetPlaceableUsedCallback(std::function<bool(PlaceableType)> callback) {
+    onPlaceableUsed = std::move(callback);
+}
+
+bool Server::NotifyPlaceableUsed(PlaceableType type) const {
+    if (onPlaceableUsed) {
+        return onPlaceableUsed(type);
     }
     return false;
 }

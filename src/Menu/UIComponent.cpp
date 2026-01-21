@@ -208,6 +208,26 @@ void UIComponent::Init() {
         windowClass->server->SetInventoryLoadCallback([this](const std::string& path) {
             loadInventory(path);
         });
+
+        // Register callback for when placeables are used (to remove from inventory)
+        windowClass->server->SetPlaceableUsedCallback([this](PlaceableType type) -> bool {
+            if (!inventoryController) return false;
+
+            // Find and remove one placeable of the given type from inventory
+            for (int i = 0; i < 20; ++i) {
+                Item* item = inventoryController->getItem(i);
+                if (!item) continue;
+
+                if (item->getType() == ItemType::PLACEABLE) {
+                    auto* placeable = dynamic_cast<Placeable*>(item);
+                    if (placeable && placeable->getPlaceableType() == type) {
+                        inventoryController->removeItem(i, 1);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        });
     }
 }
 
@@ -262,7 +282,9 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
             // Scroll wheel to change hotbar slot
             bool inGame = !documents.at("main_menu")->IsVisible() &&
                           !documents.at("pause_menu")->IsVisible() &&
-                          !blockInput;
+                          !blockInput &&
+                          windowClass && windowClass->server &&
+                          windowClass->server->GetServerState() == ServerState::RUNNING;
             if (inventoryController && inGame) {
                 int currentSlot = inventoryController->getSelectedQuickbarSlot();
                 int newSlot = currentSlot;
@@ -336,7 +358,9 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
             if (keycode == SDLK_TAB) {
                 bool inGame = !documents.at("main_menu")->IsVisible() &&
                               !documents.at("pause_menu")->IsVisible() &&
-                              !blockInput;
+                              !blockInput &&
+                              windowClass && windowClass->server &&
+                              windowClass->server->GetServerState() == ServerState::RUNNING;
                 if (inventoryController && inGame) {
                     inventoryController->toggle();
                     SDL_Log("Inventory toggled");
@@ -347,7 +371,9 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
             if (keycode >= SDLK_1 && keycode <= SDLK_5) {
                 bool inGame = !documents.at("main_menu")->IsVisible() &&
                               !documents.at("pause_menu")->IsVisible() &&
-                              !blockInput;
+                              !blockInput &&
+                              windowClass && windowClass->server &&
+                              windowClass->server->GetServerState() == ServerState::RUNNING;
                 if (inventoryController && inGame) {
                     int slot = keycode - SDLK_1;  // SDLK_1 -> 0, SDLK_2 -> 1, etc.
                     inventoryController->setSelectedQuickbarSlot(slot);

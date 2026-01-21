@@ -20,6 +20,7 @@
 
 class Item;
 struct ItemData;
+enum class PlaceableType;
 
 class Player;
 enum class structureType;
@@ -80,6 +81,9 @@ class Server : public std::enable_shared_from_this<Server> {
 
     // Callback for adding items to UI inventory
     std::function<bool(std::unique_ptr<Item>)> onItemDropped;
+
+    // Callback for removing placeable item from inventory when placed
+    std::function<bool(PlaceableType)> onPlaceableUsed;
 
     // Callbacks for inventory save/load
     std::function<void(const std::string&)> onSaveInventory;
@@ -177,11 +181,17 @@ public:
     void LoadServerState();
     void Reset();
     void SetServerState(ServerState newState);
+    [[nodiscard]] ServerState GetServerState() const { return serverState; }
 
     // Set callback for item drops (used by UI to receive items)
     void SetItemDropCallback(std::function<bool(std::unique_ptr<Item>)> callback);
     // Add item through callback (returns false if no callback set)
     bool AddItemToInventory(std::unique_ptr<Item> item) const;
+
+    // Set callback for when placeable items are used (to remove from inventory)
+    void SetPlaceableUsedCallback(std::function<bool(PlaceableType)> callback);
+    // Notify that a placeable was used (returns false if no callback set)
+    bool NotifyPlaceableUsed(PlaceableType type) const;
 
     // Set callbacks for inventory save/load
     void SetInventorySaveCallback(std::function<void(const std::string&)> callback);
