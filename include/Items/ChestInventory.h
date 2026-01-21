@@ -15,6 +15,7 @@
 class UIComponent;
 class Window;
 class Chest;
+class InventoryController;
 
 // Data storage for a chest's items (no UI)
 class ChestStorage {
@@ -59,6 +60,15 @@ public:
     // Called by slot listener
     void onSlotClicked(int slotIndex);
 
+    // Cross-inventory transfer support
+    void setInventoryController(InventoryController* controller) { inventoryController = controller; }
+    int getSelectedSlot() const { return selectedSlot; }
+    void clearSelection();
+
+    // Transfer items between inventories
+    bool transferToPlayerInventory(int chestSlot);
+    bool transferFromPlayerInventory(int chestSlot, std::unique_ptr<Item> item);
+
     static constexpr int CHEST_SLOTS = 20;
 
 private:
@@ -66,6 +76,7 @@ private:
     UIComponent* uiComponent;
     Rml::ElementDocument* document;
     std::unique_ptr<ChestSlotListener> slotListener;
+    InventoryController* inventoryController = nullptr;
 
     Chest* currentChest = nullptr;
     bool visible = false;

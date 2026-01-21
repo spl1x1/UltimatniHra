@@ -190,6 +190,10 @@ void UIComponent::Init() {
 
     // Initialize chest inventory UI
     chestInventoryUI = std::make_unique<ChestInventoryUI>(windowClass, this);
+
+    // Connect inventory controller and chest inventory UI for cross-transfers
+    inventoryController->setChestInventoryUI(chestInventoryUI.get());
+    chestInventoryUI->setInventoryController(inventoryController.get());
 }
 
 void UIComponent::HandleEvent(const SDL_Event *e) {

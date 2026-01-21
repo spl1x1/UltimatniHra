@@ -15,6 +15,7 @@
 #include "Item.h"
 
 class CraftingSystem;
+class ChestInventoryUI;
 
 // Quickbar slot info for displaying items in the HUD quickbar
 struct QuickbarSlotInfo {
@@ -76,6 +77,11 @@ public:
     int getSelectedSlot() const { return selectedSlot; }
     std::string getSelectedEquipmentSlot() const { return selectedEquipmentSlot; }
 
+    // Cross-inventory transfer support (for chest interaction)
+    void setChestInventoryUI(ChestInventoryUI* chestUI) { chestInventoryUI = chestUI; }
+    void clearSelection();
+    std::unique_ptr<Item> takeItem(int slotIndex);  // Remove and return item from slot
+
     // Get item at slot (returns nullptr if empty)
     Item* getItem(int slotIndex);
 
@@ -132,6 +138,7 @@ private:
 
     int selectedSlot = -1;  // Currently selected inventory slot for moving
     std::string selectedEquipmentSlot;  // Currently selected equipment slot
+    ChestInventoryUI* chestInventoryUI = nullptr;  // Reference for cross-inventory transfers
 
     // Equipment slot management
     std::unordered_map<std::string, std::unique_ptr<Item>> equipmentItems; // slot_id -> item

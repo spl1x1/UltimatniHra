@@ -3,6 +3,7 @@
 //
 
 #include "../../include/Items/ChestInventory.h"
+#include "../../include/Items/inventory.h"
 #include "../../include/Structures/Chest.h"
 #include "../../include/Window/Window.h"
 #include "../../include/Menu/UIComponent.h"
@@ -256,6 +257,63 @@ void ChestInventoryUI::onSlotClicked(int slotIndex) {
 
     SDL_Log("ChestInventoryUI: Slot %d clicked, selectedSlot = %d", slotIndex, selectedSlot);
 
+    // Check if player inventory has a selected item
+    if (inventoryController && inventoryController->getSelectedSlot() != -1) {
+        int playerSlot = inventoryController->getSelectedSlot();
+        SDL_Log("ChestInventoryUI: Player has slot %d selected, transferring to chest slot %d", playerSlot, slotIndex);
+
+        // Take item from player inventory
+        std::unique_ptr<Item> playerItem = inventoryController->takeItem(playerSlot);
+        if (playerItem) {
+            auto& chestItems = storage->getItems();
+            auto existingIt = chestItems.find(slotIndex);
+
+            if (existingIt == chestItems.end()) {
+                // Empty chest slot - place item here
+                chestItems[slotIndex] = std::move(playerItem);
+                updateItemDisplay(slotIndex);
+                SDL_Log("ChestInventoryUI: Moved item from player slot %d to chest slot %d", playerSlot, slotIndex);
+            } else {
+                // Chest slot has item - try to stack or swap
+                Item* chestItem = existingIt->second.get();
+                Item* newItem = playerItem.get();
+
+                if (chestItem->isStackable() && newItem->isStackable() &&
+                    chestItem->getName() == newItem->getName()) {
+                    // Try to stack
+                    int spaceInTarget = chestItem->getMaxStackSize() - chestItem->getStackSize();
+                    if (spaceInTarget > 0) {
+                        int transferAmount = std::min(newItem->getStackSize(), spaceInTarget);
+                        chestItem->addToStack(transferAmount);
+                        newItem->removeFromStack(transferAmount);
+                        updateItemDisplay(slotIndex);
+
+                        if (newItem->getStackSize() > 0) {
+                            // Remaining items go back to player
+                            inventoryController->addItem(std::move(playerItem));
+                        }
+                        SDL_Log("ChestInventoryUI: Stacked items from player to chest slot %d", slotIndex);
+                    } else {
+                        // Stack full - swap items
+                        std::swap(existingIt->second, playerItem);
+                        updateItemDisplay(slotIndex);
+                        inventoryController->addItem(std::move(playerItem));
+                        SDL_Log("ChestInventoryUI: Swapped items between player and chest slot %d", slotIndex);
+                    }
+                } else {
+                    // Different items - swap
+                    std::swap(existingIt->second, playerItem);
+                    updateItemDisplay(slotIndex);
+                    inventoryController->addItem(std::move(playerItem));
+                    SDL_Log("ChestInventoryUI: Swapped different items between player and chest slot %d", slotIndex);
+                }
+            }
+        }
+        inventoryController->clearSelection();
+        return;
+    }
+
+    // Normal chest slot selection logic
     if (selectedSlot == -1) {
         if (storage->getItem(slotIndex)) {
             selectedSlot = slotIndex;
@@ -324,4 +382,83 @@ bool ChestInventoryUI::moveItem(int fromSlot, int toSlot) {
     }
 
     return true;
+}
+
+void ChestInventoryUI::clearSelection() {
+    if (selectedSlot != -1) {
+        updateSlotHighlight(selectedSlot, false);
+        selectedSlot = -1;
+    }
+    // Refresh the display to ensure UI is up to date
+    refreshDisplay();
+}
+
+bool ChestInventoryUI::transferToPlayerInventory(int chestSlot) {
+    if (!currentChest || !inventoryController) return false;
+
+    auto* storage = currentChest->getChestStorage();
+    if (!storage) return false;
+
+    auto& chestItems = storage->getItems();
+    auto it = chestItems.find(chestSlot);
+    if (it == chestItems.end()) return false;
+
+    // Take the item from chest
+    std::unique_ptr<Item> item = std::move(it->second);
+    chestItems.erase(it);
+
+    // Try to add to player inventory
+    if (inventoryController->addItem(std::move(item))) {
+        clearSlot(chestSlot);
+        SDL_Log("Transferred item from chest slot %d to player inventory", chestSlot);
+        return true;
+    } else {
+        // Failed to add - put it back in chest
+        chestItems[chestSlot] = std::move(item);
+        SDL_Log("Failed to transfer - player inventory full");
+        return false;
+    }
+}
+
+bool ChestInventoryUI::transferFromPlayerInventory(int chestSlot, std::unique_ptr<Item> item) {
+    if (!currentChest || !item) return false;
+
+    auto* storage = currentChest->getChestStorage();
+    if (!storage) return false;
+
+    auto& chestItems = storage->getItems();
+    auto existingIt = chestItems.find(chestSlot);
+
+    if (existingIt == chestItems.end()) {
+        // Empty slot - place item here
+        chestItems[chestSlot] = std::move(item);
+        updateItemDisplay(chestSlot);
+        SDL_Log("Transferred item from player inventory to chest slot %d", chestSlot);
+        return true;
+    } else {
+        // Slot has item - try to stack or swap
+        Item* existingItem = existingIt->second.get();
+        Item* newItem = item.get();
+
+        if (existingItem->isStackable() && newItem->isStackable() &&
+            existingItem->getName() == newItem->getName()) {
+            // Try to stack
+            int spaceInTarget = existingItem->getMaxStackSize() - existingItem->getStackSize();
+            if (spaceInTarget > 0) {
+                int transferAmount = std::min(newItem->getStackSize(), spaceInTarget);
+                existingItem->addToStack(transferAmount);
+                newItem->removeFromStack(transferAmount);
+                updateItemDisplay(chestSlot);
+
+                if (newItem->getStackSize() <= 0) {
+                    // All items transferred
+                    return true;
+                }
+                // Some items remaining - caller needs to handle
+                return false;
+            }
+        }
+        // Cannot stack - swap items handled by caller
+        return false;
+    }
 }

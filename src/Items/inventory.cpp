@@ -4,6 +4,8 @@
 
 #include "../../include/Items/inventory.h"
 #include "../../include/Items/Crafting.h"
+#include "../../include/Items/ChestInventory.h"
+#include "../../include/Structures/Chest.h"
 
 #include "../../include/Window/Window.h"
 #include "../../include/Menu/UIComponent.h"
@@ -161,6 +163,34 @@ void InventoryController::hide() {
             selectedEquipmentSlot.clear();
         }
     }
+}
+
+void InventoryController::clearSelection() {
+    if (selectedSlot != -1) {
+        updateSlotHighlight(selectedSlot, false);
+        selectedSlot = -1;
+    }
+    if (!selectedEquipmentSlot.empty()) {
+        updateEquipmentSlotHighlight(selectedEquipmentSlot, false);
+        selectedEquipmentSlot.clear();
+    }
+}
+
+std::unique_ptr<Item> InventoryController::takeItem(int slotIndex) {
+    auto it = items.find(slotIndex);
+    if (it == items.end()) return nullptr;
+
+    std::unique_ptr<Item> item = std::move(it->second);
+    items.erase(it);
+    clearSlot(slotIndex);
+
+    // Update quickbar if slot is in quickbar range
+    if (slotIndex < QUICKBAR_SIZE) {
+        updateQuickbarSlot(slotIndex);
+    }
+
+    SDL_Log("Took item '%s' from inventory slot %d", item->getName().c_str(), slotIndex);
+    return item;
 }
 
 bool InventoryController::addItem(std::unique_ptr<Item> item) {
@@ -328,6 +358,82 @@ bool InventoryController::moveItem(int fromSlot, int toSlot) {
 void InventoryController::onSlotClicked(int slotIndex) {
     SDL_Log("Inventory slot %d clicked, selectedSlot = %d, selectedEquipmentSlot = %s",
             slotIndex, selectedSlot, selectedEquipmentSlot.c_str());
+
+    // Check if chest inventory has a selected item
+    if (chestInventoryUI && chestInventoryUI->isVisible() && chestInventoryUI->getSelectedSlot() != -1) {
+        int chestSlot = chestInventoryUI->getSelectedSlot();
+        SDL_Log("Chest has slot %d selected, transferring to player slot %d", chestSlot, slotIndex);
+
+        Chest* chest = chestInventoryUI->getCurrentChest();
+        if (chest) {
+            auto* storage = chest->getChestStorage();
+            if (storage) {
+                auto& chestItems = storage->getItems();
+                auto chestIt = chestItems.find(chestSlot);
+                if (chestIt != chestItems.end()) {
+                    std::unique_ptr<Item> chestItem = std::move(chestIt->second);
+                    chestItems.erase(chestIt);
+
+                    auto invIt = items.find(slotIndex);
+                    if (invIt == items.end()) {
+                        // Empty inventory slot - place item here
+                        items[slotIndex] = std::move(chestItem);
+                        updateItemDisplay(slotIndex);
+                        if (slotIndex < QUICKBAR_SIZE) {
+                            updateQuickbarSlot(slotIndex);
+                        }
+                        SDL_Log("Moved item from chest slot %d to player slot %d", chestSlot, slotIndex);
+                    } else {
+                        // Inventory slot has item - try to stack or swap
+                        Item* existingItem = invIt->second.get();
+                        Item* newItem = chestItem.get();
+
+                        if (existingItem->isStackable() && newItem->isStackable() &&
+                            existingItem->getName() == newItem->getName()) {
+                            // Try to stack
+                            int spaceInTarget = existingItem->getMaxStackSize() - existingItem->getStackSize();
+                            if (spaceInTarget > 0) {
+                                int transferAmount = std::min(newItem->getStackSize(), spaceInTarget);
+                                existingItem->addToStack(transferAmount);
+                                newItem->removeFromStack(transferAmount);
+                                updateItemDisplay(slotIndex);
+                                if (slotIndex < QUICKBAR_SIZE) {
+                                    updateQuickbarSlot(slotIndex);
+                                }
+
+                                if (newItem->getStackSize() > 0) {
+                                    // Remaining items go back to chest
+                                    chestItems[chestSlot] = std::move(chestItem);
+                                }
+                                SDL_Log("Stacked items from chest to player slot %d", slotIndex);
+                            } else {
+                                // Stack full - swap items
+                                std::swap(invIt->second, chestItem);
+                                updateItemDisplay(slotIndex);
+                                if (slotIndex < QUICKBAR_SIZE) {
+                                    updateQuickbarSlot(slotIndex);
+                                }
+                                chestItems[chestSlot] = std::move(chestItem);
+                                SDL_Log("Swapped items between player slot %d and chest slot %d", slotIndex, chestSlot);
+                            }
+                        } else {
+                            // Different items - swap
+                            std::swap(invIt->second, chestItem);
+                            updateItemDisplay(slotIndex);
+                            if (slotIndex < QUICKBAR_SIZE) {
+                                updateQuickbarSlot(slotIndex);
+                            }
+                            chestItems[chestSlot] = std::move(chestItem);
+                            SDL_Log("Swapped different items between player slot %d and chest slot %d", slotIndex, chestSlot);
+                        }
+                    }
+                }
+                // Update chest display for the affected slot
+                chestInventoryUI->clearSelection();
+            }
+        }
+        return;
+    }
 
     // If an equipment slot is selected, try to move from equipment to inventory
     if (!selectedEquipmentSlot.empty()) {

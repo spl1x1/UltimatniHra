@@ -4,6 +4,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: Andy;
+    pointer-events: none;
 }
 
 #inventory-container {
@@ -12,6 +13,7 @@ body {
     background-color: #2c3e50;
     border: 2dp solid #ecf0f1;
     padding: 5dp;
+    pointer-events: auto;
 }
 
 .close-button {
@@ -162,6 +164,7 @@ body {
 
 .inventory-slot.selected {
     border-color: #ffff00;
+    border-width: 2dp;
     background-color: #4a5568;
 }
 
