@@ -4,6 +4,8 @@
 
 #include "../../include/Structures/OreNode.h"
 
+#include "../../include/Items/Item.h"
+
 structureType OreNode::GetType() const {
     return  structureType::ORE_NODE;
 }
@@ -54,7 +56,21 @@ StructureInventoryComponent * OreNode::GetInventoryComponent() {
     return nullptr;
 }
 
-void OreNode::DropInventoryItems() {}
+void OreNode::DropInventoryItems() {
+    switch (renderingComponent.GetVariant()) {
+        case 1: // Iron
+            hitboxComponent.GetServer()->AddItemToInventory(std::move(ItemFactory::createMaterial(MaterialType::IRON)));
+            break;
+        case 2: // Copper
+            hitboxComponent.GetServer()->AddItemToInventory(std::move(ItemFactory::createMaterial(MaterialType::COPPER)));
+            break;
+        case 3: // Gold
+            hitboxComponent.GetServer()->AddItemToInventory(std::move(ItemFactory::createMaterial(MaterialType::GOLD)));
+            break;
+        default:
+            break;
+    }
+}
 
 OreNode::OreNode(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int type, const int variant)
 : id(id),hitboxComponent(server), type(type) {

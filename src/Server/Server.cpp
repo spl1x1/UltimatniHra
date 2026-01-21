@@ -591,7 +591,6 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
     auto sendMine = [](IEntity* player, const MouseButtonEvent &eventData, const HandData handDataInstance) {
         const auto logicComp{player->GetLogicComponent()};
         const auto server{player->GetServer()};
-        if (!eventData.sameTile) server->mineProgress == 0.0f;
         logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{eventData.x, eventData.y})));
         const auto tile{toTileCoordinates(static_cast<int>(eventData.x), static_cast<int>(eventData.y))};
         const auto id = server->GetMapValue_unprotected(
@@ -613,9 +612,9 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
             proggressAmount = handDataInstance.damage / 100.0f;
         }
 
-        server->mineProgress += proggressAmount; //TODO: pridat rychlost podle nastroje
-        if (server->mineProgress >= 1.0f) {
-            server->mineProgress = 0.0f;
+        server->MineProgress += proggressAmount; //TODO: pridat rychlost podle nastroje
+        if (server->MineProgress >= 1.0f) {
+            server->MineProgress = 0.0f;
             server->GetStructure(id)->DropInventoryItems();
             server->RemoveStructure(id);
         }
@@ -623,7 +622,9 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
 
     auto sendMoveTo = [](IEntity* player, const MouseButtonEvent event) {
         const auto logicComp{player->GetLogicComponent()};
-        logicComp->AddEvent(Event_MoveTo::Create(event.x, event.y));
+        logicComp->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE),true);
+        logicComp->AddEvent(Event_InterruptSpecific::Create(EntityEvent::Type::MOVE_TO),true);
+        logicComp->AddEvent(Event_MoveTo::Create(event.x, event.y), true);
     };
 
     auto placeChest = [](const IEntity* player, const MouseButtonEvent &eventData) {
@@ -643,9 +644,16 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
     const auto tile {toTileCoordinates(event.x, event.y)};
     const auto tileID{GetMapValue_unprotected(static_cast<int>(tile.x),static_cast<int>(tile.y),WorldData::COLLISION_MAP)};
 
+    const bool isSameTile = (lastMinedTileCoordinates == tile);
+    lastMinedTileCoordinates = tile;
+    if (!isSameTile) MineProgress = 0.0f;
+    SDL_Log("Tile ID at click: %d", tileID);
+    SDL_Log("Tile Coordinates at click: %d", tile.x);
+    SDL_Log("The tile is the same as last: %s", isSameTile ? "true" : "false");
+
     const auto playerInstance{dynamic_cast<Player*>(GetPlayer())};
     const auto handData{playerInstance->GetHandData()};
-    bool ghostMode{playerInstance->IsGhostMode()};
+    const bool ghostMode{playerInstance->IsGhostMode()};
 
     if (event.button == MouseButtonEvent::Button::LEFT) {
         if (ghostMode) {

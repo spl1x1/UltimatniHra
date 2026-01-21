@@ -84,7 +84,6 @@ struct MouseButtonEvent {
 
     float x;
     float y;
-    bool sameTile{false};
 };
 
 enum class OreType {

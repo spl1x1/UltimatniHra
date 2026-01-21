@@ -99,10 +99,11 @@ class Server : public std::enable_shared_from_this<Server> {
     y = tile y
     */
     [[nodiscard]] bool check3by3AreaFree(int x, int y) const;
+    Coordinates lastMinedTileCoordinates{};
 
 public:
 
-    float mineProgress{0.0f}; //Pro simulaci tezby
+    float MineProgress{0.0f}; //Pro simulaci tezby
     bool SpawnSlimes{true};
     std::vector<Coordinates> respawnPoints{};
 

@@ -6,6 +6,8 @@
 
 #include <variant>
 
+#include "../../include/Items/Item.h"
+
 structureType OreDeposit::GetType() const {
     return structureType::ORE_DEPOSIT;
 }
@@ -57,6 +59,19 @@ StructureInventoryComponent * OreDeposit::GetInventoryComponent() {
 }
 
 void OreDeposit::DropInventoryItems() {
+    switch (renderingComponent.GetVariant()) {
+        case 1: // Iron
+            hitboxComponent.GetServer()->AddItemToInventory(std::move(ItemFactory::createMaterial(MaterialType::IRON)));
+            break;
+        case 2: // Copper
+            hitboxComponent.GetServer()->AddItemToInventory(std::move(ItemFactory::createMaterial(MaterialType::COPPER)));
+            break;
+        case 3: // Gold
+            hitboxComponent.GetServer()->AddItemToInventory(std::move(ItemFactory::createMaterial(MaterialType::GOLD)));
+            break;
+        default:
+            break;
+    }
 }
 
 OreDeposit::OreDeposit(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int type, const int variant)

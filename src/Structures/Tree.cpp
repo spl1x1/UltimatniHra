@@ -6,6 +6,7 @@
 
 #include <random>
 
+#include "../../include/Items/Item.h"
 #include "../../include/Sprites/Sprite.hpp"
 #include "../../include/Sprites/TreeSprite.hpp"
 
@@ -64,7 +65,9 @@ StructureInventoryComponent * Tree::GetInventoryComponent() {
     return nullptr;
 }
 
-void Tree::DropInventoryItems() {}
+void Tree::DropInventoryItems() {
+    hitboxComponent.GetServer()->AddItemToInventory(std::move(ItemFactory::createMaterial(MaterialType::WOOD)));
+}
 
 
 Tree::Tree(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server> &server, int innerType)
@@ -81,4 +84,5 @@ Tree::Tree(const int id, Coordinates topLeftCorner, const std::shared_ptr<Server
 Tree::~Tree() {
     if (!initialized) return;
     hitboxComponent.destroy(id);
+
 };

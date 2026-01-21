@@ -59,13 +59,6 @@ void Window::loadConfig() {
 
 
 void Window::handleMouseInputs() {
-    const auto tile{toTileCoordinates(data.mouseData.x + 16, data.mouseData.y + 16)};
-    const bool isSameTile = (data.lastTileCoordinates == tile);
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Mouse Tile Coordinates: (%d, %d)", static_cast<int>(tile.x), static_cast<int>(tile.y));
-    if (server->GetMapValue(
-    static_cast<int>(tile.x),
-    static_cast<int>(tile.y),
-    WorldData::COLLISION_MAP) < 1) data.forceMousePreview = false;
 
     auto sendLeftClickInput = [&] {
         data.drawMousePreview = true;
@@ -75,7 +68,6 @@ void Window::handleMouseInputs() {
                 .action = MouseButtonEvent::Action::RELEASE,
                 .x = data.mouseData.x + 16,
                 .y = data.mouseData.y + 16,
-                .sameTile = isSameTile
             });
             return;
         }
@@ -84,7 +76,6 @@ void Window::handleMouseInputs() {
             .action = MouseButtonEvent::Action::PRESS,
             .x = data.mouseData.x + 16,
             .y = data.mouseData.y + 16,
-            .sameTile = isSameTile
         });
     };
 
@@ -95,7 +86,6 @@ void Window::handleMouseInputs() {
                 .action = MouseButtonEvent::Action::RELEASE,
                 .x = data.mouseData.x + 16,
                 .y = data.mouseData.y + 16,
-                .sameTile = isSameTile
             });
             return;
         }
@@ -104,7 +94,6 @@ void Window::handleMouseInputs() {
             .action = MouseButtonEvent::Action::PRESS,
             .x = data.mouseData.x + 16,
             .y = data.mouseData.y + 16,
-            .sameTile = isSameTile
         });
     };
 
@@ -131,7 +120,6 @@ void Window::handleMouseInputs() {
         data.mouseData.currentRightHoldTime = 0.0f;
         data.mouseData.rightButtonPressed = false;
     };
-    data.lastTileCoordinates = toTileCoordinates(data.mouseData.x + 16, data.mouseData.y + 16);
 }
 
 void Window::handlePlayerInput() const {
@@ -230,12 +218,11 @@ void Window::renderHud() {
     cursor.textureName = "cursor";
     renderAt(cursor);
 
-    if (data.drawMousePreview || data.forceMousePreview) {
+    if (const auto progress = static_cast<int>(server->MineProgress*100.0f); (data.drawMousePreview && progress > 0.0f) || data.forceMousePreview) {
         SDL_Color color{0,255,255,200};
-        const auto progress = static_cast<int>(server->mineProgress*100.0f);
-        drawTextAt(std::to_string(progress)+"%", {data.mouseData.x, data.mouseData.y}, color);
+        drawTextAt(std::to_string(progress)+"%", {data.mouseData.x +8.0f, data.mouseData.y+8.0f}, color);
     }
-    const auto tileInfo{server->GetTileInfo(data.mouseData.x +32.0f, data.mouseData.y +32.0f)};
+    const auto tileInfo{server->GetTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
     for (int i{0}; i < static_cast<int>(tileInfo.size()); ++i) {
         drawTextAt(tileInfo.at(i), {data.mouseData.x, data.mouseData.y + 32.0f + static_cast<float>(i)*16.0f}, SDL_Color{255,255,255,255});
     }
