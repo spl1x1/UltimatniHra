@@ -331,11 +331,31 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                 }
                 case SDL_SCANCODE_ESCAPE: {
                     if (documents.at("main_menu")->IsVisible()) break;
+
+                    // Check if any UI panels are open and close them instead of showing pause menu
                     auto& consoleHandler = ConsoleHandler::GetInstance();
+                    bool closedSomething = false;
+
                     if (consoleHandler.IsVisible()) {
                         consoleHandler.Hide();
-                        break;
+                        closedSomething = true;
                     }
+                    if (inventoryController && inventoryController->isVisible()) {
+                        inventoryController->hide();
+                        closedSomething = true;
+                    }
+                    if (inventoryController && inventoryController->isCraftingUIVisible()) {
+                        inventoryController->hideCraftingUI();
+                        closedSomething = true;
+                    }
+                    if (chestInventoryUI && chestInventoryUI->isVisible()) {
+                        chestInventoryUI->closeChest();
+                        closedSomething = true;
+                    }
+
+                    // If we closed something, don't toggle pause menu
+                    if (closedSomething) break;
+
                     blockInput = !blockInput;
                     if (blockInput) {
                         SDL_Log("Game paused, input blocked.");
@@ -377,6 +397,21 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
                 if (inventoryController && inGame) {
                     int slot = keycode - SDLK_1;  // SDLK_1 -> 0, SDLK_2 -> 1, etc.
                     inventoryController->setSelectedQuickbarSlot(slot);
+                }
+            }
+
+            // L key to drop/delete selected item from inventory
+            if (keycode == SDLK_L) {
+                if (inventoryController && inventoryController->isVisible()) {
+                    int selectedSlot = inventoryController->getSelectedSlot();
+                    if (selectedSlot >= 0) {
+                        Item* item = inventoryController->getItem(selectedSlot);
+                        if (item) {
+                            SDL_Log("Dropping item from slot %d: %s", selectedSlot, item->getName().c_str());
+                            inventoryController->removeItem(selectedSlot, item->getStackSize());
+                            inventoryController->clearSelection();
+                        }
+                    }
                 }
             }
             break;
