@@ -606,7 +606,7 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
         auto proggressAmount{0.0f};
 
         if (type == structureType::TREE) {
-            proggressAmount = handDataInstance.toolType== HandData::AXE ? handDataInstance.damage / 100.0f : 0.1f;
+            proggressAmount = handDataInstance.toolType== HandData::AXE ? handDataInstance.damage*1.5f / 100.0f : 0.05f;
         }
         else if ((type == structureType::ORE_NODE || type == structureType::ORE_DEPOSIT)) {
             if (handDataInstance.toolType != HandData::PICKAXE) return;
