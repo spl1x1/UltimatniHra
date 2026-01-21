@@ -11,6 +11,7 @@
 #include <random>
 
 #include "../../include/Entities/Entity.h"
+#include "../../include/Entities/Player.hpp"
 
 Chest* Chest::openChest = nullptr;
 
@@ -73,6 +74,7 @@ StructureInventoryComponent * Chest::GetInventoryComponent() {
 void Chest::DropInventoryItems() {}
 
 void Chest::OpenChest() {
+    if (open) return;
     SDL_Log("Opening Chest %d", id);
     renderingComponent.PlayAnimation(AnimationType::INTERACT, Direction::DOWN);
     open = true;
@@ -80,6 +82,7 @@ void Chest::OpenChest() {
 }
 
 void Chest::CloseChest() {
+    if (!open) return;
     SDL_Log("Closing Chest %d", id);
     renderingComponent.PlayAnimation(AnimationType::INTERACT, Direction::UP);
     open = false;
@@ -97,7 +100,7 @@ void Chest::Interact(IEntity *entity) {
         return;
     }
     if (openChest && openChest != this)openChest->CloseChest();
-    OpenChest();
+    if (!dynamic_cast<Player*>(entity)->IsGhostMode()) OpenChest();
 }
 
 

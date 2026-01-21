@@ -1225,9 +1225,9 @@ ConsoleHandler::ConsoleHandler() : document(nullptr), windowPtr(nullptr), visibl
 }
 
 ConsoleHandler::~ConsoleHandler() {
-    if (document) {
-        document->Close();
-    }
+    //if (document) {
+        //document->Close();
+    //}
 }
 
 void ConsoleHandler::Setup(Rml::ElementDocument* console_doc, Window* window) {

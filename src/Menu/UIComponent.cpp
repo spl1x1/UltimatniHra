@@ -424,7 +424,7 @@ void UIComponent::Render() {
             windowClass->server->KillAllEntities();
         }
         ImGui::Checkbox("Player collision", &windowClass->data.collisionState);
-        ImGui::Checkbox("Mouse preview", &windowClass->data.drawMousePreview);
+        ImGui::Checkbox("Force Mouse preview", &windowClass->data.forceMousePreview);
         ImGui::Checkbox("Spawn Slimes",  &windowClass->server->SpawnSlimes);
         ImGui::Checkbox("God mode",  &windowClass->server->GetPlayer()->GetHealthComponent()->GodMode);
         ImGui::Text("Mouse Position: (%f, %f)", windowClass->data.mouseData.x, windowClass->data.mouseData.y);

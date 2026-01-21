@@ -12,8 +12,6 @@
 #include "../../include/Menu/UIComponent.h"
 #include <SDL3/SDL.h>
 
-#include "../../include/Entities/Player.hpp"
-
 class InventoryCloseListener : public Rml::EventListener {
 public:
     InventoryCloseListener(InventoryController* controller) : controller(controller) {}

@@ -164,9 +164,7 @@ void Server::setupSlimeAi(IEntity* entity) {
 
 bool Server::check3by3AreaFree(int x, int y) const {
     for (int dx = -1; dx <= 1; dx++) {
-        for (int dy = -1; dy <= 1; dy++) {
-            if (GetMapValue_unprotected(x + dx, y + dy) != 0) return false;
-        }
+        for (int dy = -1; dy <= 1; dy++) if (GetMapValue_unprotected(x + dx, y + dy) != 0) return false;
     }
     return true;
 }
@@ -575,21 +573,22 @@ void Server::InvalidateStructureCache() {
     cacheValidityData.isCacheValid = false;
 }
 
-void Server::SendClickEvent(const MouseButtonEvent &event) const {
+void Server::SendClickEvent(const MouseButtonEvent &event) {
 
     auto checkForStructure= [](const IEntity* player, const MouseButtonEvent &eventData) {
         const auto [x, y]{toTileCoordinates(static_cast<int>(eventData.x), static_cast<int>(eventData.y))};
         return player->GetServer()->GetMapValue_unprotected(static_cast<int>(x),static_cast<int>(y),WorldData::COLLISION_MAP);
     };
 
-    auto sendAttack = [](IEntity* player, const MouseButtonEvent &eventData) {
+    auto sendAttack = [](IEntity* player, const MouseButtonEvent &eventData, const HandData handDataInstance) {
+        const auto damage = handDataInstance.damage == 0 ? 1 : handDataInstance.damage;
         const auto logicComp{player->GetLogicComponent()};
         logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{eventData.x, eventData.y})));
-        logicComp->AddEvent(Event_ClickAttack::Create(2,10,{eventData.x, eventData.y}));
+        logicComp->AddEvent(Event_ClickAttack::Create(2,damage,{eventData.x, eventData.y}));
 
         };
 
-    auto sendMine = [](IEntity* player, const MouseButtonEvent &eventData) {
+    auto sendMine = [](IEntity* player, const MouseButtonEvent &eventData, const HandData handDataInstance) {
         const auto logicComp{player->GetLogicComponent()};
         const auto server{player->GetServer()};
         if (!eventData.sameTile) server->mineProgress == 0.0f;
@@ -603,13 +602,18 @@ void Server::SendClickEvent(const MouseButtonEvent &event) const {
         const auto structure{server->GetStructure(id)};
         if (!structure) return;
 
-        if (const auto type{structure->GetType()};
-            type != structureType::TREE
-            && type != structureType::ORE_DEPOSIT
-            && type != structureType::ORE_NODE
-            && type != structureType::CHEST) return;
+        const auto type{structure->GetType()};
+        auto proggressAmount{0.0f};
 
-        server->mineProgress += 0.1f; //TODO: pridat rychlost podle nastroje
+        if (type == structureType::TREE) {
+            proggressAmount = handDataInstance.toolType== HandData::AXE ? handDataInstance.damage / 100.0f : 0.1f;
+        }
+        else if ((type == structureType::ORE_NODE || type == structureType::ORE_DEPOSIT)) {
+            if (handDataInstance.toolType != HandData::PICKAXE) return;
+            proggressAmount = handDataInstance.damage / 100.0f;
+        }
+
+        server->mineProgress += proggressAmount; //TODO: pridat rychlost podle nastroje
         if (server->mineProgress >= 1.0f) {
             server->mineProgress = 0.0f;
             server->GetStructure(id)->DropInventoryItems();
@@ -639,13 +643,20 @@ void Server::SendClickEvent(const MouseButtonEvent &event) const {
     const auto tile {toTileCoordinates(event.x, event.y)};
     const auto tileID{GetMapValue_unprotected(static_cast<int>(tile.x),static_cast<int>(tile.y),WorldData::COLLISION_MAP)};
 
+    const auto playerInstance{dynamic_cast<Player*>(GetPlayer())};
+    const auto handData{playerInstance->GetHandData()};
+    bool ghostMode{playerInstance->IsGhostMode()};
+
     if (event.button == MouseButtonEvent::Button::LEFT) {
-        if (event.action == MouseButtonEvent::Action::PRESS) sendAttack(localPlayer.get(), event);
-        if (event.action == MouseButtonEvent::Action::RELEASE) sendMine(localPlayer.get(), event);
+        if (ghostMode) {
+            sendMoveTo(localPlayer.get(), event);
+            return;
+        }
+        if (event.action == MouseButtonEvent::Action::PRESS)
+            tileID < 1 ? sendAttack(localPlayer.get(), event, handData) : sendMine(localPlayer.get(), event, handData);
     }
     else if (event.button == MouseButtonEvent::Button::RIGHT) {
-        if (event.action == MouseButtonEvent::Action::RELEASE) return;
-        if (tileID == 0) placeChest(localPlayer.get(), event);
+        if (tileID == 0 && handData.toolType == HandData::PLACEABLE && !ghostMode) placeChest(localPlayer.get(), event);
         else if (tileID > 0) interact(localPlayer.get(), event);
         else sendMoveTo(localPlayer.get(), event);
     }
@@ -705,7 +716,6 @@ IEntity* Server::AddEntity_unprotected(Coordinates coordinates, const EntityType
 
 
 void Server::Tick() {
-
     auto tryToSpawnSlime = [&]() {
         constexpr auto maxAttempts{10};
         if (spawnGen.dist(spawnGen.generator) >5) return;
@@ -838,6 +848,10 @@ std::map<int,std::shared_ptr<IEntity>> Server::GetEntities() {
 
 std::map<int,std::shared_ptr<IStructure>> Server::GetStructures() {
     std::shared_lock lock(serverMutex);
+    return structures;
+}
+
+std::map<int,std::shared_ptr<IStructure>> Server::GetStructures_unprotected() {
     return structures;
 }
 

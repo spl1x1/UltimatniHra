@@ -494,7 +494,14 @@ void EntityHealthComponent::Tick(const float deltaTime) {
 void EntityHealthComponent::TakeDamage(const int damage, IEntity& entity) {
     if (GodMode) return;
     if (IsDead() || damage <= 0) return;
-    health -= damage;
+
+    float defence{1.0f};
+    if (entity.GetType() == EntityType::PLAYER) {
+        const auto& armourData = dynamic_cast<Player&>(entity).GetArmourData();
+        defence = armourData.protection == 0 ? 1.0f : armourData.protection / 100.0f ;
+    }
+
+    health -= (damage * defence);
 
     auto renderingComponent{entity.GetRenderingComponent()};
     const auto direction{EntityRenderingComponent::GetDirectionBaseOnAngle(entity.GetLogicComponent()->GetAngle())};

@@ -130,6 +130,7 @@ public:
     [[nodiscard]] bool IsEntityColliding(int entityId);
     [[nodiscard]] std::map<int,std::shared_ptr<IEntity>> GetEntities(); //Musi byt thread safe, vraci kopii entity mapy
     [[nodiscard]] std::map<int,std::shared_ptr<IStructure>> GetStructures(); //Musi byt thread safe, vraci kopii strukturu mapy
+    [[nodiscard]] std::map<int,std::shared_ptr<IStructure>> GetStructures_unprotected(); //Verze bez locku, pro vnitrni pouzitiq
     [[nodiscard]] IEntity*  GetPlayer(); //Metoda je thread safe, ale operace s pointerem na entitu ne
     [[nodiscard]] IEntity* GetPlayer_unprotected() const; //Unprotected verze GetPlayer
     [[nodiscard]] std::shared_ptr<Server> GetSharedPtr();
@@ -149,7 +150,7 @@ public:
     static int CalculateAngle(Coordinates center, Coordinates point); //Vypocita uhel mezi dvema objekty, nemusi byt thread safe
     std::vector<std::string> GetTileInfo(float x, float y);
     void InvalidateStructureCache(); //Invaliduje cache pro struktury
-    void SendClickEvent(const MouseButtonEvent &event) const;
+    void SendClickEvent(const MouseButtonEvent &event);
     void KillAllEntities(); //Zabije vsechny entity na serveru, nezapomenout na thread safety
     void SpawnRespawnAnchors();
 

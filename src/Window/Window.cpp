@@ -59,7 +59,13 @@ void Window::loadConfig() {
 
 
 void Window::handleMouseInputs() {
-    bool isSameTile = (data.lastTileCoordinates == toTileCoordinates(data.mouseData.x + 16, data.mouseData.y + 16));
+    const auto tile{toTileCoordinates(data.mouseData.x + 16, data.mouseData.y + 16)};
+    const bool isSameTile = (data.lastTileCoordinates == tile);
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Mouse Tile Coordinates: (%d, %d)", static_cast<int>(tile.x), static_cast<int>(tile.y));
+    if (server->GetMapValue(
+    static_cast<int>(tile.x),
+    static_cast<int>(tile.y),
+    WorldData::COLLISION_MAP) < 1) data.forceMousePreview = false;
 
     auto sendLeftClickInput = [&] {
         data.drawMousePreview = true;
@@ -104,7 +110,6 @@ void Window::handleMouseInputs() {
 
 
     const auto deltaTime{server->GetDeltaTime()};
-    if (!data.drawMousePreview) return;
     const SDL_MouseButtonFlags mouseStates = SDL_GetMouseState(nullptr, nullptr);
 
     if ((mouseStates^SDL_BUTTON_LMASK) == 0) {;
@@ -219,14 +224,18 @@ void Window::drawTextAt(const std::string &text, const Coordinates coordinates, 
 }
 
 void Window::renderHud() {
-
     RenderingContext cursor;
     cursor.coordinates = {data.mouseData.x,data.mouseData.y};
     cursor.rect = SDL_FRect{0.0f,0.0f,32.0f,32.0f};
     cursor.textureName = "cursor";
     renderAt(cursor);
 
-    const auto tileInfo{server->GetTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
+    if (data.drawMousePreview || data.forceMousePreview) {
+        SDL_Color color{0,255,255,200};
+        const auto progress = static_cast<int>(server->mineProgress*100.0f);
+        drawTextAt(std::to_string(progress)+"%", {data.mouseData.x, data.mouseData.y}, color);
+    }
+    const auto tileInfo{server->GetTileInfo(data.mouseData.x +32.0f, data.mouseData.y +32.0f)};
     for (int i{0}; i < static_cast<int>(tileInfo.size()); ++i) {
         drawTextAt(tileInfo.at(i), {data.mouseData.x, data.mouseData.y + 32.0f + static_cast<float>(i)*16.0f}, SDL_Color{255,255,255,255});
     }
@@ -648,7 +657,7 @@ void Window::tick() {
 }
 
 
-void Window::initGame(bool loadingSave) {
+void Window::initGame(const bool loadingSave) {
     data.mainScreen = false;
     data.inMenu = false;
     data.last = SDL_GetPerformanceCounter();
@@ -674,6 +683,7 @@ void Window::initGame(bool loadingSave) {
         WorldRender(*this).GenerateWorldTexture();
         server->GenerateStructures();
         server->SpawnRespawnAnchors();
+        server->SaveServerState();
     }
     else {
         server->LoadServerState();
