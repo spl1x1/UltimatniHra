@@ -546,11 +546,9 @@ int Server::CalculateAngle(Coordinates center, Coordinates point) {
         return angle;
 }
 
-std::vector<std::string> Server::GetTileInfo(const float x, const float y) {
+std::vector<std::string> Server::GetTileInfo(int x, int y) {
     std::shared_lock lock(serverMutex);
-    const int tileX{static_cast<int>(std::floor(x / 32.0f))};
-    const int tileY{static_cast<int>(std::floor(y / 32.0f))};
-    const auto mapValue{worldData.GetMapValue(tileX, tileY, WorldData::COLLISION_MAP)};
+    const auto mapValue{worldData.GetMapValue(x, y, WorldData::COLLISION_MAP)};
 
      std::vector<std::string> text;
 
@@ -558,7 +556,7 @@ std::vector<std::string> Server::GetTileInfo(const float x, const float y) {
         const auto entityPos{entity->GetEntityCenter()};
         const int entityTileX{static_cast<int>(std::floor(entityPos.x / 32.0f))};
         const int entityTileY{static_cast<int>(std::floor(entityPos.y / 32.0f))};
-        if (entityTileX == tileX && entityTileY == tileY) {
+        if (entityTileX == x && entityTileY == y) {
             text.emplace_back(EntityRenderingComponent::TypeToString(entity->GetType()));
         }
     }
@@ -584,7 +582,7 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
         const auto damage = handDataInstance.damage == 0 ? 1 : handDataInstance.damage;
         const auto logicComp{player->GetLogicComponent()};
         logicComp->AddEvent(Event_SetAngle::Create(CalculateAngle(player->GetEntityCenter(), Coordinates{eventData.x, eventData.y})));
-        logicComp->AddEvent(Event_ClickAttack::Create(2,damage,{eventData.x, eventData.y}));
+        logicComp->AddEvent(Event_ClickAttack::Create(2,static_cast<int>(damage),{eventData.x, eventData.y}));
 
         };
 
@@ -668,6 +666,12 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
         else if (tileID > 0) interact(localPlayer.get(), event);
         else sendMoveTo(localPlayer.get(), event);
     }
+}
+
+void Server::SendAttackEvent() const {
+    const auto handleData{localPlayer->GetHandData()};
+    const auto damage = handleData.damage == 0 ? 1 : handleData.damage;
+    localPlayer->GetLogicComponent()->PerformAttack(localPlayer.get(),1, static_cast<int>(damage));
 }
 
 void Server::KillAllEntities() {

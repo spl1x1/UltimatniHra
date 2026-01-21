@@ -99,11 +99,10 @@ class Server : public std::enable_shared_from_this<Server> {
     y = tile y
     */
     [[nodiscard]] bool check3by3AreaFree(int x, int y) const;
-    Coordinates lastMinedTileCoordinates{};
 
 public:
-
-    float MineProgress{0.0f}; //Pro simulaci tezby
+    Coordinates lastMinedTileCoordinates{};
+    float MineProgress{0.0f};
     bool SpawnSlimes{true};
     std::vector<Coordinates> respawnPoints{};
 
@@ -149,9 +148,10 @@ public:
     std::set<int> GetStructuresInArea(Coordinates topLeft, Coordinates bootomLeft); //Vraci ID vsech entit v dane oblasti TODO: implementovat, nezapomenout na thread safety
     void ApplyDamageAt_unprotected(int damage, const std::vector<Coordinates>& positions, int entityId = -1); //Aplikuje damage vsem entitam v okoli dane pozice, non thread safe
     static int CalculateAngle(Coordinates center, Coordinates point); //Vypocita uhel mezi dvema objekty, nemusi byt thread safe
-    std::vector<std::string> GetTileInfo(float x, float y);
+    std::vector<std::string> GetTileInfo(int x, int y);
     void InvalidateStructureCache(); //Invaliduje cache pro struktury
     void SendClickEvent(const MouseButtonEvent &event);
+    void SendAttackEvent() const;
     void KillAllEntities(); //Zabije vsechny entity na serveru, nezapomenout na thread safety
     void SpawnRespawnAnchors();
 

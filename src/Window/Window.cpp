@@ -140,6 +140,9 @@ void Window::handlePlayerInput() const {
         dx *= 1.25f;
         dy *= 1.25f;
     }
+    if (keystates[SDL_SCANCODE_SPACE]) {
+        server->SendAttackEvent();
+    }
 
     // Normalize diagonal movement
     if (dx != 0 && dy != 0) {
@@ -218,11 +221,14 @@ void Window::renderHud() {
     cursor.textureName = "cursor";
     renderAt(cursor);
 
-    if (const auto progress = static_cast<int>(server->MineProgress*100.0f); (data.drawMousePreview && progress > 0.0f) || data.forceMousePreview) {
+    const auto tile{toTileCoordinates({data.mouseData.x +16.0f, data.mouseData.y +16.0f})};
+
+    if (const auto progress = static_cast<int>(server->MineProgress*100.0f);
+    (data.drawMousePreview && progress > 0 && tile == server->lastMinedTileCoordinates)  || data.forceMousePreview) {
         SDL_Color color{0,255,255,200};
         drawTextAt(std::to_string(progress)+"%", {data.mouseData.x +8.0f, data.mouseData.y+8.0f}, color);
     }
-    const auto tileInfo{server->GetTileInfo(data.mouseData.x +16.0f, data.mouseData.y +16.0f)};
+    const auto tileInfo{server->GetTileInfo(static_cast<int>(tile.x), static_cast<int>(tile.y))};
     for (int i{0}; i < static_cast<int>(tileInfo.size()); ++i) {
         drawTextAt(tileInfo.at(i), {data.mouseData.x, data.mouseData.y + 32.0f + static_cast<float>(i)*16.0f}, SDL_Color{255,255,255,255});
     }
@@ -259,6 +265,12 @@ void Window::renderHud() {
     }
     if (static_cast<int>(playerHealth) % 10 >= 5) {
         rect.x = 10.0f + static_cast<float>(fullHearts) * 17.0f;
+        SDL_RenderTexture(data.Renderer,
+                          data.healthHurtState ? textures.at("heart_half_hurt") : textures.at("heart_half"),
+                          nullptr, &rect);
+    }
+    if (static_cast<int>(playerHealth) < 5 && playerHealth > 0) {
+        rect.x = 10.0f;
         SDL_RenderTexture(data.Renderer,
                           data.healthHurtState ? textures.at("heart_half_hurt") : textures.at("heart_half"),
                           nullptr, &rect);
