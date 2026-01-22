@@ -164,7 +164,7 @@ bool SaveManager::deleteSave(int slotId) {
 
     std::filesystem::remove("saves/slot_" + std::to_string(slotId) +"_server_state.json");
     std::filesystem::remove("saves/worldmap_slot_" + std::to_string(slotId) +".png");
-
+    std::filesystem::remove("saves/slot_" + std::to_string(slotId) +"_inventory.json");
     return true;
 }
 

@@ -325,6 +325,7 @@ void Server::SaveServerState() {
         SDL_Log("Server is not running, cannot save state.");
         return;
     }
+
     std::vector<StructureData> structuresData;
     structuresData.reserve(structures.size());
     {
@@ -850,6 +851,11 @@ WorldData & Server::GetWorldData() {
 
 std::vector<Coordinates> Server::GetRespawnPoints() {
     return respawnPoints;
+}
+
+ServerState Server::GetServerState() {
+    std::shared_lock lock(serverMutex);
+    return serverState;
 }
 
 std::map<int,std::shared_ptr<IEntity>> Server::GetEntities() {
