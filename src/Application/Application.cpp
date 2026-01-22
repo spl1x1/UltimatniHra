@@ -25,9 +25,11 @@ void Application::handleException() {
 
 void Application::SignalHandler(const int sig) {
     SDL_Log("Signal %d received, shutting down...", sig);
-    instance->server->SaveServerState();
-    auto &saveManager{SaveManager::getInstance()};
-    saveManager.saveGame(saveManager.getCurrentSlot(), instance->server.get());
+    if (instance->server->GetServerState() == ServerState::RUNNING) {
+        instance->server->SaveServerState();
+        auto &saveManager{SaveManager::getInstance()};
+        saveManager.saveGame(saveManager.getCurrentSlot(), instance->server.get());
+    }
     Rml::Shutdown();
     exit(0);
 }

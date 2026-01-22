@@ -143,6 +143,7 @@ public:
     [[nodiscard]] AiManager& GetAiManager_unprotected();
     [[nodiscard]] WorldData& GetWorldData();
     [[nodiscard]] std::vector<Coordinates> GetRespawnPoints();
+    [[nodiscard]] ServerState GetServerState();
 
     //Methods
     void GenerateStructures(); //Generuje stromy na mape sveta pro jistotu lockuje mutex serveru, volat při prvním vytvoreni jinak load

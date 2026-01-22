@@ -659,7 +659,6 @@ void UIComponent::saveInventory(const std::string& filePath) {
     std::ofstream file(filePath);
     file << sb.c_str();
     file.close();
-    SDL_Log("UIComponent: Saved inventory to %s", filePath.c_str());
 }
 
 void UIComponent::loadInventory(const std::string& filePath) {
