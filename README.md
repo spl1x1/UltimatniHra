@@ -1,7 +1,6 @@
 # Ultimatní hra
 
-2D survival/procedurální sandbox v C++.  
-Tento projekt je studentská práce, která se zaměřuje na kombinaci akce, těžby a přežívání na náhodně generované mapě.
+2D survival sandbox v C++.  
 
 ![Game Screenshot](assets/screenshot.png)
 
@@ -19,7 +18,7 @@ Tento projekt je studentská práce, která se zaměřuje na kombinaci akce, tě
 - **Save/Load:**
     - Ukládání a načítání rozpracované hry.
 - **Respawn Anchor:**
-    - Umožňuje uložit pozici pro znovuzrození hráče po smrti.
+    - Umožňuje znovuzrození hráče po smrti.
 - **Ghost mode:**
     - Mód, kdy je hráč po smrti nehmotný („duch“). Lze obnovit z anchoru.
 - **Slime Enemy:**
