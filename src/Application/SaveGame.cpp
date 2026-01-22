@@ -104,8 +104,6 @@ bool SaveManager::saveGame(int slotId, Server* server) {
     save.worldData.spawnX = spawnPoint.x;
     save.worldData.spawnY = spawnPoint.y;
 
-    // TODO: implementovat play time
-    // save.playTime += sessionTime; //pripravene az to budu potrebovat
     server->SaveServerState();
     server->SetServerState(ServerState::STOPPED);
 
@@ -251,4 +249,18 @@ bool SaveManager::deserializeSave(SaveGame& save, const std::string& filepath) {
 
     file.close();
     return true;
+}
+
+void SaveManager::updatePlayTime(float deltaTime) {
+    if (currentSlot < 0 || currentSlot >= saveSlots.size()) {
+        return;
+    }
+    saveSlots[currentSlot].playTime += deltaTime;
+}
+
+float SaveManager::getPlayTime(int slotId) const {
+    if (slotId >= 0 && slotId < saveSlots.size()) {
+        return saveSlots[slotId].playTime;
+    }
+    return 0.0f;
 }

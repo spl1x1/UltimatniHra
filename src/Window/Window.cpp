@@ -354,6 +354,7 @@ void Window::advanceFrame() {
     const float deltaTime = static_cast<float>(current - data.last)/static_cast<float>(SDL_GetPerformanceFrequency());
     server->SetDeltaTime(deltaTime);
     server->Tick();
+    SaveManager::getInstance().updatePlayTime(deltaTime);
     WaterSprite::Tick(deltaTime);
     data.last = current;
 

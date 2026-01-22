@@ -58,6 +58,9 @@ public:
     int getCurrentSlot() const { return currentSlot; }
     void setCurrentSlot(int slot) { currentSlot = slot; }
 
+    void updatePlayTime(float deltaTime);
+    float getPlayTime(int slotId) const;
+
 private:
     SaveManager() : currentSlot(-1) {}
     SaveManager(const SaveManager&) = delete;
