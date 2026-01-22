@@ -1,10 +1,13 @@
-# Ultimatní hra
+## <img width="32" height="32" alt="Icon39" style="vertical-align: -0.25em"  src="https://github.com/user-attachments/assets/d969f139-2afd-4670-8904-5e050f4bb833" /> Ultimatní hra
 
-2D survival sandbox v C++.  
+# 2D survival sandbox v C++.  
 
 ![Game Screenshot](assets/screenshot.png)
 
 ---
+## 📖 Původní plán
+- [Plán projektu](https://github.com/user-attachments/files/23143561/Projekt.pdf)
+
 
 ## ✨ Hlavní vlastnosti
 
