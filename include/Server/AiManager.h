@@ -36,8 +36,8 @@ public:
     using StateHandler = std::function<void(IEntity*, float deltaTime)>;
 
     void setState(AiState state);
-    [[nondiscard]] AiState getState() const;
-    [[nondiscard]] float getTimeInCurrentState() const;
+     AiState getState() const;
+    float getTimeInCurrentState() const;
 
     void registerState(AiState state, const StateHandler& onEnter, const StateHandler& onUpdate);
 
