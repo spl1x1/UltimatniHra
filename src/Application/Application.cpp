@@ -45,10 +45,10 @@ void Application::init() {
 }
 
 void Application::run() const {
-    while (gameWindow->data.Running) gameWindow->tick();
+    //while (gameWindow->data.Running) gameWindow->tick();
 
     try {
-        //while (gameWindow->data.Running) gameWindow->tick();
+        while (gameWindow->data.Running) gameWindow->tick();
     }
     catch (const std::exception& e) {
         std::cerr << "Exception caught: " << e.what() << std::endl;

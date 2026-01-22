@@ -84,11 +84,7 @@ void Player::Save(Server* server) {
 void Player::SetGhostMode(const bool enable) {
     isGhostMode = enable;
     if (!isGhostMode) return;
-    for (const auto& [id,structure] : server->GetStructures_unprotected()) {
-        if (!structure) continue;
-        if (structure->GetType() != structureType::CHEST) continue;
-        dynamic_cast<Chest*>(structure.get())->CloseChest();
-    }
+    if (const auto chest{Chest::GetOpenChest()}) chest->CloseChest();
 }
 
 void Player::ReviveFromGhostMode() {
