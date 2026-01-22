@@ -135,8 +135,10 @@ InventoryController::~InventoryController() {
 
 void InventoryController::toggle() {
     if (visible) {
+        window->data.inMenu=false;
         hide();
     } else {
+        window->data.inMenu=true;
         show();
     }
 }

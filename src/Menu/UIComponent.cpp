@@ -338,18 +338,22 @@ void UIComponent::HandleEvent(const SDL_Event *e) {
 
                     if (consoleHandler.IsVisible()) {
                         consoleHandler.Hide();
+                        windowClass->data.inMenu = false;
                         closedSomething = true;
                     }
                     if (inventoryController && inventoryController->isVisible()) {
                         inventoryController->hide();
+                        windowClass->data.inMenu = false;
                         closedSomething = true;
                     }
                     if (inventoryController && inventoryController->isCraftingUIVisible()) {
                         inventoryController->hideCraftingUI();
+                        windowClass->data.inMenu = false;
                         closedSomething = true;
                     }
                     if (chestInventoryUI && chestInventoryUI->isVisible()) {
                         chestInventoryUI->closeChest();
+                        windowClass->data.inMenu = false;
                         closedSomething = true;
                     }
 

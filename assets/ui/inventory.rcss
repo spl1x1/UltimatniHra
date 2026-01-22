@@ -14,6 +14,7 @@ body {
     border: 2dp solid #ecf0f1;
     padding: 5dp;
     pointer-events: auto;
+    margin-top: 0dp;
 }
 
 .close-button {
@@ -25,8 +26,8 @@ body {
     color: white;
     background-color: #e74c3c;
     position: absolute;
-    top: -10dp;
-    right: -10dp;
+    top: 0dp;
+    right: 0dp;
     cursor: pointer;
 }
 
