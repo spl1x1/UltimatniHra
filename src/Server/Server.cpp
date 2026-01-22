@@ -647,9 +647,6 @@ void Server::SendClickEvent(const MouseButtonEvent &event) {
     const bool isSameTile = (lastMinedTileCoordinates == tile);
     lastMinedTileCoordinates = tile;
     if (!isSameTile) MineProgress = 0.0f;
-    SDL_Log("Tile ID at click: %d", tileID);
-    SDL_Log("Tile Coordinates at click: %d", tile.x);
-    SDL_Log("The tile is the same as last: %s", isSameTile ? "true" : "false");
 
     const auto playerInstance{dynamic_cast<Player*>(GetPlayer())};
     const auto handData{playerInstance->GetHandData()};
@@ -911,11 +908,11 @@ void Server::GenerateStructures() {
 
     const std::vector<biomeModifierInfo> biomeModifierValues = {
         {1, 0.0,0.1, Tree::TreeVariant::NONE, 0},//Beach
-        {2, 0.0,0.7,Tree::TreeVariant::NONE, 0.1}, //Desert
-        {3,0.5,0.5, Tree::TreeVariant::PLAINS, 0.05}, //Grass
-        {4, 0.0,1.5, Tree::TreeVariant::NONE, 0.2},//Mountain
-        {5,1.3,0.3,Tree::TreeVariant::FOREST,0.05}, //Forest
-        {6,0.3,1.3, Tree::TreeVariant::SNOW,0.15}  //Snow
+        {2, 0.0,0.7,Tree::TreeVariant::NONE, 0.2}, //Desert
+        {3,0.5,0.5, Tree::TreeVariant::PLAINS, 0.1}, //Grass
+        {4, 0.0,1.5, Tree::TreeVariant::NONE, 0.3},//Mountain
+        {5,1.3,0.3,Tree::TreeVariant::FOREST,0.1}, //Forest
+        {6,0.3,1.3, Tree::TreeVariant::SNOW,0.2}  //Snow
     };
 
     constexpr int commonOreVariants{2}; //Pocet variant rud, IRON, COPPER
@@ -936,8 +933,8 @@ void Server::GenerateStructures() {
         const int oreAmount = (dist(mt) < biome.oreRarityModifier * 100) ? rareOreVariants : commonOreVariants;
         std::uniform_int_distribution<> oreTypeDist(1,oreAmount);
 
-        if (dist(mt) < OREDEPOSIT*10) return AddStructure_unprotected(pos, structureType::ORE_DEPOSIT, oreTypeDist(mt), oreDist(mt));
-        return AddStructure_unprotected(pos, structureType::ORE_NODE, oreTypeDist(mt), oreDist(mt));
+        if (dist(mt) < OREDEPOSIT*10) return AddStructure_unprotected(pos, structureType::ORE_DEPOSIT, oreDist(mt), oreTypeDist(mt));
+        return AddStructure_unprotected(pos, structureType::ORE_NODE, oreDist(mt), oreTypeDist(mt));
     };
 
     auto checkForDiagonalNeighbors = [&](const int x, const int y) -> int {
